@@ -1,3 +1,3 @@
-# Device To Device Streaming on mobile phones
+# Device To Device Streaming on Mobile Phones
 
-Repositorio de investigación
+Repositorio del proyecto
