@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import d2d.testing.MainActivity;
+import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.sessions.ReceiveSession;
 import d2d.testing.utils.Logger;
 import d2d.testing.net.packets.DataReceived;
@@ -97,12 +98,14 @@ public class RTSPServerWorker extends AbstractWorker {
     private String mPassword;
 
     private MainActivity mMainActivity;
+    private RTSPServerSelector mServerSelector;
 
-    public RTSPServerWorker(String username, String password, MainActivity mainActivity) {
+    public RTSPServerWorker(String username, String password, MainActivity mainActivity, RTSPServerSelector serverSelector) {
         super();
         this.mUsername = username;
         this.mPassword = password;
         this.mMainActivity = mainActivity;
+        this.mServerSelector = serverSelector;
     }
 
     public RtspResponse processRequest(RtspRequest request, SelectableChannel channel) throws IllegalStateException, IOException {
@@ -219,6 +222,7 @@ public class RTSPServerWorker extends AbstractWorker {
 
         // Parse the requested URI and configure the session
         ReceiveSession session = handleServerRequest(request, socket);
+        session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         mServerSessions.put(channel, session);
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
@@ -342,7 +346,7 @@ public class RTSPServerWorker extends AbstractWorker {
 
         srcPorts = trackInfo.getLocalPorts();
         trackInfo.setLocalAddress(session.getDestinationAddress());
-        trackInfo.startServer();
+        trackInfo.startServer(session.getReceiveNet());
 
         response.attributes = "Transport: RTP/AVP/UDP;" + (session.getDestinationAddress().isMulticastAddress() ? "multicast" : "unicast") +
                 ";destination=" + session.getDestinationAddress().getHostAddress() +

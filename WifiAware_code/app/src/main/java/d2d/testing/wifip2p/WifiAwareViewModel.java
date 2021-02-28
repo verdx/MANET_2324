@@ -33,7 +33,7 @@ import d2d.testing.streaming.rtsp.RtspClient;
 
 public class WifiAwareViewModel extends AndroidViewModel {
 
-    public static ConnectivityManager connectivityManager;
+    private static ConnectivityManager connectivityManager;
     private WifiAwareManager manager;
     private WifiAwareSession session;
     private PublishDiscoverySession publishSession;
@@ -103,6 +103,10 @@ public class WifiAwareViewModel extends AndroidViewModel {
         return subscribeSession != null;
     }
 
+    public static ConnectivityManager getConnectivityManager() {
+        return connectivityManager;
+    }
+
     public boolean createSession() throws InterruptedException {
         if(manager == null) return false;
         if(session != null) return true;
@@ -160,7 +164,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
                     try {
-                        RTSPServerSelector.getInstance().addLoopbackConnection();
+                        RTSPServerSelector.getInstance().addNewConnection("127.0.0.1", 1234);
                         RTSPServerSelector.getInstance().addNewConnection(publishSession, peerHandle);
                     } catch (IOException e) {
                         e.printStackTrace();

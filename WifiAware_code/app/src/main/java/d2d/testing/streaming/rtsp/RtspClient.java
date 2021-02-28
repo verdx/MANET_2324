@@ -43,6 +43,7 @@ import d2d.testing.StreamActivity;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.rtp.RtpSocket;
+import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 
 import android.net.ConnectivityManager;
@@ -148,6 +149,7 @@ public class RtspClient {
 	private NetworkCapabilities mCurrentNetCapabitities;
 	private boolean mEnabled = false;
 
+	private SessionBuilder mSessionBuilder;
 	/**
 	 * The callback interface you need to implement to know what's going on with the 
 	 * RTSP server (for example your Wowza Media Server).
@@ -197,6 +199,8 @@ public class RtspClient {
 	public void setSession(Session session) {
 		mTmpParameters.session = session;
 	}
+
+	public void setmSessionBuilder(SessionBuilder builder){mSessionBuilder = builder;}
 
 	public Session getSession() {
 		return mTmpParameters.session;
@@ -372,13 +376,12 @@ public class RtspClient {
 						mParameters = mTmpParameters.clone();
 						mParameters.host = peerIpv6.getHostAddress();
 						mParameters.port = peerPort;
+						mParameters.session = mSessionBuilder.build();
 						mParameters.session.setDestinationAddress(peerIpv6, true);
 						mParameters.session.setDestinationPort(peerPort);
 						mParameters.session.setOriginAddress(mSocket.getLocalAddress(), true);
 					} catch (IOException e) {
-						mState = STATE_STOPPED;
-						mEnabled = false;
-						mCurrentNetCapabitities = null;
+						clearClient();
 						return;
 					}
 
@@ -387,9 +390,10 @@ public class RtspClient {
 						mParameters.session.syncConfigure();
 					} catch (Exception e) {
 						mParameters.session = null;
-						mState = STATE_STOPPED;
-						mEnabled = false;
-						mCurrentNetCapabitities = null;
+						try {
+							mSocket.close();
+						} catch (IOException ex) {}
+						clearClient();
 						return;
 					}
 
@@ -410,6 +414,7 @@ public class RtspClient {
 					} catch (Exception e) {
 						abort();
 					}
+					mConnManager.bindProcessToNetwork(null);
 				}
 			}
 		});
@@ -447,9 +452,14 @@ public class RtspClient {
 		} catch (Exception ignore) {}
 		mHandler.removeCallbacks(mConnectionMonitor);
 		mHandler.removeCallbacks(mRetryConnection);
+		clearClient();
+	}
+
+	private void clearClient(){
 		mState = STATE_STOPPED;
 		mEnabled = false;
 		mCurrentNetCapabitities = null;
+		mConnManager.bindProcessToNetwork(null);
 	}
 	
 	private void tryConnection() throws IOException {

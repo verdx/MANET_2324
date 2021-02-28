@@ -31,6 +31,7 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     private RtspClient rtspClient;
 
     public Session mSesion;
+    public SessionBuilder mSessionBuilder;
 
     private FloatingActionButton recordButton;
     public boolean mRecording = false;
@@ -47,13 +48,13 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
         mSurfaceView = findViewById(R.id.surface);
 
         // Configures the SessionBuilder
-        mSesion = SessionBuilder.getInstance()
+        mSessionBuilder = SessionBuilder.getInstance()
                 .setSurfaceView(mSurfaceView)
                 .setPreviewOrientation(90)
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_AAC)
-                .setVideoEncoder(SessionBuilder.VIDEO_H264)
-                .build();
+                .setVideoEncoder(SessionBuilder.VIDEO_H264);
+        mSesion = mSessionBuilder.build();
 
         mSurfaceView.getHolder().addCallback(this);
 
@@ -121,7 +122,8 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
 
     public void startStreaming() {
         rtspClient = new RtspClient(mAwareModel, this);
-        rtspClient.setSession(mSesion);
+        //rtspClient.setSession(mSesion);
+        rtspClient.setmSessionBuilder(mSessionBuilder);
         rtspClient.setStreamPath("/Cliente1");
         //rtspClient.setServerAddress("192.168.49.1", 12345);
         rtspClient.startStream();

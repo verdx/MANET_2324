@@ -1,11 +1,14 @@
 package d2d.testing.streaming.sessions;
 
+import android.net.Network;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.channels.SelectableChannel;
 import java.util.Random;
 
 import d2d.testing.net.threads.selectors.UDPServerSelector;
+import d2d.testing.wifip2p.WifiAwareViewModel;
 
 public class TrackInfo {
     private int mLocalRtpPort;
@@ -32,11 +35,11 @@ public class TrackInfo {
         mLocalAddress = localAddress;
     }
 
-    public void startServer() throws IOException {
-        mRtcpUdpServer = new UDPServerSelector(null, mLocalAddress, mLocalRtcpPort);
+    public void startServer(Network receiveNet) throws IOException {
+        mRtcpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtcpPort, receiveNet, WifiAwareViewModel.getConnectivityManager());
         mRtcpUdpServer.start();
 
-        mRtpUdpServer = new UDPServerSelector(null, mLocalAddress, mLocalRtpPort);
+        mRtpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtpPort, receiveNet, WifiAwareViewModel.getConnectivityManager());
         mRtpUdpServer.start();
     }
 
