@@ -14,6 +14,7 @@ public class RtspResponse {
     public static final String STATUS_OK = "200 OK";
     public static final String STATUS_BAD_REQUEST = "400 Bad Request";
     public static final String STATUS_UNAUTHORIZED = "401 Unauthorized";
+    public static final String STATUS_FORBIDDEN = "403 Forbidden";
     public static final String STATUS_NOT_FOUND = "404 Not Found";
     public static final String STATUS_INTERNAL_SERVER_ERROR = "500 Internal Server Error";
 

@@ -7,8 +7,15 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.hardware.Camera;
+import android.net.wifi.aware.DiscoverySession;
+import android.net.wifi.aware.PeerHandle;
+import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Bundle;
@@ -36,6 +43,7 @@ import d2d.testing.gui.FragmentStreams;
 import d2d.testing.gui.StreamDetail;
 import d2d.testing.gui.ViewPagerAdapter;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.utils.Logger;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 import d2d.testing.utils.Permissions;
@@ -119,27 +127,28 @@ public class MainActivity extends AppCompatActivity {
 
         tabLayout.setupWithViewPager(viewPager);
 
-        Button bStart = findViewById(R.id.startButton);
-        bStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if(mAwareModel.createSession()){
-                        if(mAwareModel.publishService("Server", MainActivity.this)){
-                            Toast.makeText(MainActivity.this, "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
-                        }
-                        else{
-                            Toast.makeText(MainActivity.this, "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_SHORT).show();
-                        }
-                    }else {
-                        Toast.makeText(MainActivity.this, "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        try {
+            if(mAwareModel.createSession()){
+                if(mAwareModel.publishService("Server", MainActivity.this)){
+                    Toast.makeText(MainActivity.this, "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
                 }
+                else{
+                    Toast.makeText(MainActivity.this, "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_SHORT).show();
+                }
+                if(mAwareModel.subscribeToService("Server", this)){
+                    Toast.makeText(MainActivity.this, "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_SHORT).show();
+                }
+            }else {
+                Toast.makeText(MainActivity.this, "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
             }
-        });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
+
 
     private void DiscoverPeers(){
 

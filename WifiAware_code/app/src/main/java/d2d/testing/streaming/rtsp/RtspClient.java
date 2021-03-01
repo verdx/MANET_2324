@@ -147,6 +147,7 @@ public class RtspClient {
 	private ConnectivityManager mConnManager;
 	private Network mCurrentNet;
 	private NetworkCapabilities mCurrentNetCapabitities;
+	private PeerHandle mPeerHandle;
 	private boolean mEnabled = false;
 
 	private SessionBuilder mSessionBuilder;
@@ -158,7 +159,7 @@ public class RtspClient {
 		public void onRtspUpdate(int message, Exception exception);
 	}
 
-	public RtspClient(WifiAwareViewModel awareModel, StreamActivity activity) {
+	public RtspClient(WifiAwareViewModel awareModel) {
 		mCSeq = 0;
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
@@ -180,7 +181,6 @@ public class RtspClient {
 		signal.acquireUninterruptibly();
 
 		mAwareModel = awareModel;
-		mActivity = activity;
 	}
 
 	/**
@@ -303,6 +303,7 @@ public class RtspClient {
 	 */
 
 	public void startStream(){
+		/*
 		try {
 			if(mAwareModel.createSession()){
 				if(mAwareModel.subscribeToService("Server", this)){
@@ -315,12 +316,14 @@ public class RtspClient {
 				Toast.makeText(mActivity, "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
 			}
 		} catch (InterruptedException e) {}
+		*/
 	}
 
 	public void connectionCreated(ConnectivityManager manager, DiscoverySession subscribeSession, PeerHandle handle){
 		mCurrentNetCapabitities = null;
 		mCurrentNet = null;
 		mConnManager = manager;
+		mPeerHandle = handle;
 		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
 				.setPskPassphrase("wifiawaretest")
 				.build();
@@ -350,6 +353,7 @@ public class RtspClient {
 		@Override
 		public void onLost(@NonNull Network network) {
 			mConnManager.unregisterNetworkCallback(this);
+			mAwareModel.removeClient(mPeerHandle);
 			stopStream();
 		}
 	}
@@ -540,7 +544,7 @@ public class RtspClient {
 			if (response.status == 401) throw new RuntimeException("Bad credentials !");
 
 		} else if (response.status == 403) {
-			throw new RuntimeException("Access forbidden !");
+			Log.d(TAG, "Streaming " + mParameters.path + " refused by server");
 		}
 	}
 

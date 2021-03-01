@@ -25,7 +25,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import d2d.testing.MainActivity;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
@@ -42,10 +44,13 @@ public class WifiAwareViewModel extends AndroidViewModel {
     private HandlerThread worker;
     private Handler workerHandle;
 
+    private Map<PeerHandle, RtspClient> mClients;
+
 
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
         available = new MutableLiveData<Boolean>(Boolean.FALSE);
+        mClients = new HashMap<>();
         session = null;
         publishSession = null;
         subscribeSession = null;
@@ -145,6 +150,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
                         publishSession = session;
                         try {
                             RTSPServerSelector.initiateInstance(activity, connectivityManager).start();
+                            RTSPServerSelector.getInstance().addNewConnection("127.0.0.1", 1234);
                         } catch (IOException e) {
                             session.close();
                             publishSession = null;
@@ -164,7 +170,6 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
                     try {
-                        RTSPServerSelector.getInstance().addNewConnection("127.0.0.1", 1234);
                         RTSPServerSelector.getInstance().addNewConnection(publishSession, peerHandle);
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -178,7 +183,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
         }
     }
 
-    public boolean subscribeToService(String serviceName, final RtspClient client) throws InterruptedException {
+    public boolean subscribeToService(String serviceName, final MainActivity activity) throws InterruptedException {
         if(session == null) return false;
         synchronized (WifiAwareViewModel.this){
             SubscribeConfig config = new SubscribeConfig.Builder().setServiceName(serviceName).build();
@@ -209,7 +214,11 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
                 @Override
                 public void onMessageSendSucceeded(int messageId) {
-                    client.connectionCreated(connectivityManager, subscribeSession, lastPeerHandle);
+                    RtspClient rtspClient = new RtspClient(WifiAwareViewModel.this);
+                    synchronized (mClients){
+                        mClients.put(lastPeerHandle, rtspClient);
+                    }
+                    rtspClient.connectionCreated(connectivityManager, subscribeSession, lastPeerHandle);
                 }
 
 
@@ -217,6 +226,12 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
             this.wait();
             return subscribeSession != null;
+        }
+    }
+
+    public void removeClient(PeerHandle handle){
+        synchronized (mClients){
+            mClients.remove(handle);
         }
     }
 

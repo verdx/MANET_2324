@@ -9,6 +9,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 
+import d2d.testing.streaming.StreamingList;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
@@ -20,6 +21,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.UUID;
 
 
 public class StreamActivity extends AppCompatActivity implements SurfaceHolder.Callback {
@@ -121,14 +124,17 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
      */
 
     public void startStreaming() {
-        rtspClient = new RtspClient(mAwareModel, this);
+
+        UUID localStreamUUID = UUID.randomUUID();
+        StreamingList.getInstance().addLocalStreaming(localStreamUUID, mSessionBuilder);
+        /*
         //rtspClient.setSession(mSesion);
         rtspClient.setmSessionBuilder(mSessionBuilder);
         rtspClient.setStreamPath("/Cliente1");
         //rtspClient.setServerAddress("192.168.49.1", 12345);
         rtspClient.startStream();
         Toast.makeText(this,"Retransmitting streaming to server for multihopping", Toast.LENGTH_SHORT).show();
-
+        */
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
         mRecording = true;
     }
