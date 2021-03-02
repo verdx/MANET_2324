@@ -18,17 +18,19 @@
             android:layout_width="wrap_content"
             android:layout_height="19dp"
             android:layout_below="@id/connectionStatus"
-            android:layout_marginStart="8dp"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="8dp"
             android:text="@string/mi_dispositivo" />
 
         <ListView
             android:id="@+id/streamListView"
             android:layout_width="match_parent"
-            android:layout_height="322dp"
+            android:layout_height="214dp"
             android:layout_above="@+id/uploadButton"
             android:layout_below="@+id/stream_list"
             android:layout_marginTop="10dp"
-            android:layout_marginBottom="25dp" >
+            android:layout_marginBottom="15dp">
 
         </ListView>
 
@@ -61,7 +63,7 @@
 
                 <TextView
                     android:id="@+id/my_name"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
@@ -125,7 +127,7 @@
             android:layout_alignParentBottom="true"
             android:layout_marginStart="50dp"
             android:layout_marginEnd="50dp"
-            android:layout_marginBottom="35dp"
+            android:layout_marginBottom="15dp"
             android:backgroundTint="#E45C51"
             android:backgroundTintMode="src_in"
             android:drawableLeft="@android:drawable/ic_media_play"
@@ -146,7 +148,7 @@
             android:layout_alignParentEnd="true"
             android:layout_marginStart="50dp"
             android:layout_marginEnd="49dp"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="15dp"
             android:backgroundTint="#409FB8"
             android:backgroundTintMode="src_in"
             android:drawableLeft="@android:drawable/ic_menu_upload"

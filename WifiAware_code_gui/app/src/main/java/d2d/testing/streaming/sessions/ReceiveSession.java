@@ -1,5 +1,6 @@
 package d2d.testing.streaming.sessions;
 
+import android.net.Network;
 import android.os.HandlerThread;
 
 import java.io.IOException;
@@ -22,6 +23,8 @@ public class ReceiveSession {
     private String mSessionIDessionDescription;
     private String path;
 
+    private Network mReceiveNet;
+
 
     /**
      * Creates a streaming session that can be customized by adding tracks.
@@ -34,6 +37,7 @@ public class ReceiveSession {
 
         mSessionID = randomUUID().toString();
         path = "";
+        mReceiveNet = null;
     }
 
     /**
@@ -69,6 +73,14 @@ public class ReceiveSession {
         return mDestPort;
     }
 
+    public void setReceiveNet(Network net){
+        mReceiveNet = net;
+    }
+
+    public Network getReceiveNet(){
+        return mReceiveNet;
+    }
+
     public String getSessionID() {
         return mSessionID;
     }
@@ -83,10 +95,10 @@ public class ReceiveSession {
      **/
     public void start() throws IOException {
         if(trackExists(0)) {
-            mAudioTrackInfo.startServer();
+            mAudioTrackInfo.startServer(mReceiveNet);
         }
         if(trackExists(1)) {
-            mVideoTrackInfo.startServer();
+            mVideoTrackInfo.startServer(mReceiveNet);
         }
     }
     /** Stops all existing streams. */

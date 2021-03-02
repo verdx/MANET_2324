@@ -9,13 +9,21 @@ public class StreamDetail {
         this.name = name;
     }
 
-    public String getIp() { return ip; }
+    public String getIp() {
+        return ip;
+    }
 
-    public void setIp(String ip) { this.ip = ip; }
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
 
-    public String getName() { return name; }
+    public String getName() {
+        return name;
+    }
 
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public boolean equals(Object o) {
         if(o instanceof StreamDetail) {

@@ -1,5 +1,6 @@
 package d2d.testing.gui;
 
+
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -31,7 +32,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         return fragmentListTitles.get(i);
     }
 
-    public void addFragment(Fragment fragment, String Title){
+    public void AddFragment(Fragment fragment,String Title){
         fragmentList.add(fragment);
         fragmentListTitles.add(Title);
     }

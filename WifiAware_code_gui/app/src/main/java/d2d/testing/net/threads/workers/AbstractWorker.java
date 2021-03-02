@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.AbstractSelector;

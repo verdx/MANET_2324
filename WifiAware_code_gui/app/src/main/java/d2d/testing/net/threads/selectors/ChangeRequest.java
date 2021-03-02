@@ -5,6 +5,7 @@ import java.nio.channels.SelectableChannel;
 public class ChangeRequest {
     public static final int REGISTER = 1;
     public static final int CHANGE_OPS = 2;
+    public static final int REMOVE = 3;
 
     private final SelectableChannel mChannel;
     private final int mType;

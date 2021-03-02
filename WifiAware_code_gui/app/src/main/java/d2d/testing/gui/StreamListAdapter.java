@@ -10,6 +10,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import d2d.testing.R;
 
+import static d2d.testing.R.id.stream_name;
+
 public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
     private Context mContext;
 
@@ -26,12 +28,12 @@ public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         convertView = inflater.inflate(R.layout.stream_detail,null);
 
-        TextView stream_nam = convertView.findViewById(R.id.stream_name);
+        TextView stream_nam = convertView.findViewById(stream_name);
         TextView stream_ip = convertView.findViewById(R.id.stream_ip);
 
         /*
-        * Aqui va la parte de los BOTONES de visualizar streaming y enviar streaming
-        * */
+         * Aqui va la parte de los BOTONES de visualizar streaming (ojo) y enviar streaming (envio)
+         */
 
         stream_nam.setText(name);
         stream_ip.setText(ip);

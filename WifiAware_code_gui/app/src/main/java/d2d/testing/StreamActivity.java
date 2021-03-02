@@ -6,10 +6,10 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.Toast;
 
 
+import d2d.testing.streaming.StreamingList;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
@@ -22,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.UUID;
+
 
 public class StreamActivity extends AppCompatActivity implements SurfaceHolder.Callback {
 
@@ -32,8 +34,9 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     private RtspClient rtspClient;
 
     public Session mSesion;
+    public SessionBuilder mSessionBuilder;
 
-    private Button recordButton;
+    private FloatingActionButton recordButton;
     public boolean mRecording = false;
 
     private WifiAwareViewModel mAwareModel;
@@ -48,17 +51,18 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
         mSurfaceView = findViewById(R.id.surface);
 
         // Configures the SessionBuilder
-        mSesion = SessionBuilder.getInstance()
+        mSessionBuilder = SessionBuilder.getInstance()
                 .setSurfaceView(mSurfaceView)
                 .setPreviewOrientation(90)
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_AAC)
-                .setVideoEncoder(SessionBuilder.VIDEO_H264)
-                .build();
+                .setVideoEncoder(SessionBuilder.VIDEO_H264);
+        mSesion = mSessionBuilder.build();
 
         mSurfaceView.getHolder().addCallback(this);
 
-        recordButton = findViewById(R.id.recordButton);
+        recordButton = findViewById(R.id.button_capture);
+        recordButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.holo_red_dark)));
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,25 +89,60 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) { }
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+    }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder) { }
+    public void surfaceDestroyed(SurfaceHolder holder) {
+
+    }
+
+    /**
+    public void startStreaming() {
+        if(WifiP2pController.getInstance().isGroupOwner()) {
+            try {
+                RTSPServerSelector.getInstance().setAllowLiveStreaming(true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(true,"192.168.49.1:12345/","Group Owner stream"));
+            Toast.makeText(this,"Retransmitting streaming from server to multiple devices simultaneously", Toast.LENGTH_SHORT).show();
+        } else {
+            rtspClient = new RtspClient();
+            rtspClient.setSession(mSesion);
+            rtspClient.setStreamPath(setPath());
+            rtspClient.setServerAddress("192.168.49.1", 12345);
+            rtspClient.startStream();
+            Toast.makeText(this,"Retransmitting streaming to GO server for multihopping", Toast.LENGTH_SHORT).show();
+        }
+
+        recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
+        mRecording = true;
+    }
+
+     */
 
     public void startStreaming() {
-        rtspClient = new RtspClient(mAwareModel, this);
-        rtspClient.setSession(mSesion);
+
+        UUID localStreamUUID = UUID.randomUUID();
+        StreamingList.getInstance().addLocalStreaming(localStreamUUID, mSessionBuilder);
+        /*
+        //rtspClient.setSession(mSesion);
+        rtspClient.setmSessionBuilder(mSessionBuilder);
         rtspClient.setStreamPath("/Cliente1");
         //rtspClient.setServerAddress("192.168.49.1", 12345);
         rtspClient.startStream();
         Toast.makeText(this,"Retransmitting streaming to server for multihopping", Toast.LENGTH_SHORT).show();
-
+        */
+        recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
         mRecording = true;
     }
 
     private void stopStreaming() {
         rtspClient.stopStream();
 
+        recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_video_camera));
         mRecording = false;
         Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
     }
@@ -118,4 +157,32 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
         //this.stopService(mIntent);
         mSesion.stopPreview();
     }
+    /*
+     setPath() esto quiza se deberia comprobar en GO en futuro antes de hacer streaming
+    */
+    /*
+    private String setPath(){
+       ArrayList<StreamDetail> list = WifiP2pController.getInstance().getMainActivity().getStreamlist();
+
+       String ip = "192.168.49.1:12345";
+       String name = "Cliente_";
+       String path = "/Cliente_";
+       StreamDetail streamDetail = new StreamDetail(name + "1", ip + path + "1");
+       int clietnNumber = 1;
+
+       if(list.contains(streamDetail)) {
+           for (int i = 2; i < 100; i++) {
+               streamDetail.setIp(ip + path + i);
+               streamDetail.setName(name + i);
+               if (!list.contains(streamDetail)) {
+                   clietnNumber = i;
+                   break;
+               }
+           }
+       }
+
+       return path + clietnNumber;
+    }
+    */
+
 }

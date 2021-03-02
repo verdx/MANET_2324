@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import d2d.testing.MainActivity;
 import d2d.testing.utils.Logger;
@@ -37,29 +36,25 @@ import d2d.testing.net.threads.workers.RTSPServerWorker;
  * Cuando se comuniquen por el canal se guardaran los datos en mReadBuffer y se pasaran al thread del RTSPServerWorker, que es creado por esta clase.
  */
 public class RTSPServerSelector extends AbstractSelector {
-    private ServerSocketChannel mServerSocketChannel;
-
     static private RTSPServerSelector INSTANCE = null;
 
     private Map<PeerHandle, Connection> mConnectionsMap;
     private Map<ServerSocketChannel, Connection> mServerChannelsMap;
-    public Network mLastNet;
 
     private RTSPServerSelector(ConnectivityManager connManager) throws IOException {
-        super(null, connManager);
+        super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
 
-        mWorker = new RTSPServerWorker(null, null, null);
+        mWorker = new RTSPServerWorker(null, null, null, this);
         mWorker.start();
     }
 
     private RTSPServerSelector(MainActivity mainActivity, ConnectivityManager connManager) throws IOException {
-        super(mainActivity, connManager);
+        super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
-
-        mWorker = new RTSPServerWorker(null, null, mainActivity);
+        mWorker = new RTSPServerWorker(null, null, mainActivity, this);
         mWorker.start();
     }
 
@@ -67,6 +62,7 @@ public class RTSPServerSelector extends AbstractSelector {
         if(INSTANCE == null) {
             INSTANCE = new RTSPServerSelector(null);
         }
+
         return INSTANCE;
     }
 
@@ -74,50 +70,17 @@ public class RTSPServerSelector extends AbstractSelector {
         if(INSTANCE == null) {
             INSTANCE = new RTSPServerSelector(mainActivity,connManager);
         }
+
         return INSTANCE;
     }
 
-    public void run(){
-        mSelectorLock.lock();
-        while(mEnabled){
-            try {
-                mSelectorLock.unlock();
-                mSelector.select();
-                mSelectorLock.lock();
-                this.processChangeRequests();
-                Iterator<SelectionKey> itKeys = mSelector.selectedKeys().iterator();
-                while (itKeys.hasNext()) {
-                    SelectionKey myKey = itKeys.next();
-                    itKeys.remove();
-
-                    if (!myKey.isValid()) {
-                        continue;
-                    }
-
-                    if (myKey.isAcceptable()) {
-                        this.accept(myKey);
-                    } else if (myKey.isConnectable()) {
-                        this.finishConnection(myKey);
-                    } else if (myKey.isReadable()) {
-                        this.read(myKey);
-                    } else if (myKey.isWritable()) {
-                        this.write(myKey);
-                    }
-                }
-            } catch (IOException e) {
-                mEnabled = false;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        mSelectorLock.unlock();
-    }
 
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
         if(mConnectionsMap.get(handle) != null){
             return true;
         }
         if(!mEnabled) return false;
+
         ServerSocketChannel serverSocketChannel = null;
         int mServerPort;
         try {
@@ -133,16 +96,7 @@ public class RTSPServerSelector extends AbstractSelector {
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                     .setNetworkSpecifier(networkSpecifier)
                     .build();
-            mSelectorLock.lock();
-            mSelector.wakeup();
-            try{
-                SelectionKey serverKey = serverSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT);
-            }catch (IOException ex){
-                mSelectorLock.unlock();
-                serverSocketChannel.close();
-                throw ex;
-            }
-            mSelectorLock.unlock();
+            this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
             Connection conn = new Connection(serverSocketChannel, handle);
             mConnectionsMap.put(handle, conn);
             mServerChannelsMap.put(serverSocketChannel, conn);
@@ -153,25 +107,15 @@ public class RTSPServerSelector extends AbstractSelector {
         return true;
     }
 
-    public synchronized boolean addLoopbackConnection(){
+    public synchronized boolean addNewConnection(String serverIP, int serverPort){
         if(!mEnabled) return false;
         ServerSocketChannel serverSocketChannel = null;
-        int mServerPort;
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
-            mServerPort = 1234;
-            serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1" ,mServerPort));
-            mSelectorLock.lock();
-            mSelector.wakeup();
-            try{
-                SelectionKey serverKey = serverSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT);
-            }catch (IOException ex){
-                mSelectorLock.unlock();
-                serverSocketChannel.close();
-                throw ex;
-            }
-            mSelectorLock.unlock();
+            serverSocketChannel.socket().bind(new InetSocketAddress(serverIP ,serverPort));
+            this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
+            mConnections.add(serverSocketChannel);
         } catch (IOException e) {
             return false;
         }
@@ -185,54 +129,37 @@ public class RTSPServerSelector extends AbstractSelector {
             return;
         }
         serverChan = conn.mServerSocketChannel;
-        mSelectorLock.lock();
-        mSelector.wakeup();
-        conn.closeConnection(mSelector);
-        mSelectorLock.unlock();
+        conn.closeConnection(this);
         mConnectionsMap.remove(handle);
         mServerChannelsMap.remove(serverChan);
     }
 
-    protected synchronized void accept(@NonNull SelectionKey key){
-        ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
-        try {
-            if(((InetSocketAddress)serverChan.getLocalAddress()).getAddress().getHostAddress().equals("127.0.0.1")){ //QUE FUNCION DESEMPEÑA ESTE IF: Averiguar si lo estamos enviando desde looopback??
+    protected void accept(@NonNull SelectionKey key) throws IOException {
+        synchronized (this){
+            ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
+            Connection conn = mServerChannelsMap.get(serverChan);
+            if(conn == null){
                 super.accept(key);
                 return;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Connection conn = mServerChannelsMap.get(serverChan);
-        if(conn == null){
-            return;
-        }
-        SocketChannel socketChannel = null;
-        try {
-            socketChannel = serverChan.accept();
-            socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
-            socketChannel.register(mSelector, SelectionKey.OP_READ);
-            conn.mComChannels.add(socketChannel);
-        } catch (IOException e) {
-            mConnectionsMap.remove(conn.handle);
-            mServerChannelsMap.remove(serverChan);
-            conn.closeConnection(mSelector);
+            SocketChannel socketChannel = null;
+            try {
+                socketChannel = serverChan.accept();
+                socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
+                socketChannel.register(mSelector, SelectionKey.OP_READ);
+                conn.mComChannels.add(socketChannel);
+            } catch (IOException e) {
+                mConnectionsMap.remove(conn.handle);
+                mServerChannelsMap.remove(serverChan);
+                conn.closeConnection(this);
+            }
         }
     }
 
+
     @Override
-    protected void initiateConnection() {
-        try {
-            mServerSocketChannel = (ServerSocketChannel) ServerSocketChannel.open().configureBlocking(false);
-            mServerSocketChannel.socket().bind(new InetSocketAddress(mPortTCP));
-            // Create a new non-blocking server socket channel and start listening
-            mStatusTCP = STATUS_LISTENING;
-            addChangeRequest(new ChangeRequest(mServerSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
-            Logger.d("RTSPServerSelector: initiateConnection(): server listening TCP connections on port " + mPortTCP);
-        } catch (IOException e) {
-            Logger.d("RTSPServerSelector: initiateConnection(): failed to listen at port " + mPortTCP);
-            e.printStackTrace();
-        }
+    protected void initiateConnection() { //No se crea un canal de escucha para el servidor, como en UDPServerSelector, si no que por cada subscriber se crea un canal de escucha en addNewConnection
+        mStatusTCP = STATUS_LISTENING;
     }
 
     @Override
@@ -245,6 +172,21 @@ public class RTSPServerSelector extends AbstractSelector {
         for (SelectableChannel socket : mConnections) {
             this.send(socket,data);
         }
+    }
+
+
+    public synchronized Network getChannelNetwork(SelectableChannel chan){
+        for(Map.Entry<ServerSocketChannel, Connection> entry : mServerChannelsMap.entrySet()){
+            if(entry.getKey().equals(chan)){
+                return entry.getValue().net;
+            }
+            for(SocketChannel sockChan : entry.getValue().mComChannels){
+                if(sockChan.equals(chan)){
+                    return entry.getValue().net;
+                }
+            }
+        }
+        return null;
     }
 
     public void setAllowLiveStreaming(boolean allow) {
@@ -263,24 +205,16 @@ public class RTSPServerSelector extends AbstractSelector {
         public Network net;
         public List<SocketChannel> mComChannels;
 
-        public void closeConnection(Selector selector){
-            try {
-                SelectionKey selKey = this.mServerSocketChannel.keyFor(selector);
-                if(selKey != null) selKey.cancel();
-                this.mServerSocketChannel.close();
-                for(SocketChannel chan : this.mComChannels){
-                    selKey = chan.keyFor(selector);
-                    if(selKey != null) selKey.cancel();
-                    chan.close();
-                }
-            } catch (IOException e) {}
-            finally {
-                this.mServerSocketChannel = null;
-                this.handle = null;
-                this.net = null;
-                this.mComChannels.clear();
-
+        public void closeConnection(RTSPServerSelector serverSelector){
+            serverSelector.addChangeRequest(new ChangeRequest(mServerSocketChannel, ChangeRequest.REMOVE, 0));
+            for(SocketChannel chan : this.mComChannels){
+                serverSelector.addChangeRequest(new ChangeRequest(chan, ChangeRequest.REMOVE, 0));
+                serverSelector.onClientDisconnected(chan);
             }
+            this.mServerSocketChannel = null;
+            this.handle = null;
+            this.net = null;
+            this.mComChannels.clear();
         }
     }
 
@@ -300,7 +234,6 @@ public class RTSPServerSelector extends AbstractSelector {
                     return;
                 }
                 conn.net = network;
-                mLastNet = network;
             }
         }
 

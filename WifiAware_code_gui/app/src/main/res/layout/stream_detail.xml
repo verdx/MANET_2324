@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/info_stream"
         android:layout_width="407dp"
         android:layout_height="63dp"
         android:background="?android:attr/activatedBackgroundIndicator"
@@ -57,9 +58,10 @@
                 android:layout_width="73dp"
                 android:layout_height="match_parent"
                 android:adjustViewBounds="true"
-                android:background="#00FFFFFF"
+                android:background="#00CACACA"
                 android:cropToPadding="false"
                 android:scaleType="fitCenter"
+                android:tint="#7CFFFFFF"
                 app:srcCompat="@android:drawable/ic_menu_view" />
 
             <ImageButton
@@ -70,8 +72,9 @@
                 android:layout_weight="1"
                 android:adjustViewBounds="true"
                 android:background="#00FFFFFF"
-                android:cropToPadding="false"
+                android:cropToPadding="true"
                 android:scaleType="fitCenter"
+                android:tint="#7EFFFFFF"
                 app:srcCompat="@android:drawable/ic_menu_send" />
 
         </LinearLayout>

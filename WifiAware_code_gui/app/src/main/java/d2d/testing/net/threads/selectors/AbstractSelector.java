@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -73,10 +72,8 @@ public abstract class AbstractSelector implements Runnable{
     protected static final int STATUS_CONNECTING = 2;
     protected static final int STATUS_CONNECTED = 4;
 
-    private final MainActivity mMainActivity;
     protected final Selector mSelector;
-    protected final Lock mSelectorLock = new ReentrantLock();
-    public ConnectivityManager mConManager;
+    protected ConnectivityManager mConManager;
 
     // A list of ChangeRequest instances and Data/socket map
     protected final List<SelectableChannel> mConnections = new ArrayList<>();
@@ -84,7 +81,6 @@ public abstract class AbstractSelector implements Runnable{
     private final Map<SelectableChannel, List> mPendingData = new HashMap<>();
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 
-    protected InetAddress mInetAddress;
 
     protected int mPortTCP = PORT_TCP;
 
@@ -98,13 +94,8 @@ public abstract class AbstractSelector implements Runnable{
     public abstract void send(byte[] data);
     protected abstract void initiateConnection();
 
-    public AbstractSelector(MainActivity mainActivity, ConnectivityManager connManager) throws IOException {
-        this(mainActivity,null, connManager);
-    }
 
-    public AbstractSelector(MainActivity mainActivity, InetAddress inetAddress, ConnectivityManager connManager) throws IOException {
-        this.mInetAddress   = inetAddress;
-        this.mMainActivity  = mainActivity;
+    public AbstractSelector(ConnectivityManager connManager) throws IOException {
         mConManager = connManager;
 
         this.mSelector = SelectorProvider.provider().openSelector();
@@ -112,9 +103,6 @@ public abstract class AbstractSelector implements Runnable{
         //this.initiateConnectionUDP();
     }
 
-    public MainActivity getMainActivity(){
-        return this.mMainActivity;
-    }
 
     public void stop(){
         this.mEnabled = false;
@@ -223,7 +211,6 @@ public abstract class AbstractSelector implements Runnable{
                 key.interestOps(SelectionKey.OP_READ);  // Register an interest in reading till send
                 Logger.d("AbstractSelector: client (" + socketChannel.socket().getLocalAddress() + ") finished connecting...");
                 onClientConnected(socketChannel);
-                mMainActivity.setDefaultP2PIp(socketChannel.socket().getLocalAddress().toString().substring(1));
             }
         } catch (IOException e) {
             this.mStatusTCP = STATUS_DISCONNECTED;
@@ -331,6 +318,7 @@ public abstract class AbstractSelector implements Runnable{
     public void addChangeRequest(ChangeRequest changeRequest) {
         synchronized(this.mPendingChangeRequests) {         // Queue a channel registration
             this.mPendingChangeRequests.add(changeRequest);
+            mSelector.wakeup();
         }
     }
 
@@ -352,6 +340,11 @@ public abstract class AbstractSelector implements Runnable{
                             break;
                         case ChangeRequest.REGISTER:
                             changeRequest.getChannel().register(mSelector, changeRequest.getOps());
+                            break;
+                        case ChangeRequest.REMOVE:
+                            SelectableChannel chan = changeRequest.getChannel();
+                            chan.keyFor(mSelector).cancel();
+                            chan.close();
                             break;
                     }
                 } catch (Exception e) {

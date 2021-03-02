@@ -61,6 +61,13 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         this.setContentView(R.layout.activity_view_stream);
+/*
+        try {
+            RTSPServerSelector.getInstance().mConManager.bindProcessToNetwork(RTSPServerSelector.getInstance().mLastNet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        */
 
         String ip = getIntent().getExtras().getString("IP");
         String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
@@ -148,10 +155,16 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
     }
 
     @Override
-    public void onSurfacesCreated(IVLCVout vlcVout) { }
+    public void onSurfacesCreated(IVLCVout vlcVout) {
+
+    }
 
     @Override
-    public void onSurfacesDestroyed(IVLCVout vlcVout) { }
+    public void onSurfacesDestroyed(IVLCVout vlcVout) {
+
+    }
+
+
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {

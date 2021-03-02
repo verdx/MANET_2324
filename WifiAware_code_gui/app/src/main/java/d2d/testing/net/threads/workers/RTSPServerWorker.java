@@ -19,7 +19,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import d2d.testing.MainActivity;
-import d2d.testing.net.packets.StreamingList;
+import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.Stream;
+import d2d.testing.streaming.StreamingList;
 import d2d.testing.streaming.sessions.ReceiveSession;
 import d2d.testing.utils.Logger;
 import d2d.testing.net.packets.DataReceived;
@@ -89,8 +91,9 @@ public class RTSPServerWorker extends AbstractWorker {
     public static final Pattern rexegHeader = Pattern.compile("(\\S+):(.+)",Pattern.CASE_INSENSITIVE);
 
     protected HashMap<SelectableChannel, Session> mSessions = new HashMap<>();
-    protected HashMap<SelectableChannel, ReceiveSession> mServerSessions = new HashMap<>();
+    protected HashMap<SelectableChannel, UUID> mServerSessions = new HashMap<>();
     protected HashMap<SelectableChannel, RebroadcastSession> mRebroadcastSessions = new HashMap<>();
+
 
     boolean allowLiveStreaming = false;
 
@@ -99,19 +102,19 @@ public class RTSPServerWorker extends AbstractWorker {
     private String mPassword;
 
     private MainActivity mMainActivity;
+    private RTSPServerSelector mServerSelector;
 
-    private StreamingList mStreamingList;
-
-    public RTSPServerWorker(String username, String password, MainActivity mainActivity) {
+    public RTSPServerWorker(String username, String password, MainActivity mainActivity, RTSPServerSelector serverSelector) {
         super();
         this.mUsername = username;
         this.mPassword = password;
         this.mMainActivity = mainActivity;
+        this.mServerSelector = serverSelector;
     }
 
     public RtspResponse processRequest(RtspRequest request, SelectableChannel channel) throws IllegalStateException, IOException {
         Session requestSession = mSessions.get(channel);
-        ReceiveSession receiveSession = mServerSessions.get(channel);
+        ReceiveSession receiveSession = StreamingList.getInstance().getStreaming(mServerSessions.get(channel));
         RebroadcastSession rebroadcastSession = mRebroadcastSessions.get(channel);
         RtspResponse response = new RtspResponse(request);
 
@@ -223,12 +226,16 @@ public class RTSPServerWorker extends AbstractWorker {
 
         // Parse the requested URI and configure the session
         ReceiveSession session = handleServerRequest(request, socket);
+        session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
-        //Pongo a la lista la ReceiveSession con el identificador del cliente
-        mStreamingList.addIdReceiveSession(UUID.fromString(request.headers.get("UUID")), session);
+        UUID streamUUID = UUID.fromString(request.path);
+        if(StreamingList.getInstance().getStreaming(streamUUID) != null) {
+            response.status = RtspResponse.STATUS_FORBIDDEN;
+            return response;
+        }
+        StreamingList.getInstance().addReceiveStreaming(streamUUID, session);
 
-        mServerSessions.put(channel, session);
-
+        mServerSessions.put(channel, streamUUID);
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
                               "Content-Type: application/sdp\r\n" +
                               "Session: " + session.getSessionID() + ";timeout=" + session.getTimeout() +"\r\n";
@@ -350,7 +357,7 @@ public class RTSPServerWorker extends AbstractWorker {
 
         srcPorts = trackInfo.getLocalPorts();
         trackInfo.setLocalAddress(session.getDestinationAddress());
-        trackInfo.startServer();
+        trackInfo.startServer(session.getReceiveNet());
 
         response.attributes = "Transport: RTP/AVP/UDP;" + (session.getDestinationAddress().isMulticastAddress() ? "multicast" : "unicast") +
                 ";destination=" + session.getDestinationAddress().getHostAddress() +
@@ -691,20 +698,17 @@ public class RTSPServerWorker extends AbstractWorker {
         //Buscar la serverSession que corresponde al path
         RebroadcastSession session = new RebroadcastSession();
 
-        for(ReceiveSession receiveSession : mServerSessions.values()) {
-            if(receiveSession.getPath().equalsIgnoreCase(path)) {
-                session.setServerSession(receiveSession);
-            }
-        }
+        ReceiveSession receiveSession = StreamingList.getInstance().getStreaming(UUID.fromString(path));
+        session.setServerSession(receiveSession);
 
-        if(session.getServerSession() == null) {
+        if(receiveSession == null) {
             throw new IllegalArgumentException();
         }
 
         Log.d(TAG,"handleRequest: Origin" + client.getLocalAddress().getHostAddress());
-        session.setOrigin(client.getInetAddress().getHostAddress());
+        session.setOrigin(client.getLocalAddress().getHostAddress());
 
-        Log.d(TAG,"handleRebroadcastRequest: Destination" + client.getLocalAddress().getHostAddress());
+        Log.d(TAG,"handleRebroadcastRequest: Destination" + client.getInetAddress().getHostAddress());
         session.setDestination(client.getInetAddress().getHostAddress());
 
         return session;
@@ -725,7 +729,8 @@ public class RTSPServerWorker extends AbstractWorker {
             mSessions.remove(channel);
         }
 
-        ReceiveSession receiveSession = mServerSessions.get(channel);
+        UUID streamUUID = mServerSessions.get(channel);
+        ReceiveSession receiveSession = StreamingList.getInstance().removeStreaming(streamUUID);
         if(receiveSession != null) {
             String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
             String name = receiveSession.getPath();

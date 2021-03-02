@@ -17,7 +17,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +26,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.viewpager.widget.ViewPager;
+
+import com.google.android.material.tabs.TabLayout;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,12 +74,39 @@ public class MainActivity extends AppCompatActivity {
     private TextView myStatus;
 
     private WifiP2pDevice aux;
+    private Button record;
+    private Button upload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        record = findViewById(R.id.recordButton);
+        record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            if(checkCameraHardware()) {
+                //wiFiP2pPermissions.camera();
+                //wiFiP2pPermissions.audio();
+                handleCamera();
+                /*
+                if(camera_has_perm && audio_has_perm) {
+                    //TODO here goes all the functionality
+                }
+                */
+            }
+            }
+        });
+
+        upload = findViewById(R.id.uploadButton);
+        upload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBrowse();
+            }
+        });
 
         mAwareModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(WifiAwareViewModel.class);
         initialWork();
@@ -125,6 +155,12 @@ public class MainActivity extends AppCompatActivity {
                 else{
                     Toast.makeText(MainActivity.this, "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_SHORT).show();
                 }
+                if(mAwareModel.subscribeToService("Server", this)){
+                    Toast.makeText(MainActivity.this, "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_SHORT).show();
+                }
             }else {
                 Toast.makeText(MainActivity.this, "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
             }
@@ -132,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
 
     private void DiscoverPeers(){
 
@@ -148,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
         openStreamActivity();
     }
 
+    /*
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.action_items, menu);
@@ -155,9 +193,9 @@ public class MainActivity extends AppCompatActivity {
         //updateWifiIcon(WifiP2pController.getInstance().isWifiEnabled());
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        /*
         switch (item.getItemId()) {
             case R.id.atn_direct_enable:
 
@@ -169,7 +207,9 @@ public class MainActivity extends AppCompatActivity {
                     DiscoverPeers();
                 }
                 return true;
-            case R.id.atn_direct_camera:
+
+
+            case R.id.recordButton:
                 if(checkCameraHardware()) {
                     //wiFiP2pPermissions.camera();
                     //wiFiP2pPermissions.audio();
@@ -182,15 +222,15 @@ public class MainActivity extends AppCompatActivity {
 
                 }
                 return true;
-            case R.id.atn_direct_file_transfer:
+            /*case R.id.atn_direct_file_transfer:
                     onBrowse();
                 return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
-        */
-        return true;
     }
+    */
 
     public static String getDeviceStatus(int deviceStatus) {
         //Log.d(MainActivity.TAG, "Peer status :" + deviceStatus);
@@ -222,42 +262,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void updateThisDevice(WifiP2pDevice device) {
-         //devices_fragment.updateMyDeviceStatus(device);
-    }
-
-    public void updateMsg(final String str){
-        runOnUiThread(new Runnable() {
-            public void run() {
-               //devices_fragment.updateMsg(str);
-            }
-        });
-    }
-
     public void updateStreamList(final boolean on_off,final String ip, final String name){
         runOnUiThread(new Runnable() {
-            public void run() {
-                updateList(on_off, ip, name);
+            public void run() { updateList(on_off, ip, name);
             }
         });
     }
-
-    /*
-    public void updatePeers(WifiP2pDevice[] deviceArray)
-    {
-       devices_fragment.updateDeviceArray(deviceArray);
-        if (deviceArray.length == 0) {
-            Toast.makeText(getApplicationContext(), "No Devices Found", Toast.LENGTH_SHORT).show();
-            devices_fragment.setTextView("Discovery Finished");
-        }
-        else
-        {
-            DeviceListAdapter deviceListAdapter = new DeviceListAdapter(this, deviceArray);
-            //listView.setAdapter(deviceListAdapter);
-            devices_fragment.updateList(deviceListAdapter);
-        }
-
-    }*/
 
     public void onBrowse() {
         Intent chooseFile;
@@ -435,7 +445,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-//_----------------------------------------------------------------------------------------------------------------------------- LISTA DE STREAMING
+
+    //---------------------------------------------------------------------------------------------------------------------------- LISTA DE STREAMING
     public void updateList(boolean on_off, String ip, String name){
         if(!ip.equals("0.0.0.0")) {
             StreamDetail detail = new StreamDetail(name,ip);
@@ -467,7 +478,7 @@ public class MainActivity extends AppCompatActivity {
         return this.streamList;
     }
 
-    //_----------------------------------------------------------------------------------------------------------------------------- Informacion de dispositivo
+    //----------------------------------------------------------------------------------------------------------------------------- Informacion de dispositivo
     public void setConectationStatus(String status){
         conectationStatus.setText(status);
     }
@@ -483,7 +494,6 @@ public class MainActivity extends AppCompatActivity {
             UpdateMyInfo task = new UpdateMyInfo();
             task.execute();
         }
-
     }
 
     //esto quiza se pueda arreglar de otra manera,esto se hace porque
