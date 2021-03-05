@@ -215,6 +215,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onMessageSendSucceeded(int messageId) {
                     RtspClient rtspClient = new RtspClient(WifiAwareViewModel.this);
+                    rtspClient.setCallback(activity);
                     synchronized (mClients){
                         mClients.put(lastPeerHandle, rtspClient);
                     }
@@ -236,6 +237,15 @@ public class WifiAwareViewModel extends AndroidViewModel {
     }
 
     public void closeSessions(){
+        synchronized (mClients){
+            for(RtspClient client : mClients.values()){
+                client.release();
+            }
+            mClients.clear();
+        }
+        try {
+            if(RTSPServerSelector.itsInitialized()) RTSPServerSelector.getInstance().stop();
+        } catch (IOException e) {}
         if(publishSession != null){
             publishSession.close();
             publishSession = null;

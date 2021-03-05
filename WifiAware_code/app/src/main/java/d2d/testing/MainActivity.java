@@ -36,6 +36,7 @@ import com.google.android.material.tabs.TabLayout;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import d2d.testing.gui.DeviceListAdapter;
 import d2d.testing.gui.FragmentDevices;
@@ -43,13 +44,17 @@ import d2d.testing.gui.FragmentStreams;
 import d2d.testing.gui.StreamDetail;
 import d2d.testing.gui.ViewPagerAdapter;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.Streaming;
+import d2d.testing.streaming.StreamingRecord;
+import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
+import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.utils.Logger;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 import d2d.testing.utils.Permissions;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  implements StreamingRecordObserver, RtspClient.Callback{
     private static final int REQUEST_COARSE_LOCATION_CODE = 101;
     private static final int MY_CAMERA_REQUEST_CODE = 100;
     private static final int MY_AUDIO_REQUEST_CODE = 104;
@@ -147,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        StreamingRecord.getInstance().addObserver(this);
     }
 
 
@@ -306,11 +313,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        try {
-            RTSPServerSelector.getInstance().stop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mAwareModel.closeSessions();
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
@@ -447,5 +450,36 @@ public class MainActivity extends AppCompatActivity {
                 defaultP2PIp = ip;
             }
         });
+    }
+
+    @Override
+    public void localStreamingAvailable(UUID id, SessionBuilder sessionBuilder) {}
+
+    @Override
+    public void localStreamingUnavailable() {}
+
+    @Override
+    public void streamingAvailable(Streaming streaming, boolean bAllowDispatch) {
+        final String path = streaming.getUUID().toString();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                streams_fragment.updateList(true, path, path);
+            }
+        });
+    }
+
+    @Override
+    public void streamingUnavailable(Streaming streaming) {
+        final String path = streaming.getUUID().toString();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                streams_fragment.updateList(false, path, path);
+            }
+        });
+    }
+
+    @Override
+    public void onRtspUpdate(int message, Exception exception) {
+        Toast.makeText(getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
     }
 }

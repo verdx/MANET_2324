@@ -28,6 +28,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.MessageDigest;
@@ -35,15 +36,21 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import d2d.testing.StreamActivity;
+import d2d.testing.streaming.Streaming;
+import d2d.testing.streaming.StreamingRecord;
+import d2d.testing.streaming.StreamingRecordObserver;
+import d2d.testing.streaming.sessions.RebroadcastSession;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.rtp.RtpSocket;
 import d2d.testing.streaming.sessions.SessionBuilder;
+import d2d.testing.streaming.sessions.TrackInfo;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 
 import android.net.ConnectivityManager;
@@ -69,15 +76,18 @@ import androidx.annotation.NonNull;
  * The original purpose of this class was to implement a small RTSP client compatible with Wowza.
  * It implements Digest Access Authentication according to RFC 2069. 
  */
-public class RtspClient {
+public class RtspClient implements StreamingRecordObserver {
 
 	public final static String TAG = "RtspClient";
 
 	/** Message sent when the connection to the RTSP server failed. */
 	public final static int ERROR_CONNECTION_FAILED = 0x01;
+
+	public final static int ERROR_NETWORK_LOST = 0x02;
 	
 	/** Message sent when the credentials are wrong. */
 	public final static int ERROR_WRONG_CREDENTIALS = 0x03;
+
 	
 	/** Use this to use UDP for the transport protocol. */
 	public final static int TRANSPORT_UDP = RtpSocket.TRANSPORT_UDP;
@@ -89,14 +99,14 @@ public class RtspClient {
 	 * Message sent when the connection with the RTSP server has been lost for 
 	 * some reason (for example, the user is going under a bridge).
 	 * When the connection with the server is lost, the client will automatically try to
-	 * reconnect as long as {@link #stopStream()} is not called. 
+	 * reconnect as long as {@link #stop()} is not called.
 	 **/
 	public final static int ERROR_CONNECTION_LOST = 0x04;
 	
 	/**
 	 * Message sent when the connection with the RTSP server has been reestablished.
 	 * When the connection with the server is lost, the client will automatically try to
-	 * reconnect as long as {@link #stopStream()} is not called.
+	 * reconnect as long as {@link #stop()} is not called.
 	 */
 	public final static int MESSAGE_CONNECTION_RECOVERED = 0x05;
 	
@@ -105,15 +115,13 @@ public class RtspClient {
 	private final static int STATE_STOPPING = 0x02;
 	private final static int STATE_STOPPED = 0x03;
 	private int mState = 0;
-	private WifiAwareViewModel mAwareModel;
-	StreamActivity mActivity;
 
 	private class Parameters {
 		public String host; 
 		public String username;
 		public String password;
-		public String path;
-		public Session session;
+		//public String path;
+		//public Session session;
 		public int port;
 		public int transport;
 		
@@ -122,22 +130,36 @@ public class RtspClient {
 			params.host = host;
 			params.username = username;
 			params.password = password;
-			params.path = path;
-			params.session = session;
+			//params.path = path;
+			//params.session = session;
 			params.port = port;
 			params.transport = transport;
 			return params;
 		}
 	}
-	
+
+	private class StreamingState{
+		public int mCSeq;
+		public String mSessionID;
+		public String mAuthorization;
+		public StreamingState(){
+			mCSeq = 0;
+			mAuthorization = null;
+			mSessionID = null;
+		}
+	}
+
+	private UUID mLocalStreamingUUID = null;
+	private Session mLocalStreamingSession;
+	private StreamingState mLocalStreamingState;
+
+	private Map<UUID, StreamingState> mRebroadcastStreamingStates;
+	private Map<UUID, RebroadcastSession> mRebroadcastStreamings;
 	
 	private Parameters mTmpParameters;
 	private Parameters mParameters;
 
-	private int mCSeq;
 	private Socket mSocket;
-	private String mSessionID;
-	private String mAuthorization;
 	private BufferedReader mBufferedReader;
 	private OutputStream mOutputStream;
 	private Callback mCallback;
@@ -148,7 +170,9 @@ public class RtspClient {
 	private Network mCurrentNet;
 	private NetworkCapabilities mCurrentNetCapabitities;
 	private PeerHandle mPeerHandle;
-	private boolean mEnabled = false;
+	private WifiAwareNetworkCallback mNetworkCallback;
+
+
 
 	private SessionBuilder mSessionBuilder;
 	/**
@@ -156,16 +180,15 @@ public class RtspClient {
 	 * RTSP server (for example your Wowza Media Server).
 	 */
 	public interface Callback {
-		public void onRtspUpdate(int message, Exception exception);
+		void onRtspUpdate(int message, Exception exception);
 	}
 
 	public RtspClient(WifiAwareViewModel awareModel) {
-		mCSeq = 0;
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
-		mTmpParameters.path = "/";
+		//mTmpParameters.path = "/";
 		mTmpParameters.transport = TRANSPORT_UDP;
-		mAuthorization = null;
+
 		mCallback = null;
 		mMainHandler = new Handler(Looper.getMainLooper());
 		mState = STATE_STOPPED;
@@ -180,7 +203,8 @@ public class RtspClient {
 		}.start();
 		signal.acquireUninterruptibly();
 
-		mAwareModel = awareModel;
+		mRebroadcastStreamingStates = new HashMap<>();
+		mRebroadcastStreamings = new HashMap<>();
 	}
 
 	/**
@@ -194,17 +218,27 @@ public class RtspClient {
 
 	/**
 	 * The {@link Session} that will be used to stream to the server.
-	 * If not called before {@link #startStream()}, a it will be created.
-	 */
-	public void setSession(Session session) {
-		mTmpParameters.session = session;
+	 * If not called before startStream(), a it will be created.
+
+	 public void setSession(Session session) {
+	 	mTmpParameters.session = session;
+	 }
+
+	 public Session getSession() {
+	 	return mTmpParameters.session;
+	 }
+
+	 /**
+	 * The path to which the stream will be sent to.
+
+	public void setStreamPath(String path) {
+		mTmpParameters.path = path;
 	}
+	*/
 
-	public void setmSessionBuilder(SessionBuilder builder){mSessionBuilder = builder;}
+	public void setSessionBuilder(SessionBuilder builder){mSessionBuilder = builder;}
 
-	public Session getSession() {
-		return mTmpParameters.session;
-	}	
+
 
 	/**
 	 * Sets the destination address of the RTSP server.
@@ -227,13 +261,7 @@ public class RtspClient {
 		mTmpParameters.password = password;
 	}
 
-	/**
-	 * The path to which the stream will be sent to. 
-	 * @param path The path
-	 */
-	public void setStreamPath(String path) {
-		mTmpParameters.path = path;
-	}
+
 
 	/**
 	 * Call this with {@link #TRANSPORT_TCP} or {@value #TRANSPORT_UDP} to choose the 
@@ -248,90 +276,29 @@ public class RtspClient {
 		return mState==STATE_STARTED||mState==STATE_STARTING;
 	}
 
-	/**
-	 * Connects to the RTSP server to publish the stream, and the effectively starts streaming.
-	 * You need to call {@link #setServerAddress(String, int)} and optionally {@link #setSession(Session)} 
-	 * and {@link #setCredentials(String, String)} before calling this.
-	 * Should be called of the main thread !
-	 */
-	/**
-	public void startStream() {
-		if (mTmpParameters.host == null) throw new IllegalStateException("setServerAddress(String,int) has not been called !");
-		if (mTmpParameters.session == null) throw new IllegalStateException("setSession() has not been called !");
-		mHandler.post(new Runnable () {
+
+
+	public void connectionCreated(final ConnectivityManager manager, final DiscoverySession subscribeSession, final PeerHandle handle){
+		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
-				if (mState != STATE_STOPPED) return;
+				if(mState != STATE_STOPPED) return;
+				mCurrentNetCapabitities = null;
+				mCurrentNet = null;
+				mConnManager = manager;
+				mPeerHandle = handle;
+				NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+						.setPskPassphrase("wifiawaretest")
+						.build();
+				NetworkRequest networkRequest = new NetworkRequest.Builder()
+						.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+						.setNetworkSpecifier(networkSpecifier)
+						.build();
 				mState = STATE_STARTING;
-				
-				Log.d(TAG,"Connecting to RTSP server...");
-				
-				// If the user calls some methods to configure the client, it won't modify its behavior until the stream is restarted
-				mParameters = mTmpParameters.clone();
-				mParameters.session.setDestination(mTmpParameters.host);
-				
-				try {
-					mParameters.session.syncConfigure();
-				} catch (Exception e) {
-					mParameters.session = null;
-					mState = STATE_STOPPED;
-					return;
-				}				
-				
-				try {
-					tryConnection();
-				} catch (Exception e) {
-					postError(ERROR_CONNECTION_FAILED, e);
-					abort();
-					return;
-				}
-				
-				try {
-					mParameters.session.syncStart();
-					mState = STATE_STARTED;
-					if (mParameters.transport == TRANSPORT_UDP) {
-						mHandler.post(mConnectionMonitor);
-					}
-				} catch (Exception e) {
-					abort();
-				}
-
+				mNetworkCallback = new WifiAwareNetworkCallback();
+				manager.requestNetwork(networkRequest, mNetworkCallback);
 			}
 		});
-
-	}
-	 */
-
-	public void startStream(){
-		/*
-		try {
-			if(mAwareModel.createSession()){
-				if(mAwareModel.subscribeToService("Server", this)){
-					Toast.makeText(mActivity, "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
-				}
-				else{
-					Toast.makeText(mActivity, "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_SHORT).show();
-				}
-			}else {
-				Toast.makeText(mActivity, "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
-			}
-		} catch (InterruptedException e) {}
-		*/
-	}
-
-	public void connectionCreated(ConnectivityManager manager, DiscoverySession subscribeSession, PeerHandle handle){
-		mCurrentNetCapabitities = null;
-		mCurrentNet = null;
-		mConnManager = manager;
-		mPeerHandle = handle;
-		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-				.setPskPassphrase("wifiawaretest")
-				.build();
-		NetworkRequest networkRequest = new NetworkRequest.Builder()
-				.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-				.setNetworkSpecifier(networkSpecifier)
-				.build();
-		manager.requestNetwork(networkRequest, new WifiAwareNetworkCallback());
 	}
 
 	private class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
@@ -345,16 +312,20 @@ public class RtspClient {
 		public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
 			if(mCurrentNetCapabitities == null){
 				mCurrentNetCapabitities = networkCapabilities;
-				if(!mEnabled) start();
+				start();
 			}
 			else Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
 		}
 
 		@Override
 		public void onLost(@NonNull Network network) {
-			mConnManager.unregisterNetworkCallback(this);
-			mAwareModel.removeClient(mPeerHandle);
-			stopStream();
+			mHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					postError(ERROR_NETWORK_LOST, null);
+					restartClient();
+				}
+			});
 		}
 	}
 
@@ -362,14 +333,10 @@ public class RtspClient {
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				if(!mEnabled && mCurrentNetCapabitities != null && mConnManager.bindProcessToNetwork(mCurrentNet)) {
-					mEnabled = true;
+				if(mCurrentNetCapabitities != null && mConnManager.bindProcessToNetwork(mCurrentNet)) {
 					WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) mCurrentNetCapabitities.getTransportInfo();
 					InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
 					int peerPort = peerAwareInfo.getPort();
-
-					if (mState != STATE_STOPPED) return;
-					mState = STATE_STARTING;
 
 					Log.d(TAG,"Connecting to RTSP server...");
 					try {
@@ -380,45 +347,16 @@ public class RtspClient {
 						mParameters = mTmpParameters.clone();
 						mParameters.host = peerIpv6.getHostAddress();
 						mParameters.port = peerPort;
-						mParameters.session = mSessionBuilder.build();
-						mParameters.session.setDestinationAddress(peerIpv6, true);
-						mParameters.session.setDestinationPort(peerPort);
-						mParameters.session.setOriginAddress(mSocket.getLocalAddress(), true);
-					} catch (IOException e) {
-						clearClient();
-						return;
-					}
-
-
-					try {
-						mParameters.session.syncConfigure();
-					} catch (Exception e) {
-						mParameters.session = null;
-						try {
-							mSocket.close();
-						} catch (IOException ex) {}
-						clearClient();
-						return;
-					}
-
-					try {
-						tryConnection();
-					} catch (Exception e) {
-						postError(ERROR_CONNECTION_FAILED, e);
-						abort();
-						return;
-					}
-
-					try {
-						mParameters.session.syncStart();
 						mState = STATE_STARTED;
+						mConnManager.bindProcessToNetwork(null);
 						if (mParameters.transport == TRANSPORT_UDP) {
 							mHandler.post(mConnectionMonitor);
 						}
-					} catch (Exception e) {
-						abort();
+						StreamingRecord.getInstance().addObserver(RtspClient.this);
+					} catch (IOException e) {
+						postError(ERROR_CONNECTION_FAILED, e);
+						clearClient();
 					}
-					mConnManager.bindProcessToNetwork(null);
 				}
 			}
 		});
@@ -427,60 +365,267 @@ public class RtspClient {
 	/**
 	 * Stops the stream, and informs the RTSP server.
 	 */
-	public void stopStream() {
+	public void stop() { //Restaurar para poder hacer onConnectionCreated
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				if (mParameters != null && mParameters.session != null) {
-					mParameters.session.stop();
-				}
-				if (mState != STATE_STOPPED) {
-					mState = STATE_STOPPING;
-					abort();
-				}
+				restartClient();
 			}
 		});
 	}
 
 	public void release() {
-		stopStream();
+		stop();
 		mHandler.getLooper().quit();
 	}
-	
-	private void abort() {
-		try {
-			sendRequestTeardown();
-		} catch (Exception ignore) {}
-		try {
-			mSocket.close();
-		} catch (Exception ignore) {}
-		mHandler.removeCallbacks(mConnectionMonitor);
-		mHandler.removeCallbacks(mRetryConnection);
+
+
+	private void restartClient(){
+		closeConnections();
 		clearClient();
 	}
 
+	private void closeLocalStreaming(){
+		if(mLocalStreamingUUID != null){
+			try {
+				sendRequestTeardown(mLocalStreamingState, mLocalStreamingUUID.toString());
+			} catch (Exception ignore) {}
+			if(mLocalStreamingSession != null){
+				if (mLocalStreamingSession.isStreaming()) {
+					mLocalStreamingSession.syncStop();
+				}
+				mLocalStreamingSession.release();
+			}
+		}
+		mLocalStreamingSession = null;
+		mLocalStreamingState = null;
+		mLocalStreamingUUID = null;
+		mSessionBuilder = null;
+	}
+
+	private void closeStreaming(UUID id){
+		RebroadcastSession session = mRebroadcastStreamings.remove(id);
+		if(session != null){
+			try {
+				sendRequestTeardown(mRebroadcastStreamingStates.remove(session), id.toString());
+			} catch (Exception ignore) {}
+			session.stop();
+		}
+	}
+
+	private void closeConnections(){
+		closeLocalStreaming();
+		for(Map.Entry<UUID, RebroadcastSession> entry : mRebroadcastStreamings.entrySet()){
+			try {
+				sendRequestTeardown(mRebroadcastStreamingStates.get(entry.getKey()), entry.getKey().toString());
+			} catch (Exception ignore) {}
+			entry.getValue().stop();
+		}
+		mRebroadcastStreamings.clear();
+		mRebroadcastStreamingStates.clear();
+	}
+
+
 	private void clearClient(){
 		mState = STATE_STOPPED;
-		mEnabled = false;
+
+		try {
+			if(mSocket != null) mSocket.close();
+		} catch (Exception ignore) {}
+		mSocket = null;
+		mBufferedReader = null;
+		mOutputStream = null;
+		if(mNetworkCallback != null) mConnManager.unregisterNetworkCallback(mNetworkCallback);
+		mNetworkCallback = null;
+		mCurrentNet = null;
 		mCurrentNetCapabitities = null;
 		mConnManager.bindProcessToNetwork(null);
+		mHandler.removeCallbacks(mConnectionMonitor);
+	}
+
+	@Override
+	public void localStreamingAvailable(final UUID id, final SessionBuilder sessionBuilder) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				mLocalStreamingUUID = id;
+				mSessionBuilder = sessionBuilder;
+				mLocalStreamingState = new StreamingState();
+				sendLocalStreaming();
+			}
+		});
+	}
+
+	@Override
+	public void localStreamingUnavailable() {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				closeLocalStreaming();
+			}
+		});
+	}
+
+	@Override
+	public void streamingAvailable(final Streaming streaming, final boolean bAllowDispatch) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				UUID streamingUUID = streaming.getUUID();
+				StreamingState st = mRebroadcastStreamingStates.get(streamingUUID);
+				if(!bAllowDispatch){
+					if(st != null){
+						closeStreaming(streamingUUID);
+					}
+				}
+				else{
+					if(st == null){
+						st = new StreamingState();
+						RebroadcastSession session = new RebroadcastSession();
+						session.setServerSession(streaming.getReceiveSession());
+
+						mRebroadcastStreamings.put(streamingUUID, session);
+						mRebroadcastStreamingStates.put(streamingUUID, st);
+						sendStreaming(streamingUUID);
+					}
+				}
+			}
+		});
+	}
+
+	@Override
+	public void streamingUnavailable(final Streaming streaming) {
+		mHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				UUID streamingUUID = streaming.getUUID();
+				StreamingState st = mRebroadcastStreamingStates.get(streamingUUID);
+				if(st != null){
+					closeStreaming(streamingUUID);
+				}
+			}
+		});
+	}
+
+	private void sendLocalStreaming(){
+		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
+			try {
+				mLocalStreamingSession = mSessionBuilder.build();
+				mLocalStreamingSession.setDestinationAddress(InetAddress.getByName(mParameters.host), true);
+				mLocalStreamingSession.setDestinationPort(mParameters.port);
+				mLocalStreamingSession.setOriginAddress(mSocket.getLocalAddress(), true);
+				mLocalStreamingSession.syncConfigure();
+				mConnManager.bindProcessToNetwork(null);
+			} catch (Exception e) {
+				mLocalStreamingSession = null;
+				mConnManager.bindProcessToNetwork(null);
+				return;
+			}
+
+			try {
+				tryLocalStreamingConnection();
+			}catch(SecurityException e){ //Credenciales de conexion invalidas
+				postError(ERROR_WRONG_CREDENTIALS, new Exception("Credenciales invalidas para streaming " + mLocalStreamingUUID.toString(), e));
+				mLocalStreamingSession = null;
+				return;
+			}
+			catch (IOException e) { //Se perdio la conexion con el RTSPServer
+				postError(ERROR_CONNECTION_FAILED, e);
+				restartClient();
+				return;
+			}
+			catch(IllegalStateException e){ //Fallo en protocolo o en configuracion del cliente
+				restartClient();
+				return;
+			}
+			catch(RuntimeException e){ //El servidor rechazo el envio
+				//Como de momento solo rechaza por bucles no volvemos a intentar el envio
+				mLocalStreamingSession = null;
+				return;
+			}
+			try {
+				mLocalStreamingSession.syncStart();
+			} catch (Exception e) { //Se perdio la conexion con el RTSPServer
+				postError(ERROR_CONNECTION_FAILED, e);
+				restartClient();
+			}
+		}
+		else{
+			postError(ERROR_NETWORK_LOST, null);
+			restartClient();
+		}
+	}
+
+	private void sendStreaming(UUID streamUUID){
+		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
+			StreamingState st = mRebroadcastStreamingStates.get(streamUUID);
+			RebroadcastSession session = mRebroadcastStreamings.get(streamUUID);
+			try {
+				session.setDestinationAddress(InetAddress.getByName(mParameters.host), true);
+				session.setOriginAddress(mSocket.getLocalAddress(), true);
+			} catch (Exception e) {
+				mRebroadcastStreamingStates.remove(streamUUID);
+				mRebroadcastStreamings.remove(streamUUID);
+			}
+
+			try {
+				tryConnection(st, streamUUID.toString(), session);
+				session.startTrack(0);
+				session.startTrack(1);
+			}catch(SecurityException e){ //Credenciales de conexion invalidas
+				postError(ERROR_WRONG_CREDENTIALS, new Exception("Credenciales invalidas para streaming " + streamUUID.toString(), e));
+				mRebroadcastStreamingStates.remove(streamUUID);
+				mRebroadcastStreamings.remove(streamUUID);
+			}
+			catch (IOException e) { //Se perdio la conexion con el RTSPServer
+				postError(ERROR_CONNECTION_FAILED, e);
+				restartClient();
+			}
+			catch(IllegalStateException e){ //Fallo en protocolo o en configuracion del cliente
+				restartClient();
+			}
+			catch(RuntimeException e){ //El servidor rechazo el envio
+				//Como de momento solo rechaza por bucles no volvemos a intentar el envio
+				mRebroadcastStreamingStates.remove(streamUUID);
+				mRebroadcastStreamings.remove(streamUUID);
+			}
+			finally {
+				mConnManager.bindProcessToNetwork(null);
+			}
+		}
+		else{
+			postError(ERROR_NETWORK_LOST, null);
+			restartClient();
+		}
 	}
 	
-	private void tryConnection() throws IOException {
-		mCSeq = 0;
-		sendRequestAnnounce();
-		sendRequestSetup();
-		sendRequestRecord();
+	private void tryLocalStreamingConnection() throws SecurityException, IOException, IllegalStateException, RuntimeException {
+		mLocalStreamingState.mCSeq = 0;
+		String path = mLocalStreamingUUID.toString();
+		sendRequestAnnounce(mLocalStreamingState, path, mLocalStreamingSession.getSessionDescription());
+		sendRequestSetup(mLocalStreamingState, path, mLocalStreamingSession.getTrack(0), 0);
+		sendRequestSetup(mLocalStreamingState, path, mLocalStreamingSession.getTrack(1), 1);
+		sendRequestRecord(mLocalStreamingState, path);
+	}
+
+	private void tryConnection(StreamingState st, String path, RebroadcastSession session) throws IOException {
+		st.mCSeq = 0;
+		sendRequestAnnounce(st, path, session.getSessionDescription());
+		sendRequestSetup(st, path, session, 0);
+		sendRequestSetup(st, path, session, 1);
+		sendRequestRecord(st, path);
 	}
 	
 	/**
 	 * Forges and sends the ANNOUNCE request 
 	 */
-	private void sendRequestAnnounce() throws IllegalStateException, SocketException, IOException {
-
-		String body = mParameters.session.getSessionDescription();
-		String request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+" RTSP/1.0\r\n" +
-				"CSeq: " + (++mCSeq) + "\r\n" +
+	//IOException fallo de conexion
+	//IllegalStateException fallo en protocolo o configuracion de cliente
+	//
+	private void sendRequestAnnounce(StreamingState st, String path, String sessionDesc) throws SecurityException, IOException, IllegalStateException, RuntimeException{
+		String body = sessionDesc;
+		String request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
+				"CSeq: " + (++st.mCSeq) + "\r\n" +
 				"Content-Length: " + body.length() + "\r\n" +
 				"Content-Type: application/sdp\r\n\r\n" +
 				body;
@@ -500,9 +645,9 @@ public class RtspClient {
 			try {
 				Matcher m = Response.rexegSession.matcher(response.headers.get("session"));
 				m.find();
-				mSessionID = m.group(1);
+				st.mSessionID = m.group(1);
 			} catch (Exception e) {
-				throw new IOException("Invalid response from server. Session id: "+mSessionID);
+				throw new IllegalStateException("Invalid response from server. Session id: "+st.mSessionID);
 			}
 		}
 
@@ -517,21 +662,21 @@ public class RtspClient {
 				nonce = m.group(2);
 				realm = m.group(1);
 			} catch (Exception e) {
-				throw new IOException("Invalid response from server");
+				throw new IllegalStateException("Invalid response from server");
 			}
 
-			String uri = "rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path;
+			String uri = "rtsp://"+mParameters.host+":"+mParameters.port+"/"+path;
 			String hash1 = computeMd5Hash(mParameters.username+":"+m.group(1)+":"+mParameters.password);
 			String hash2 = computeMd5Hash("ANNOUNCE"+":"+uri);
 			String hash3 = computeMd5Hash(hash1+":"+m.group(2)+":"+hash2);
 
-			mAuthorization = "Digest username=\""+mParameters.username+"\",realm=\""+realm+"\",nonce=\""+nonce+"\",uri=\""+uri+"\",response=\""+hash3+"\"";
+			st.mAuthorization = "Digest username=\""+mParameters.username+"\",realm=\""+realm+"\",nonce=\""+nonce+"\",uri=\""+uri+"\",response=\""+hash3+"\"";
 
-			request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+" RTSP/1.0\r\n" +
-					"CSeq: " + (++mCSeq) + "\r\n" +
+			request = "ANNOUNCE rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
+					"CSeq: " + (++st.mCSeq) + "\r\n" +
 					"Content-Length: " + body.length() + "\r\n" +
-					"Authorization: " + mAuthorization + "\r\n" +
-					"Session: " + mSessionID + "\r\n" +
+					"Authorization: " + st.mAuthorization + "\r\n" +
+					"Session: " + st.mSessionID + "\r\n" +
 					"Content-Type: application/sdp\r\n\r\n" +
 					body;
 
@@ -541,56 +686,99 @@ public class RtspClient {
 			mOutputStream.flush();
 			response = Response.parseResponse(mBufferedReader);
 
-			if (response.status == 401) throw new RuntimeException("Bad credentials !");
+			if (response.status == 401) throw new SecurityException("Bad credentials !");
 
 		} else if (response.status == 403) {
-			Log.d(TAG, "Streaming " + mParameters.path + " refused by server");
+			Log.d(TAG, "Streaming " + path + " refused by server");
+			throw new RuntimeException("Streaming " + path + " refused by server");
 		}
 	}
 
 	/**
 	 * Forges and sends the SETUP request 
 	 */
-	private void sendRequestSetup() throws IllegalStateException, SocketException, IOException {
-		for (int i=0;i<2;i++) {
-			Stream stream = mParameters.session.getTrack(i);
-			if (stream != null) {
-				String params = mParameters.transport==TRANSPORT_TCP ? 
-						("TCP;interleaved="+2*i+"-"+(2*i+1)) : ("UDP;unicast;client_port="+(5000+2*i)+"-"+(5000+2*i+1)+";mode=receive");
-				String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+"/trackID="+i+" RTSP/1.0\r\n" +
-						"Transport: RTP/AVP/"+params+"\r\n" +
-						addHeaders();
+	private void sendRequestSetup(StreamingState st, String path, Stream stream, int trackNo) throws IllegalStateException, IOException {
+		if (stream != null) {
+			String params = mParameters.transport==TRANSPORT_TCP ?
+					("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1)) : ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
+			String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+"/trackID="+trackNo+" RTSP/1.0\r\n" +
+					"Transport: RTP/AVP/"+params+"\r\n" +
+					addHeaders(st);
 
-				Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
+			Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 
-				mOutputStream.write(request.getBytes("UTF-8"));
-				mOutputStream.flush();
-				Response response = Response.parseResponse(mBufferedReader);
-				Matcher m;
-				
-				if (response.headers.containsKey("session")) {
-					try {
-						m = Response.rexegSession.matcher(response.headers.get("session"));
-						m.find();
-						mSessionID = m.group(1);
-					} catch (Exception e) {
-						throw new IOException("Invalid response from server. Session id: "+mSessionID);
-					}
+			mOutputStream.write(request.getBytes("UTF-8"));
+			mOutputStream.flush();
+			Response response = Response.parseResponse(mBufferedReader);
+			Matcher m;
+
+			if (response.headers.containsKey("session")) {
+				try {
+					m = Response.rexegSession.matcher(response.headers.get("session"));
+					m.find();
+					st.mSessionID = m.group(1);
+				} catch (Exception e) {
+					throw new IllegalStateException("Invalid response from server. Session id: "+st.mSessionID);
 				}
-				
-				if (mParameters.transport == TRANSPORT_UDP) {
-					try {
-						m = Response.rexegTransport.matcher(response.headers.get("transport")); m.find();
-						stream.setDestinationPorts(Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)));
-						Log.d(TAG, "Setting destination ports: "+Integer.parseInt(m.group(3))+", "+Integer.parseInt(m.group(4)));
-					} catch (Exception e) {
-						e.printStackTrace();
-						int[] ports = stream.getDestinationPorts();
-						Log.d(TAG,"Server did not specify ports, using default ports: "+ports[0]+"-"+ports[1]);
-					}
-				} else {
-					stream.setOutputStream(mOutputStream, (byte)(2*i));
+			}
+
+			if (mParameters.transport == TRANSPORT_UDP) {
+				try {
+					m = Response.rexegTransport.matcher(response.headers.get("transport")); m.find();
+					stream.setDestinationPorts(Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)));
+					Log.d(TAG, "Setting destination ports: "+Integer.parseInt(m.group(3))+", "+Integer.parseInt(m.group(4)));
+				} catch (Exception e) {
+					e.printStackTrace();
+					int[] ports = stream.getDestinationPorts();
+					Log.d(TAG,"Server did not specify ports, using default ports: "+ports[0]+"-"+ports[1]);
 				}
+			} else {
+				stream.setOutputStream(mOutputStream, (byte)(2*trackNo));
+			}
+		}
+	}
+
+	/**
+	 * Forges and sends the SETUP request
+	 */
+	private void sendRequestSetup(StreamingState st, String path, RebroadcastSession session, int trackNo) throws IllegalStateException, IOException {
+		if (session.serverTrackExists(trackNo)) {
+			String params = mParameters.transport==TRANSPORT_TCP ?
+					("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1)) : ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
+			String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+"/trackID="+trackNo+" RTSP/1.0\r\n" +
+					"Transport: RTP/AVP/"+params+"\r\n" +
+					addHeaders(st);
+
+			Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
+
+			mOutputStream.write(request.getBytes("UTF-8"));
+			mOutputStream.flush();
+			Response response = Response.parseResponse(mBufferedReader);
+			Matcher m;
+
+			if (response.headers.containsKey("session")) {
+				try {
+					m = Response.rexegSession.matcher(response.headers.get("session"));
+					m.find();
+					st.mSessionID = m.group(1);
+				} catch (Exception e) {
+					throw new IllegalStateException("Invalid response from server. Session id: "+st.mSessionID);
+				}
+			}
+			RebroadcastSession.RebroadcastTrackInfo rebroadcastTrackInfo = session.getRebroadcastTrack(trackNo);
+
+			if (mParameters.transport == TRANSPORT_UDP) {
+				try {
+					m = Response.rexegTransport.matcher(response.headers.get("transport")); m.find();
+					rebroadcastTrackInfo.setRemotePorts(Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)));
+					Log.d(TAG, "Setting destination ports: "+Integer.parseInt(m.group(3))+", "+Integer.parseInt(m.group(4)));
+				} catch (Exception e) {
+					e.printStackTrace();
+					int[] ports = rebroadcastTrackInfo.getRemotePorts();
+					Log.d(TAG,"Server did not specify ports, using default ports: "+ports[0]+"-"+ports[1]);
+				}
+			} else {
+				throw new IOException("TCP no implementado");
 			}
 		}
 	}
@@ -598,10 +786,10 @@ public class RtspClient {
 	/**
 	 * Forges and sends the RECORD request 
 	 */
-	private void sendRequestRecord() throws IllegalStateException, SocketException, IOException {
-		String request = "RECORD rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+" RTSP/1.0\r\n" +
+	private void sendRequestRecord(StreamingState st, String path) throws IOException {
+		String request = "RECORD rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
 				"Range: npt=0.000-\r\n" +
-				addHeaders();
+				addHeaders(st);
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
@@ -611,8 +799,8 @@ public class RtspClient {
 	/**
 	 * Forges and sends the TEARDOWN request 
 	 */
-	private void sendRequestTeardown() throws IOException {
-		String request = "TEARDOWN rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+" RTSP/1.0\r\n" + addHeaders();
+	private void sendRequestTeardown(StreamingState st, String path) throws IOException {
+		String request = "TEARDOWN rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
@@ -621,25 +809,25 @@ public class RtspClient {
 	/**
 	 * Forges and sends the OPTIONS request 
 	 */
-	private void sendRequestOption() throws IOException {
-		String request = "OPTIONS rtsp://"+mParameters.host+":"+mParameters.port+mParameters.path+" RTSP/1.0\r\n" + addHeaders();
+	private void sendRequestOption(StreamingState st, String path) throws IOException {
+		String request = "OPTIONS rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
 		Response.parseResponse(mBufferedReader);
 	}	
 
-	private String addHeaders() {
-		return "CSeq: " + (++mCSeq) + "\r\n" +
+	private String addHeaders(StreamingState st) {
+		return "CSeq: " + (++st.mCSeq) + "\r\n" +
 				"Content-Length: 0\r\n" +
-				"Session: " + mSessionID + "\r\n" +
+				(st.mSessionID != null ? "Session: " + st.mSessionID + "\r\n" : "") +
 				// For some reason you may have to remove last "\r\n" in the next line to make the RTSP client work with your wowza server :/
-				(mAuthorization != null ? "Authorization: " + mAuthorization + "\r\n":"") + "\r\n";
+				(st.mAuthorization != null ? "Authorization: " + st.mAuthorization + "\r\n":"") + "\r\n";
 	}
 
 	/**
 	 * If the connection with the RTSP server is lost, we try to reconnect to it as
-	 * long as {@link #stopStream()} is not called.
+	 * long as {@link #stop()} is not called.
 	 */
 	private Runnable mConnectionMonitor = new Runnable() {
 		@Override
@@ -647,36 +835,14 @@ public class RtspClient {
 			if (mState == STATE_STARTED) {
 				try {
 					// We poll the RTSP server with OPTION requests
-					sendRequestOption();
+					StreamingState st = new StreamingState();
+					sendRequestOption(st, "");
 					mHandler.postDelayed(mConnectionMonitor, 6000);
 				} catch (IOException e) {
 					// Happens if the OPTION request fails
-					postMessage(ERROR_CONNECTION_LOST);
+					postError(ERROR_CONNECTION_LOST, null);
 					Log.e(TAG, "Connection lost with the server...");
-					mParameters.session.stop();
-					mHandler.post(mRetryConnection);
-				}
-			}
-		}
-	};
-
-	/** Here, we try to reconnect to the RTSP. */
-	private Runnable mRetryConnection = new Runnable() {
-		@Override
-		public void run() {
-			if (mState == STATE_STARTED) {
-				try {
-					Log.e(TAG, "Trying to reconnect...");
-					tryConnection();
-					try {
-						mParameters.session.start();
-						mHandler.post(mConnectionMonitor);
-						postMessage(MESSAGE_CONNECTION_RECOVERED);
-					} catch (Exception e) {
-						abort();
-					}
-				} catch (IOException e) {
-					mHandler.postDelayed(mRetryConnection,1000);
+					restartClient();
 				}
 			}
 		}

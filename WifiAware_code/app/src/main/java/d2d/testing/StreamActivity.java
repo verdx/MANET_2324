@@ -9,7 +9,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 
-import d2d.testing.streaming.StreamingList;
+import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
@@ -31,15 +31,12 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
 
     private SurfaceView mSurfaceView;
 
-    private RtspClient rtspClient;
-
     public Session mSesion;
     public SessionBuilder mSessionBuilder;
 
     private FloatingActionButton recordButton;
     public boolean mRecording = false;
 
-    private WifiAwareViewModel mAwareModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,12 +71,6 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
             }
         });
 
-        mAwareModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(WifiAwareViewModel.class);
-
-    }
-
-    public WifiAwareViewModel getWifiAwareModel(){
-        return mAwareModel;
     }
 
 
@@ -126,7 +117,7 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     public void startStreaming() {
 
         UUID localStreamUUID = UUID.randomUUID();
-        StreamingList.getInstance().addLocalStreaming(localStreamUUID, mSessionBuilder);
+        StreamingRecord.getInstance().addLocalStreaming(localStreamUUID, mSessionBuilder);
         /*
         //rtspClient.setSession(mSesion);
         rtspClient.setmSessionBuilder(mSessionBuilder);
@@ -140,11 +131,12 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     }
 
     private void stopStreaming() {
-        rtspClient.stopStream();
+        //rtspClient.stopStream();
 
+        StreamingRecord.getInstance().removeLocalStreaming();
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_video_camera));
         mRecording = false;
-        Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
     }
 
     public void onDestroy(){

@@ -156,6 +156,7 @@ public abstract class AbstractSelector implements Runnable{
             for (SelectionKey key : mSelector.keys()) {
                 try {
                     key.channel().close();
+                    onClientDisconnected(key.channel());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

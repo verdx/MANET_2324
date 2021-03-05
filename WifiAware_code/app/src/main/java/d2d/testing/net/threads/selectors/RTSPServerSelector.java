@@ -74,6 +74,10 @@ public class RTSPServerSelector extends AbstractSelector {
         return INSTANCE;
     }
 
+    public static boolean itsInitialized(){
+        return INSTANCE != null;
+    }
+
 
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
         if(mConnectionsMap.get(handle) != null){
