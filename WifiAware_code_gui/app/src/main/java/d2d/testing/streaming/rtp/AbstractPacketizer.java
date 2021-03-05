@@ -20,10 +20,8 @@ package d2d.testing.streaming.rtp;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.util.Random;
-import d2d.testing.streaming.rtcp.SenderReport;
 
 /**
  * 

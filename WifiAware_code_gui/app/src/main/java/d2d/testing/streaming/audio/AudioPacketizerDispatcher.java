@@ -12,7 +12,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,9 +19,8 @@ import d2d.testing.streaming.rtp.AACADTSPacketizer;
 import d2d.testing.streaming.rtp.AACLATMPacketizer;
 import d2d.testing.streaming.rtp.AbstractPacketizer;
 import d2d.testing.streaming.rtp.ByteBufferInputStream;
-import d2d.testing.streaming.rtp.MediaCodecInputStream;
-import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.rtp.MediaCodecBufferReader;
+import d2d.testing.streaming.rtp.MediaCodecInputStream;
 
 
 /**
@@ -95,7 +93,7 @@ public class AudioPacketizerDispatcher {
         mMediaCodecInputStream = new MediaCodecInputStream(mMediaCodec);
         mMediaCodecsBuffers = mMediaCodec.getInputBuffers();
         mReaderThread = new Thread(new MediaCodecBufferReader(mBufferSize,mMediaCodecInputStream,mPacketizersInputsMap));
-        mWriterThread = new Thread(new AudioPacketizerDispatcher.MediaCodecBufferWriter());
+        mWriterThread = new Thread(new MediaCodecBufferWriter());
         mReaderThread.start();
         mWriterThread.start();
 

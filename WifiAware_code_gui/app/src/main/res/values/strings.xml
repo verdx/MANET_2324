@@ -6,6 +6,9 @@
     <string name="string_transfer_file">\Transfer File</string>
     <string name="string_camera">Camera</string>
     <string name="mi_dispositivo">MY DEVICE</string>
+    <string name="boton_record">RECORD</string>
+    <string name="record_video">play</string>
+    <string name="change_camera">change camera</string>
     <string name="dispositivos_encontrados">STREAMS AVAILABLE</string>
     <string name="connection_status">Connection Status</string>
     <string name="todo">TODO</string>

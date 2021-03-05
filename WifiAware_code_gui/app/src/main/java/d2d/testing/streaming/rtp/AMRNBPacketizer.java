@@ -18,8 +18,9 @@
 
 package d2d.testing.streaming.rtp;
 
-import java.io.IOException;
 import android.util.Log;
+
+import java.io.IOException;
 
 /**
  * 

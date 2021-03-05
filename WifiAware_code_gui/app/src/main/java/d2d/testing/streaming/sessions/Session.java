@@ -18,6 +18,11 @@
 
 package d2d.testing.streaming.sessions;
 
+import android.hardware.Camera.CameraInfo;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -34,12 +39,7 @@ import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.video.VideoStream;
 
-import android.hardware.Camera.CameraInfo;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-
-import static java.util.UUID.*;
+import static java.util.UUID.randomUUID;
 
 /**
  * You should instantiate this class with the {@link SessionBuilder}.<br />
@@ -392,7 +392,7 @@ public class Session {
 	 * an error occurs.	
 	 **/
 	public void syncConfigure()  
-			throws CameraInUseException, 
+			throws CameraInUseException,
 			StorageUnavailableException,
 			ConfNotSupportedException, 
 			InvalidSurfaceException, 
@@ -448,7 +448,7 @@ public class Session {
 	 * @param id The id of the stream to start
 	 **/
 	public void syncStart(int id) 			
-			throws CameraInUseException, 
+			throws CameraInUseException,
 			StorageUnavailableException,
 			ConfNotSupportedException, 
 			InvalidSurfaceException, 
@@ -498,7 +498,7 @@ public class Session {
 	 * Throws exceptions in addition to calling a callback.
 	 **/
 	public void syncStart() 			
-			throws CameraInUseException, 
+			throws CameraInUseException,
 			StorageUnavailableException,
 			ConfNotSupportedException, 
 			InvalidSurfaceException, 

@@ -18,14 +18,13 @@
 
 package d2d.testing.streaming.rtp;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
-import android.media.MediaCodec.BufferInfo;
 import android.media.MediaFormat;
 import android.util.Log;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * An InputStream that uses data from a MediaCodec.

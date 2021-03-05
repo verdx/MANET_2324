@@ -1,8 +1,5 @@
 package d2d.testing;
 
-
-import android.app.ProgressDialog;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 
 import android.os.Build;
@@ -27,16 +24,11 @@ import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 
-import java.io.IOException;
 import java.util.ArrayList;
-
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
 
 
 public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener {
     public final static String TAG = "VideoActivity";
-
-    public static final String RTSP_URL = "rtspurl";
 
     // display surface
     private SurfaceView mSurface;
@@ -50,7 +42,6 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
     private final static int VideoSizeChanged = -1;
 
     private ProgressBar bufferSpinner;
-    ProgressDialog progressDialog;
 
     private String rtspUrl;
 
@@ -61,20 +52,13 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         this.setContentView(R.layout.activity_view_stream);
-/*
-        try {
-            RTSPServerSelector.getInstance().mConManager.bindProcessToNetwork(RTSPServerSelector.getInstance().mLastNet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
 
         String ip = getIntent().getExtras().getString("IP");
-        String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
-        String path= "rtsp://" + ip2;
+        //String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
+        //String path= "rtsp://" + ip2;
 
         // Get URL
-        rtspUrl = path;
+        rtspUrl = "rtsp://127.0.0.1:1234/" + ip;
         Log.d(TAG, "Playing back " + rtspUrl);
 
         mSurface = (SurfaceView) findViewById(R.id.surface);
@@ -118,6 +102,7 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         vout.addCallback(this);
         vout.attachViews();
 
+        /*
         Uri.Builder b = new Uri.Builder();
         b.scheme("rtsp");
         b.authority(ip.substring(0, ip.lastIndexOf("/")));
@@ -125,13 +110,9 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         Uri ur2 = b.build();
         String host2 = ur2.getHost();
         int port2 = ur2.getPort();
+        */
 
-
-        Uri ur = Uri.parse(rtspUrl);
-        String host = ur.getHost();
-        int port = ur.getPort();
-
-        Media m = new Media(libvlc, Uri.parse("rtsp://127.0.0.1:1234/Cliente1"));
+        Media m = new Media(libvlc, Uri.parse(rtspUrl));
         mMediaPlayer.setMedia(m);
         mMediaPlayer.play();
     }
@@ -181,7 +162,6 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         holder = null;
         libvlc.release();
         libvlc = null;
-
         mVideoWidth = 0;
         mVideoHeight = 0;
     }

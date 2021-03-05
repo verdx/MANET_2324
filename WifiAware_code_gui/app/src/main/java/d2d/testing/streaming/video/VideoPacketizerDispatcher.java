@@ -3,18 +3,13 @@ package d2d.testing.streaming.video;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.hardware.Camera;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-import android.media.MediaRecorder;
 import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,9 +17,8 @@ import d2d.testing.streaming.hw.EncoderDebugger;
 import d2d.testing.streaming.hw.NV21Convertor;
 import d2d.testing.streaming.rtp.AbstractPacketizer;
 import d2d.testing.streaming.rtp.ByteBufferInputStream;
-import d2d.testing.streaming.rtp.MediaCodecInputStream;
-import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.rtp.MediaCodecBufferReader;
+import d2d.testing.streaming.rtp.MediaCodecInputStream;
 
 public class VideoPacketizerDispatcher {
 

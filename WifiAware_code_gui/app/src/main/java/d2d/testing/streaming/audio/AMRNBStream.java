@@ -18,12 +18,14 @@
 
 package d2d.testing.streaming.audio;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.streaming.rtp.AMRNBPacketizer;
 import android.media.MediaRecorder;
 import android.service.textservice.SpellCheckerService.Session;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+
+import d2d.testing.streaming.rtp.AMRNBPacketizer;
+import d2d.testing.streaming.sessions.SessionBuilder;
 
 /**
  * A class for streaming AAC from the camera of an android device using RTP.

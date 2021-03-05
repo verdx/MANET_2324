@@ -18,15 +18,6 @@
 
 package d2d.testing.streaming;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.util.Random;
-
-import d2d.testing.streaming.audio.AudioPacketizerDispatcher;
-import d2d.testing.streaming.audio.AudioStream;
-import d2d.testing.streaming.rtp.AbstractPacketizer;
-import d2d.testing.streaming.video.VideoStream;
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaRecorder;
@@ -36,6 +27,15 @@ import android.net.LocalSocketAddress;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.util.Random;
+
+import d2d.testing.streaming.audio.AudioStream;
+import d2d.testing.streaming.rtp.AbstractPacketizer;
+import d2d.testing.streaming.video.VideoStream;
 
 /**
  * A MediaRecorder that streams what it records using a packetizer from the RTP package.
@@ -206,7 +206,7 @@ public abstract class MediaStream implements Stream {
 	 * If the mode is set to {@link #MODE_MEDIACODEC_API} or to {@link #MODE_MEDIACODEC_API_2}, 
 	 * audio/video will be encoded with using the MediaCodec. <br />
 	 * 
-	 * The {@link #MODE_MEDIACODEC_API_2} mode only concerns {@link VideoStream}, it makes 
+	 * The {@link #MODE_MEDIACODEC_API_2} mode only concerns {@link VideoStream}, it makes
 	 * use of the createInputSurface() method of the MediaCodec API (Android 4.3 is needed there). <br />
 	 * 
 	 * @param mode Can be {@link #MODE_MEDIARECORDER_API}, {@link #MODE_MEDIACODEC_API} or {@link #MODE_MEDIACODEC_API_2} 
@@ -227,7 +227,7 @@ public abstract class MediaStream implements Stream {
 	 * Returns the packetizer associated with the {@link MediaStream}.
 	 * @return The packetizer
 	 */
-	public AbstractPacketizer getPacketizer() { 
+	public AbstractPacketizer getPacketizer() {
 		return mPacketizer;
 	}
 

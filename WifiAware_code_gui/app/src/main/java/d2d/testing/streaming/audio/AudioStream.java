@@ -18,14 +18,15 @@
 
 package d2d.testing.streaming.audio;
 
+import android.media.MediaRecorder;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 
 import d2d.testing.streaming.MediaStream;
-import android.media.MediaRecorder;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
 
 /** 
  * Don't use this class directly.

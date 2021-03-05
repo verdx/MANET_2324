@@ -9,13 +9,9 @@ import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
-import java.util.Iterator;
 
-import d2d.testing.MainActivity;
-import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.EchoWorker;
-
-import static java.lang.Thread.sleep;
+import d2d.testing.utils.Logger;
 
 public class UDPServerSelector extends AbstractSelector {
     private DatagramChannel mDatagramChannel;

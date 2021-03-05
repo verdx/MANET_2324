@@ -18,15 +18,15 @@
 
 package d2d.testing.streaming.video;
 
-import java.io.IOException;
-
-import d2d.testing.streaming.rtp.H263Packetizer;
-import d2d.testing.streaming.sessions.SessionBuilder;
-
 import android.graphics.ImageFormat;
 import android.hardware.Camera.CameraInfo;
 import android.media.MediaRecorder;
 import android.service.textservice.SpellCheckerService.Session;
+
+import java.io.IOException;
+
+import d2d.testing.streaming.rtp.H263Packetizer;
+import d2d.testing.streaming.sessions.SessionBuilder;
 
 /**
  * A class for streaming H.263 from the camera of an android device using RTP.

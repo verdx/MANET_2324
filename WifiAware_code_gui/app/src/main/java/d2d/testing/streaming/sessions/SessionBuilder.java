@@ -18,6 +18,10 @@
 
 package d2d.testing.streaming.sessions;
 
+import android.content.Context;
+import android.hardware.Camera.CameraInfo;
+import android.preference.PreferenceManager;
+
 import java.io.IOException;
 
 import d2d.testing.streaming.audio.AACStream;
@@ -29,10 +33,6 @@ import d2d.testing.streaming.video.H263Stream;
 import d2d.testing.streaming.video.H264Stream;
 import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.video.VideoStream;
-
-import android.content.Context;
-import android.hardware.Camera.CameraInfo;
-import android.preference.PreferenceManager;
 
 /**
  * Call {@link #getInstance()} to get access to the SessionBuilder.
@@ -78,7 +78,7 @@ public class SessionBuilder {
 	private SessionBuilder() {}
 
 	// The SessionManager implements the singleton pattern
-	private static volatile SessionBuilder sInstance = null; 
+	private static volatile SessionBuilder sInstance = null;
 
 	/**
 	 * Returns a reference to the {@link SessionBuilder}.

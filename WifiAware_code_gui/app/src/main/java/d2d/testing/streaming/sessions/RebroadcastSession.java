@@ -2,6 +2,8 @@ package d2d.testing.streaming.sessions;
 
 import android.os.HandlerThread;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.SelectableChannel;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -13,8 +15,10 @@ public class RebroadcastSession {
 
     public final static String TAG = "ReceiveSession";
 
-    private String mOrigin;
-    private String mDestination;
+    private InetAddress mOrigin;
+    private boolean mOriginIPv6;
+    private InetAddress mDestination;
+    private boolean mDestIPv6;
     private int mTimeToLive = 64;
     private long mTimestamp;
     public final String mSessionID;
@@ -36,7 +40,9 @@ public class RebroadcastSession {
         thread.start();
 
         mTimestamp = (uptime/1000)<<32 & (((uptime-((uptime/1000)*1000))>>32)/1000); // NTP timestamp
-        mOrigin = "127.0.0.1";
+        try {
+            mOrigin = InetAddress.getByName("127.0.0.1");
+        } catch (UnknownHostException e) {}
         mSessionID = randomUUID().toString();
         mVideoRebroadcastTrackInfo = new RebroadcastTrackInfo();
         mAudioRebroadcastTrackInfo = new RebroadcastTrackInfo();
@@ -47,8 +53,9 @@ public class RebroadcastSession {
      * It appears in the session description.
      * @param origin The origin address
      */
-    public void setOrigin(String origin) {
+    public void setOriginAddress(InetAddress origin, boolean isIPv6) {
         mOrigin = origin;
+        mOriginIPv6 = isIPv6;
     }
 
     /**
@@ -56,14 +63,15 @@ public class RebroadcastSession {
      * Changes will be taken into account the next time you start the session.
      * @param destination The destination address
      */
-    public void setDestination(String destination) {
+    public void setDestinationAddress(InetAddress destination, boolean isIPv6) {
         mDestination =  destination;
+        mDestIPv6 = isIPv6;
     }
 
     /**
      * Returns a Session Description that can be stored in a file or sent to a client with RTSP.
      * @return The Session Description.
-     * @throws IllegalStateException Thrown when {@link #setDestination(String)} has never been called.
+     * @throws IllegalStateException Thrown when {@link #setDestinationAddress(InetAddress, boolean)} (String)} has never been called.
      */
     public String getSessionDescription() {
         final Pattern regexAudioDescription = Pattern.compile("m=audio (\\d+) (.*)", Pattern.CASE_INSENSITIVE);
@@ -72,10 +80,12 @@ public class RebroadcastSession {
         StringBuilder sessionDescription = new StringBuilder();
         sessionDescription.append("v=0\r\n");
         // TODO: Add IPV6 support
-        sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin+"\r\n");
+        if(mOriginIPv6) sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP6 "+mOrigin.getHostAddress()+"\r\n");
+        else sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin.getHostAddress()+"\r\n");
         sessionDescription.append("s=Unnamed\r\n");
         sessionDescription.append("i=N/A\r\n");
-        sessionDescription.append("c=IN IP4 "+mDestination+"\r\n");
+        if(mDestIPv6) sessionDescription.append("c=IN IP6 "+mDestination.getHostAddress()+"\r\n");
+        else sessionDescription.append("c=IN IP4 "+mDestination.getHostAddress()+"\r\n");
         // t=0 0 means the session is permanent (we don't know when it will stop)
         sessionDescription.append("t=0 0\r\n");
         sessionDescription.append("a=recvonly\r\n");
@@ -94,12 +104,13 @@ public class RebroadcastSession {
         return sessionDescription.toString();
     }
 
+
     public String getSessionID() {
         return mSessionID;
     }
 
-    /** Returns the destination set with {@link #setDestination(String)}. */
-    public String getDestination() {
+    /** Returns the destination set with {@link #setDestinationAddress(InetAddress, boolean)} }. */
+    public InetAddress getDestination() {
         return mDestination;
     }
 
@@ -148,23 +159,23 @@ public class RebroadcastSession {
     public void startTrack(int trackId) {
         if (trackId == 0 && serverTrackExists(0)){
             rtcpAudioTrackChannel = getServerTrack(0).addRtcpEchoSession(
-                    getDestination(),
+                    getDestination().getHostAddress(),
                     getRebroadcastTrack(0).getRemoteRctpPort()
             );
 
             rtpAudioTrackChannel = getServerTrack(0).addRtpEchoSession(
-                    getDestination(),
+                    getDestination().getHostAddress(),
                     getRebroadcastTrack(0).getRemoteRtpPort()
             );
         }
         if (trackId == 1 && serverTrackExists(1)){
             rtcpVideoTrackChannel = getServerTrack(1).addRtcpEchoSession(
-                    getDestination(),
+                    getDestination().getHostAddress(),
                     getRebroadcastTrack(1).getRemoteRctpPort()
             );
 
             rtpVideoTrackChannel = getServerTrack(1).addRtpEchoSession(
-                    getDestination(),
+                    getDestination().getHostAddress(),
                     getRebroadcastTrack(1).getRemoteRtpPort()
             );
         }

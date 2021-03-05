@@ -18,6 +18,16 @@
 
 package d2d.testing.streaming.video;
 
+import android.annotation.SuppressLint;
+import android.content.SharedPreferences.Editor;
+import android.graphics.ImageFormat;
+import android.hardware.Camera.CameraInfo;
+import android.media.MediaRecorder;
+import android.os.Environment;
+import android.service.textservice.SpellCheckerService.Session;
+import android.util.Base64;
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
@@ -29,16 +39,6 @@ import d2d.testing.streaming.hw.EncoderDebugger;
 import d2d.testing.streaming.mp4.MP4Config;
 import d2d.testing.streaming.rtp.H264Packetizer;
 import d2d.testing.streaming.sessions.SessionBuilder;
-
-import android.annotation.SuppressLint;
-import android.content.SharedPreferences.Editor;
-import android.graphics.ImageFormat;
-import android.hardware.Camera.CameraInfo;
-import android.media.MediaRecorder;
-import android.os.Environment;
-import android.service.textservice.SpellCheckerService.Session;
-import android.util.Base64;
-import android.util.Log;
 
 /**
  * A class for streaming H.264 from the camera of an android device using RTP.

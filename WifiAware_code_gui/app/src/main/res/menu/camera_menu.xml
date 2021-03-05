@@ -5,6 +5,7 @@
             android:id="@+id/switch_flash"
             android:icon="@drawable/ic_flash_auto"
             android:title="flash"
+            android:visibility="visible"
             app:showAsAction="always" />
 
 </menu>

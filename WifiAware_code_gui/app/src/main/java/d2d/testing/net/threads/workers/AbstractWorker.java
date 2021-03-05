@@ -1,10 +1,8 @@
 package d2d.testing.net.threads.workers;
 
 import java.nio.channels.SelectableChannel;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.AbstractSelector;

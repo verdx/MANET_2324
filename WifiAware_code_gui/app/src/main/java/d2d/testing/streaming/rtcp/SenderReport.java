@@ -18,16 +18,16 @@
 
 package d2d.testing.streaming.rtcp;
 
-import static d2d.testing.streaming.rtp.RtpSocket.TRANSPORT_TCP;
-import static d2d.testing.streaming.rtp.RtpSocket.TRANSPORT_UDP;
+import android.os.SystemClock;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.nio.channels.IllegalSelectorException;
-import android.os.SystemClock;
-import android.util.Log;
+
+import static d2d.testing.streaming.rtp.RtpSocket.TRANSPORT_TCP;
+import static d2d.testing.streaming.rtp.RtpSocket.TRANSPORT_UDP;
 
 /**
  * Implementation of Sender Report RTCP packets.

@@ -4,10 +4,7 @@ import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -24,12 +21,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import d2d.testing.MainActivity;
-import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.AbstractWorker;
+import d2d.testing.utils.Logger;
 
 import static java.lang.Thread.sleep;
 
@@ -156,6 +150,7 @@ public abstract class AbstractSelector implements Runnable{
             for (SelectionKey key : mSelector.keys()) {
                 try {
                     key.channel().close();
+                    onClientDisconnected(key.channel());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

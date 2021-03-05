@@ -1,5 +1,7 @@
 package d2d.testing.gui;
 
+import android.widget.ImageButton;
+
 public class StreamDetail {
     private String name;
     private String ip;

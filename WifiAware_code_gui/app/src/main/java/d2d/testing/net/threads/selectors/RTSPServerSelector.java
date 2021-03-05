@@ -13,20 +13,16 @@ import androidx.annotation.NonNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import d2d.testing.MainActivity;
-import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.RTSPServerWorker;
 
 /**
@@ -72,6 +68,10 @@ public class RTSPServerSelector extends AbstractSelector {
         }
 
         return INSTANCE;
+    }
+
+    public static boolean itsInitialized(){
+        return INSTANCE != null;
     }
 
 

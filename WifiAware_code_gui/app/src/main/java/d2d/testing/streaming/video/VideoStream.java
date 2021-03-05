@@ -18,21 +18,6 @@
 
 package d2d.testing.streaming.video;
 
-import java.io.FileDescriptor;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import d2d.testing.streaming.MediaStream;
-import d2d.testing.streaming.Stream;
-import d2d.testing.streaming.exceptions.CameraInUseException;
-import d2d.testing.streaming.exceptions.ConfNotSupportedException;
-import d2d.testing.streaming.exceptions.InvalidSurfaceException;
-import d2d.testing.streaming.gl.SurfaceView;
-import d2d.testing.streaming.hw.EncoderDebugger;
-import d2d.testing.streaming.hw.NV21Convertor;
-import d2d.testing.streaming.rtp.MediaCodecInputStream;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -50,6 +35,21 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
+import d2d.testing.streaming.MediaStream;
+import d2d.testing.streaming.Stream;
+import d2d.testing.streaming.exceptions.CameraInUseException;
+import d2d.testing.streaming.exceptions.ConfNotSupportedException;
+import d2d.testing.streaming.exceptions.InvalidSurfaceException;
+import d2d.testing.streaming.gl.SurfaceView;
+import d2d.testing.streaming.hw.EncoderDebugger;
+import d2d.testing.streaming.rtp.MediaCodecInputStream;
+
 /** 
  * Don't use this class directly.
  */
@@ -58,7 +58,7 @@ public abstract class VideoStream extends MediaStream {
 	protected final static String TAG = "VideoStream";
 
 	protected VideoQuality mRequestedQuality = VideoQuality.DEFAULT_VIDEO_QUALITY.clone();
-	protected VideoQuality mQuality = mRequestedQuality.clone(); 
+	protected VideoQuality mQuality = mRequestedQuality.clone();
 	protected Callback mSurfaceHolderCallback = null;
 	protected SurfaceView mSurfaceView = null;
 	protected SharedPreferences mSettings = null;
@@ -305,7 +305,7 @@ public abstract class VideoStream extends MediaStream {
 	}
 
 	public synchronized void startPreview() 
-			throws CameraInUseException, 
+			throws CameraInUseException,
 			InvalidSurfaceException, 
 			RuntimeException {
 		

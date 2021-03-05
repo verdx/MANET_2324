@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- USES-HW-FEATURE: Market filtering -->
-    <uses-feature android:name="android.hardware.wifi.direct" android:required="true" />
+    <uses-feature android:name="android.hardware.wifi.aware" android:required="true" />
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
@@ -30,12 +30,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity
-            android:name=".CameraActivity"
-            android:configChanges="orientation|screenSize"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/CameraFullScreenTheme" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,11 +39,13 @@
         </activity>
 
         <activity android:name=".StreamActivity" />
+
         <activity android:name=".ViewStreamActivity"
             android:screenOrientation="landscape"
             android:theme="@style/CameraFullScreenTheme" />
 
         <service android:name=".streaming.rtsp.RtspServer" />
+
     </application>
 
 </manifest>
