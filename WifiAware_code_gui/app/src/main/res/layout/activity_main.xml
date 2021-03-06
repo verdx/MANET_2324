@@ -17,7 +17,8 @@
         android:layout_marginStart="30dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="35dp"
-        android:text="@string/mi_dispositivo" />
+        android:text="@string/mi_dispositivo"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:id="@+id/linearLayout2"
@@ -84,7 +85,9 @@
         android:layout_marginTop="20dp"
         android:layout_marginEnd="40dp"
         android:text="@string/dispositivos_encontrados"
-        android:textAlignment="textStart" />
+        android:textAlignment="textStart"
+        android:textAllCaps="false"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/recordButton"

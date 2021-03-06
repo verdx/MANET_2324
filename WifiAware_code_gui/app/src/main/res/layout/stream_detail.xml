@@ -7,8 +7,8 @@
 
     <LinearLayout
         android:id="@+id/info_stream"
-        android:layout_width="377dp"
-        android:layout_height="63dp"
+        android:layout_width="383dp"
+        android:layout_height="74dp"
         android:background="?android:attr/activatedBackgroundIndicator"
         android:padding="6dip"
         app:layout_constraintEnd_toEndOf="parent"
@@ -18,8 +18,8 @@
 
         <ImageView
             android:id="@+id/stream_icon"
-            android:layout_width="51dp"
-            android:layout_height="51dp"
+            android:layout_width="64dp"
+            android:layout_height="62dp"
             android:layout_marginEnd="15dip"
             android:src="@drawable/live" />
 
@@ -36,7 +36,7 @@
 
                 <TextView
                     android:id="@+id/stream_ip"
-                    android:layout_width="match_parent"
+                    android:layout_width="216dp"
                     android:layout_height="30dp"
                     android:layout_weight="1"
                     android:ellipsize="marquee"
@@ -44,7 +44,7 @@
 
                 <TextView
                     android:id="@+id/stream_name"
-                    android:layout_width="match_parent"
+                    android:layout_width="216dp"
                     android:layout_height="30dp"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
@@ -55,14 +55,14 @@
             <ImageButton
                 android:id="@+id/button_send"
                 style="@style/Widget.AppCompat.ImageButton"
-                android:layout_width="wrap_content"
+                android:layout_width="3dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:adjustViewBounds="true"
-                android:background="#00FFFFFF"
+                android:background="#77FFFFFF"
                 android:cropToPadding="true"
                 android:scaleType="fitCenter"
-                android:tint="#7E888888"
+                android:tint="#7A5C5656"
                 android:visibility="visible"
                 app:srcCompat="@android:drawable/ic_menu_send" />
 
