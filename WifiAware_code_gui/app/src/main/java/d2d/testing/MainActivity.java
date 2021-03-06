@@ -17,12 +17,16 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.viewpager.widget.ViewPager;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.navigation.NavigationView;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -35,6 +39,7 @@ import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.wifip2p.WifiAwareViewModel;
+
 
 public class MainActivity extends AppCompatActivity implements StreamingRecordObserver, RtspClient.Callback{
 
@@ -50,11 +55,27 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
 
     private Button record;
 
+    private AppBarConfiguration mAppBarConfiguration;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        // Passing each menu ID as a set of Ids because each
+        // menu should be considered as top level destinations.
+        mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_main, R.id.nav_settings, R.id.nav_infoApp)
+                .setDrawerLayout(drawer)
+                .build();
+
+        //REVISAR EL NAVCONTROLLER ....
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(navigationView, navController);
 
         mAwareModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(WifiAwareViewModel.class);
         initialWork();
@@ -239,5 +260,12 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
         if(myName != null) myName.setText("Model:  " + Build.MODEL);
         if(myAdd != null) myAdd.setText("Network: ..." /*+ mAwareModel.getConnectivityManager().getActiveNetwork().toString()*/);
         if(myStatus != null) myStatus.setText(getDeviceStatus());
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
     }
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_main">
+
+    <activity
+        android:id="@+id/nav_main"
+        android:name="d2d.testing.MainActivity"
+        tools:layout="@layout/app_bar_main" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="d2d.testing.gui.setting.SettingFragment"
+        android:label="Settings"
+        tools:layout="@layout/activity_settings" />
+
+    <fragment
+        android:id="@+id/nav_infoApp"
+        android:name="d2d.testing.gui.info.InfoFragment"
+        android:label="Information"
+        tools:layout="@layout/activity_info"/>
+
+</navigation>
