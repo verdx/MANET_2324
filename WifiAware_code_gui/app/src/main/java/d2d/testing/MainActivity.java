@@ -29,9 +29,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import d2d.testing.gui.FragmentStreams;
+import d2d.testing.gui.StreamDetail;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
@@ -167,11 +169,7 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
     @Override
     public void onDestroy() {
         super.onDestroy();
-        try {
-            RTSPServerSelector.getInstance().stop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mAwareModel.closeSessions();
     }
 
     private void askPermits(){
@@ -212,6 +210,10 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
             Toast.makeText(getApplicationContext(), "YOUR DEVICE HAS NO CAMERA", Toast.LENGTH_SHORT).show();
             return false;
         }
+    }
+
+    public ArrayList<StreamDetail> getStreamlist(){
+        return streams_fragment.getStreamList();
     }
 
     private void openStreamActivity() {

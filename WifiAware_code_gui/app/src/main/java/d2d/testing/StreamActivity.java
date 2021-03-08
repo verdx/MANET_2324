@@ -93,6 +93,7 @@ public class StreamActivity extends AppCompatActivity implements SurfaceHolder.C
     }
 
     private void stopStreaming() {
+        StreamingRecord.getInstance().removeLocalStreaming();
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.videocam));
         mRecording = false;
         Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();

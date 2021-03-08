@@ -97,7 +97,6 @@ public abstract class AbstractSelector implements Runnable{
         //this.initiateConnectionUDP();
     }
 
-
     public void stop(){
         this.mEnabled = false;
     }
@@ -108,7 +107,6 @@ public abstract class AbstractSelector implements Runnable{
             new Thread(this).start();
         }
     }
-
 
     public void run(){
         try {
