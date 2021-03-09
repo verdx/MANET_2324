@@ -174,7 +174,6 @@ public class RTSPServerSelector extends AbstractSelector {
         }
     }
 
-
     public synchronized Network getChannelNetwork(SelectableChannel chan){
         for(Map.Entry<ServerSocketChannel, Connection> entry : mServerChannelsMap.entrySet()){
             if(entry.getKey().equals(chan)){

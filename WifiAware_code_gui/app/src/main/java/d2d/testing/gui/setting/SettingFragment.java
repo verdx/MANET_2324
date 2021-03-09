@@ -13,7 +13,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import d2d.testing.R;
-import d2d.testing.gui.info.InfoViewModel;
 
 public class SettingFragment extends Fragment {
 
@@ -24,7 +23,7 @@ public class SettingFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
         settingViewModel =
                 new ViewModelProvider(this).get(SettingViewModel.class);
-        View root = inflater.inflate(R.layout.activity_settings, container, false);
+        View root = inflater.inflate(R.layout.fragment_settings, container, false);
         final TextView textView = root.findViewById(R.id.text_setting);
         settingViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override

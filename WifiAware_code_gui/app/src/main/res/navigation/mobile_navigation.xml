@@ -14,12 +14,12 @@
         android:id="@+id/nav_settings"
         android:name="d2d.testing.gui.setting.SettingFragment"
         android:label="Settings"
-        tools:layout="@layout/activity_settings" />
+        tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/nav_infoApp"
         android:name="d2d.testing.gui.info.InfoFragment"
         android:label="Information"
-        tools:layout="@layout/activity_info"/>
+        tools:layout="@layout/fragment_info"/>
 
 </navigation>
