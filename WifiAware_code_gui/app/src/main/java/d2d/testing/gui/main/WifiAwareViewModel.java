@@ -45,7 +45,6 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
     private Map<PeerHandle, RtspClient> mClients;
 
-
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
         available = new MutableLiveData<Boolean>(Boolean.FALSE);
@@ -93,6 +92,10 @@ public class WifiAwareViewModel extends AndroidViewModel {
         else{
             available.postValue(Boolean.FALSE);
         }
+    }
+
+    public boolean sessionCreated(){
+        return session != null;
     }
 
     public LiveData<Boolean> isWifiAwareAvailable(){

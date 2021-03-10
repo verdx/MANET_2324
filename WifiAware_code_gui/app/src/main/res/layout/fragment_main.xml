@@ -89,18 +89,16 @@
 
     <Button
         android:id="@+id/recordButton"
-        style="@style/Widget.AppCompat.Button"
         android:layout_width="wrap_content"
-        android:layout_height="74dp"
+        android:layout_height="77dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="35dp"
         android:layout_marginEnd="35dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="25dp"
         android:background="@drawable/botton_design"
         android:drawableStart="@android:drawable/ic_media_play"
-        android:drawableTint="#FFFFFF"
         android:fontFamily="sans-serif"
         android:paddingLeft="40dp"
         android:paddingRight="40dp"
@@ -111,7 +109,7 @@
         android:textSize="45sp"
         android:textStyle="bold" />
 
-    <fragment android:name="d2d.testing.gui.FragmentStreams"
+    <androidx.fragment.app.FragmentContainerView android:name="d2d.testing.gui.FragmentStreams"
         android:id="@+id/st_fragment"
         android:layout_width="wrap_content"
         android:layout_height="406dp"
@@ -122,6 +120,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="15dp"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="25dp"/>
+        android:layout_marginBottom="25dp"
+        tools:layout="@layout/streams_fragment" />
 
 </RelativeLayout>

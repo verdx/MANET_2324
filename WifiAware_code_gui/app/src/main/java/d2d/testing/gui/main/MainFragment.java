@@ -51,8 +51,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAwareModel = new ViewModelProvider(this).get(WifiAwareViewModel.class);
-        initialWork();
+        mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
+        if(!mAwareModel.sessionCreated()){
+            initialWork();
+        }
+        StreamingRecord.getInstance().addObserver(this);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -81,8 +84,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void initialWork() {
-        askPermits();
-        checkWifiAwareAvailability();
         initWifiAware();
     }
 
@@ -107,13 +108,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        StreamingRecord.getInstance().addObserver(this);
-    }
 
-    private void checkWifiAwareAvailability(){
-        if (!getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
-            Snackbar.make(getView().findViewById(android.R.id.content), "No dispones de Wifi Aware, la apliación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-        }
     }
 
     private void handleCamera(){
@@ -200,29 +195,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     public void onDestroy() {
         super.onDestroy();
         mAwareModel.closeSessions();
-    }
-
-    private void askPermits(){
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 1);
-        }
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 2);
-        }
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 3);
-        }
-        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO}, 4);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        // If request is cancelled, the result arrays are empty.
-        if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getContext(),"No has dado los permisos necesarios", Toast.LENGTH_LONG).show();
-        }
+        StreamingRecord.getInstance().removeObserver(this);
     }
 
     @Override
