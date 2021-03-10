@@ -5,10 +5,11 @@
     android:id="@+id/mobile_navigation"
     app:startDestination="@+id/nav_main">
 
-    <activity
+    <fragment
         android:id="@+id/nav_main"
-        android:name="d2d.testing.MainActivity"
-        tools:layout="@layout/app_bar_main" />
+        android:name="d2d.testing.gui.main.MainFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_main" />
 
     <fragment
         android:id="@+id/nav_settings"

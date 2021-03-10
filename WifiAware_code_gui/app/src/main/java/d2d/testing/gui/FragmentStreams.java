@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import d2d.testing.MainActivity;
 import d2d.testing.R;
+import d2d.testing.gui.main.MainFragment;
 
 
 public class FragmentStreams extends Fragment {
@@ -26,7 +27,7 @@ public class FragmentStreams extends Fragment {
     private ArrayList<StreamDetail> streamList = new ArrayList();
     private StreamListAdapter arrayAdapter;
     private ListView streamsListView;
-    private MainActivity mainActivity;
+    private MainFragment mainFragment;
 
     public FragmentStreams(){
 
@@ -48,8 +49,8 @@ public class FragmentStreams extends Fragment {
         execListener();
     }
 
-    public void setMainActivity(MainActivity activity){
-        mainActivity = activity;
+    public void setMainActivity(MainFragment mf){
+        mainFragment = mf;
     }
 
     public void updateList(boolean on_off, String ip, String name){
@@ -73,7 +74,7 @@ public class FragmentStreams extends Fragment {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               mainActivity.openViewStreamActivity(getActivity(),streamList.get(position).getIp());
+               mainFragment.openViewStreamActivity(getActivity(),streamList.get(position).getIp());
             }
         });
     }

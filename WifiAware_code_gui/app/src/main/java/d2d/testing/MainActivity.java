@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -43,19 +44,9 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.wifip2p.WifiAwareViewModel;
 
 
-public class MainActivity extends AppCompatActivity implements StreamingRecordObserver, RtspClient.Callback{
+public class MainActivity extends AppCompatActivity implements RtspClient.Callback{
 
     private WifiAwareViewModel mAwareModel;
-
-    MenuItem wifiItem;
-
-    private FragmentStreams streams_fragment;
-
-    private TextView myName;
-    private TextView myAdd;
-    private TextView myStatus;
-
-    private Button record;
 
     private AppBarConfiguration mAppBarConfiguration;
 
@@ -65,16 +56,15 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_main, R.id.nav_settings, R.id.nav_infoApp)
-                .setDrawerLayout(drawer)
-                .build();
 
-        //REVISAR EL NAVCONTROLLER ....
+        // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
+        mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_main, R.id.nav_settings, R.id.nav_infoApp).setOpenableLayout(drawer).build();
+
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
@@ -86,31 +76,10 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
     private void initialWork() {
         askPermits();
         checkWifiAwareAvailability();
-
-        streams_fragment = new FragmentStreams();
-        streams_fragment.setMainActivity(this);
-
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.st_fragment, streams_fragment);
-        transaction.commit();
-
-        record = findViewById(R.id.recordButton);
-        record.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(checkCameraHardware()) handleCamera();
-            }
-        });
-
-        myAdd = findViewById(R.id.my_address);
-        myName = findViewById(R.id.my_name);
-        myStatus = findViewById(R.id.my_status);
-
         initWifiAware();
-        updateMyDeviceStatus();
     }
 
-    private void initWifiAware(){ //Se inicia en onRequestPermissionsResult()
+    private void initWifiAware(){
         try {
             if(mAwareModel.createSession()){
                 if(mAwareModel.publishService("Server", MainActivity.this)){
@@ -131,28 +100,11 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        StreamingRecord.getInstance().addObserver(this);
     }
 
-    private void handleCamera(){
-        //openCameraActivity();
-        openStreamActivity();
-    }
-
-    public String getDeviceStatus() {
-        if (mAwareModel.isWifiAwareAvailable().getValue()) {
-            return "Wifi Aware available";
-        }
-        else return "Wifi Aware not available";
-    }
-
-    public void updateWifiIcon(boolean wifi) {
-        if(wifiItem!= null) {
-            if(wifi) {
-                wifiItem.setIconTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.holo_green_light, null)));
-            } else {
-                wifiItem.setIconTintList(ColorStateList.valueOf(getResources().getColor(android.R.color.holo_red_dark, null)));
-            }
+    private void checkWifiAwareAvailability(){
+        if (!getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
+            Snackbar.make(findViewById(android.R.id.content), "No dispones de Wifi Aware, la apliación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
         }
     }
 
@@ -195,79 +147,14 @@ public class MainActivity extends AppCompatActivity implements StreamingRecordOb
         }
     }
 
-    private void checkWifiAwareAvailability(){
-        if (!getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
-            Snackbar.make(findViewById(android.R.id.content), "No dispones de Wifi Aware, la apliación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-        }
-    }
-
-    private boolean checkCameraHardware() {
-        if (this.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
-            // This device has a camera
-            return true;
-        } else {
-            // No camera on this device
-            Toast.makeText(getApplicationContext(), "YOUR DEVICE HAS NO CAMERA", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-    }
-
-    public ArrayList<StreamDetail> getStreamlist(){
-        return streams_fragment.getStreamList();
-    }
-
-    private void openStreamActivity() {
-        Intent streamActivityIntent = new Intent(this, StreamActivity.class);
-        this.startActivity(streamActivityIntent);
-    }
-
-    public void openViewStreamActivity(Context context, String ip) {
-        Intent streamActivityIntent = new Intent(context, ViewStreamActivity.class);
-        streamActivityIntent.putExtra("IP",ip);
-        this.startActivity(streamActivityIntent);
-    }
-
-    @Override
-    public void localStreamingAvailable(UUID id, SessionBuilder sessionBuilder) {}
-
-    @Override
-    public void localStreamingUnavailable() {}
-
-    @Override
-    public void streamingAvailable(Streaming streaming, boolean bAllowDispatch) {
-        final String path = streaming.getUUID().toString();
-        runOnUiThread(new Runnable() {
-            public void run() {
-                streams_fragment.updateList(true, path, path);
-            }
-        });
-    }
-
-    @Override
-    public void streamingUnavailable(Streaming streaming) {
-        final String path = streaming.getUUID().toString();
-        runOnUiThread(new Runnable() {
-            public void run() {
-                streams_fragment.updateList(false, path, path);
-            }
-        });
-    }
-
-    @Override
-    public void onRtspUpdate(int message, Exception exception) {
-        Toast.makeText(getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
-    }
-
-    public void updateMyDeviceStatus () {
-        if(myName != null) myName.setText("Model:  " + Build.MODEL);
-        if(myAdd != null) myAdd.setText("Network: ..." /*+ mAwareModel.getConnectivityManager().getActiveNetwork().toString()*/);
-        if(myStatus != null) myStatus.setText(getDeviceStatus());
-    }
-
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+    @Override
+    public void onRtspUpdate(int message, Exception exception) {
+        Toast.makeText(getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
     }
 }
