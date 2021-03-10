@@ -116,6 +116,8 @@ public class RtspClient implements StreamingRecordObserver {
 	private final static int STATE_STOPPED = 0x03;
 	private int mState = 0;
 
+	private final static int MAX_NETWORK_REQUESTS = 30;
+
 	private class Parameters {
 		public String host; 
 		public String username;
@@ -171,8 +173,8 @@ public class RtspClient implements StreamingRecordObserver {
 	private NetworkCapabilities mCurrentNetCapabitities;
 	private PeerHandle mPeerHandle;
 	private WifiAwareNetworkCallback mNetworkCallback;
-
-
+	private NetworkRequest mNetworkRequest;
+	private int mTotalNetworkRequests;
 
 	private SessionBuilder mSessionBuilder;
 	/**
@@ -205,6 +207,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 		mRebroadcastStreamingStates = new HashMap<>();
 		mRebroadcastStreamings = new HashMap<>();
+		mTotalNetworkRequests = 0;
 	}
 
 	/**
@@ -290,31 +293,41 @@ public class RtspClient implements StreamingRecordObserver {
 				NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
 						.setPskPassphrase("wifiawaretest")
 						.build();
-				NetworkRequest networkRequest = new NetworkRequest.Builder()
+				mNetworkRequest = new NetworkRequest.Builder()
 						.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
 						.setNetworkSpecifier(networkSpecifier)
 						.build();
 				mState = STATE_STARTING;
 				mNetworkCallback = new WifiAwareNetworkCallback();
-				manager.requestNetwork(networkRequest, mNetworkCallback);
+				mTotalNetworkRequests = 0;
+				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
+				Log.d(TAG, "connectionCreated Called ");
 			}
 		});
 	}
 
 	private class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
+		public final static String TAG = "AwareNetworkCallback";
+
 		@Override
 		public void onAvailable(@NonNull Network network) {
 			mCurrentNet = network;
+			Log.d(TAG, "Network available");
 		}
 
 		@Override
 		public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
 			if(mCurrentNetCapabitities == null){
 				mCurrentNetCapabitities = networkCapabilities;
-				start();
 			}
-			else Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+			else {
+				Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+				mCurrentNetCapabitities = networkCapabilities;
+				mCurrentNet = network;
+				start();
+				Log.d(TAG, "start Called");
+			}
 		}
 
 		@Override
@@ -326,6 +339,20 @@ public class RtspClient implements StreamingRecordObserver {
 					restartClient();
 				}
 			});
+			Log.d(TAG, "Network lost");
+		}
+
+		@Override
+		public void onUnavailable() {
+			if(mTotalNetworkRequests++ > MAX_NETWORK_REQUESTS){
+				Log.d(TAG, "Network Unavailable, connection failed");
+				postError(ERROR_CONNECTION_FAILED, null);
+				restartClient();
+			}
+			else{
+				Log.d(TAG, "Network Unavailable, requesting again");
+				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
+			}
 		}
 	}
 
@@ -333,7 +360,7 @@ public class RtspClient implements StreamingRecordObserver {
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				if(mCurrentNetCapabitities != null && mConnManager.bindProcessToNetwork(mCurrentNet)) {
+				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
 					WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) mCurrentNetCapabitities.getTransportInfo();
 					InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
 					int peerPort = peerAwareInfo.getPort();
@@ -804,6 +831,7 @@ public class RtspClient implements StreamingRecordObserver {
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
+		Response.parseResponse(mBufferedReader);
 	}
 	
 	/**
@@ -837,7 +865,7 @@ public class RtspClient implements StreamingRecordObserver {
 					// We poll the RTSP server with OPTION requests
 					StreamingState st = new StreamingState();
 					sendRequestOption(st, "");
-					mHandler.postDelayed(mConnectionMonitor, 6000);
+					mHandler.postDelayed(mConnectionMonitor, 15000);
 				} catch (IOException e) {
 					// Happens if the OPTION request fails
 					postError(ERROR_CONNECTION_LOST, null);
@@ -894,7 +922,7 @@ public class RtspClient implements StreamingRecordObserver {
 		});
 	}	
 
-	static class Response {  //Cuando se utiliza esta clase???
+	static class Response {
 
 		// Parses method & uri
 		public static final Pattern regexStatus = Pattern.compile("RTSP/\\d.\\d (\\d+) (\\w+)",Pattern.CASE_INSENSITIVE);
@@ -924,14 +952,13 @@ public class RtspClient implements StreamingRecordObserver {
 
 			// Parsing headers of the request
 			while ( (line = input.readLine()) != null) {
-				//Log.e(TAG,"l: "+line.length()+", c: "+line);
+				Log.d(TAG,"l: "+line.length()+", c: "+line);
 				if (line.length()>3) {
 					matcher = rexegHeader.matcher(line);
 					matcher.find();
 					response.headers.put(matcher.group(1).toLowerCase(Locale.US),matcher.group(2));
-				} else {
-					break;
 				}
+				if(line.length() == 0) break;
 			}
 			if (line==null) throw new SocketException("Connection lost");
 
