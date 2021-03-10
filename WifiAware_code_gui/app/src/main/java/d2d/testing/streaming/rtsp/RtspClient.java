@@ -61,7 +61,7 @@ import d2d.testing.streaming.rtp.RtpSocket;
 import d2d.testing.streaming.sessions.RebroadcastSession;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.wifip2p.WifiAwareViewModel;
+import d2d.testing.gui.main.WifiAwareViewModel;
 
 /**
  * RFC 2326.

@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import d2d.testing.MainActivity;
+import d2d.testing.gui.main.MainFragment;
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
@@ -105,14 +106,14 @@ public class RTSPServerWorker extends AbstractWorker {
     private String mUsername;
     private String mPassword;
 
-    private MainActivity mMainActivity;
+    private MainFragment mMainFragment;
     private RTSPServerSelector mServerSelector;
 
-    public RTSPServerWorker(String username, String password, MainActivity mainActivity, RTSPServerSelector serverSelector) {
+    public RTSPServerWorker(String username, String password, MainFragment mainFragment, RTSPServerSelector serverSelector) {
         super();
         this.mUsername = username;
         this.mPassword = password;
-        this.mMainActivity = mainActivity;
+        this.mMainFragment = mainFragment;
         this.mServerSelector = serverSelector;
     }
 

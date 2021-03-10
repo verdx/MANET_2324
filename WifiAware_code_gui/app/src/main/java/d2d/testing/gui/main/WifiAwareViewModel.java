@@ -1,4 +1,4 @@
-package d2d.testing.wifip2p;
+package d2d.testing.gui.main;
 
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import d2d.testing.MainActivity;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
 
@@ -138,7 +137,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
         }
     }
 
-    public boolean publishService(String serviceName, final MainActivity activity) throws InterruptedException {
+    public boolean publishService(String serviceName, final MainFragment activity) throws InterruptedException {
         if(session == null) return false;
         synchronized (WifiAwareViewModel.this){
             PublishConfig config = new PublishConfig.Builder().setServiceName(serviceName).build();
@@ -183,7 +182,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
         }
     }
 
-    public boolean subscribeToService(String serviceName, final MainActivity activity) throws InterruptedException {
+    public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
         if(session == null) return false;
         synchronized (WifiAwareViewModel.this){
             SubscribeConfig config = new SubscribeConfig.Builder().setServiceName(serviceName).build();

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import d2d.testing.MainActivity;
+import d2d.testing.gui.main.MainFragment;
 import d2d.testing.net.threads.workers.RTSPServerWorker;
 
 /**
@@ -46,11 +47,11 @@ public class RTSPServerSelector extends AbstractSelector {
         mWorker.start();
     }
 
-    private RTSPServerSelector(MainActivity mainActivity, ConnectivityManager connManager) throws IOException {
+    private RTSPServerSelector(MainFragment mainFragment, ConnectivityManager connManager) throws IOException {
         super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
-        mWorker = new RTSPServerWorker(null, null, mainActivity, this);
+        mWorker = new RTSPServerWorker(null, null, mainFragment, this);
         mWorker.start();
     }
 
@@ -62,9 +63,9 @@ public class RTSPServerSelector extends AbstractSelector {
         return INSTANCE;
     }
 
-    public static RTSPServerSelector initiateInstance(MainActivity mainActivity, ConnectivityManager connManager) throws IOException {
+    public static RTSPServerSelector initiateInstance(MainFragment mainFragment, ConnectivityManager connManager) throws IOException {
         if(INSTANCE == null) {
-            INSTANCE = new RTSPServerSelector(mainActivity,connManager);
+            INSTANCE = new RTSPServerSelector(mainFragment,connManager);
         }
 
         return INSTANCE;
