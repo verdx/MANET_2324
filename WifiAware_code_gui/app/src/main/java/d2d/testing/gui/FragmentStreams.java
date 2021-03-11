@@ -29,9 +29,7 @@ public class FragmentStreams extends Fragment {
     private ListView streamsListView;
     private MainFragment mainFragment;
 
-    public FragmentStreams(){
-
-    }
+    public FragmentStreams(){ }
 
     @Nullable
     @Override

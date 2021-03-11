@@ -77,47 +77,49 @@ public class RtspClient implements StreamingRecordObserver {
 	public final static int ERROR_CONNECTION_FAILED = 0x01;
 
 	public final static int ERROR_NETWORK_LOST = 0x02;
-	
+
 	/** Message sent when the credentials are wrong. */
 	public final static int ERROR_WRONG_CREDENTIALS = 0x03;
 
-	
+
 	/** Use this to use UDP for the transport protocol. */
 	public final static int TRANSPORT_UDP = RtpSocket.TRANSPORT_UDP;
-	
+
 	/** Use this to use TCP for the transport protocol. */
-	public final static int TRANSPORT_TCP = RtpSocket.TRANSPORT_TCP;	
-	
-	/** 
-	 * Message sent when the connection with the RTSP server has been lost for 
+	public final static int TRANSPORT_TCP = RtpSocket.TRANSPORT_TCP;
+
+	/**
+	 * Message sent when the connection with the RTSP server has been lost for
 	 * some reason (for example, the user is going under a bridge).
 	 * When the connection with the server is lost, the client will automatically try to
 	 * reconnect as long as {@link #stop()} is not called.
 	 **/
 	public final static int ERROR_CONNECTION_LOST = 0x04;
-	
+
 	/**
 	 * Message sent when the connection with the RTSP server has been reestablished.
 	 * When the connection with the server is lost, the client will automatically try to
 	 * reconnect as long as {@link #stop()} is not called.
 	 */
 	public final static int MESSAGE_CONNECTION_RECOVERED = 0x05;
-	
+
 	private final static int STATE_STARTED = 0x00;
 	private final static int STATE_STARTING = 0x01;
 	private final static int STATE_STOPPING = 0x02;
 	private final static int STATE_STOPPED = 0x03;
 	private int mState = 0;
 
+	private final static int MAX_NETWORK_REQUESTS = 30;
+
 	private class Parameters {
-		public String host; 
+		public String host;
 		public String username;
 		public String password;
 		//public String path;
 		//public Session session;
 		public int port;
 		public int transport;
-		
+
 		public Parameters clone() {
 			Parameters params = new Parameters();
 			params.host = host;
@@ -148,7 +150,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 	private Map<UUID, StreamingState> mRebroadcastStreamingStates;
 	private Map<UUID, RebroadcastSession> mRebroadcastStreamings;
-	
+
 	private Parameters mTmpParameters;
 	private Parameters mParameters;
 
@@ -164,12 +166,12 @@ public class RtspClient implements StreamingRecordObserver {
 	private NetworkCapabilities mCurrentNetCapabitities;
 	private PeerHandle mPeerHandle;
 	private WifiAwareNetworkCallback mNetworkCallback;
-
-
+	private NetworkRequest mNetworkRequest;
+	private int mTotalNetworkRequests;
 
 	private SessionBuilder mSessionBuilder;
 	/**
-	 * The callback interface you need to implement to know what's going on with the 
+	 * The callback interface you need to implement to know what's going on with the
 	 * RTSP server (for example your Wowza Media Server).
 	 */
 	public interface Callback {
@@ -198,6 +200,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 		mRebroadcastStreamingStates = new HashMap<>();
 		mRebroadcastStreamings = new HashMap<>();
+		mTotalNetworkRequests = 0;
 	}
 
 	/**
@@ -214,20 +217,20 @@ public class RtspClient implements StreamingRecordObserver {
 	 * If not called before startStream(), a it will be created.
 
 	 public void setSession(Session session) {
-	 	mTmpParameters.session = session;
+	 mTmpParameters.session = session;
 	 }
 
 	 public Session getSession() {
-	 	return mTmpParameters.session;
+	 return mTmpParameters.session;
 	 }
 
 	 /**
 	 * The path to which the stream will be sent to.
 
-	public void setStreamPath(String path) {
-		mTmpParameters.path = path;
-	}
-	*/
+	 public void setStreamPath(String path) {
+	 mTmpParameters.path = path;
+	 }
+	 */
 
 	public void setSessionBuilder(SessionBuilder builder){mSessionBuilder = builder;}
 
@@ -257,14 +260,14 @@ public class RtspClient implements StreamingRecordObserver {
 
 
 	/**
-	 * Call this with {@link #TRANSPORT_TCP} or {@value #TRANSPORT_UDP} to choose the 
+	 * Call this with {@link #TRANSPORT_TCP} or {@value #TRANSPORT_UDP} to choose the
 	 * transport protocol that will be used to send RTP/RTCP packets.
 	 * Not ready yet !
 	 */
 	public void setTransportMode(int mode) {
 		mTmpParameters.transport = mode;
 	}
-	
+
 	public boolean isStreaming() {
 		return mState==STATE_STARTED||mState==STATE_STARTING;
 	}
@@ -283,31 +286,41 @@ public class RtspClient implements StreamingRecordObserver {
 				NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
 						.setPskPassphrase("wifiawaretest")
 						.build();
-				NetworkRequest networkRequest = new NetworkRequest.Builder()
+				mNetworkRequest = new NetworkRequest.Builder()
 						.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
 						.setNetworkSpecifier(networkSpecifier)
 						.build();
 				mState = STATE_STARTING;
 				mNetworkCallback = new WifiAwareNetworkCallback();
-				manager.requestNetwork(networkRequest, mNetworkCallback);
+				mTotalNetworkRequests = 0;
+				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
+				Log.d(TAG, "connectionCreated Called ");
 			}
 		});
 	}
 
 	private class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
+		public final static String TAG = "AwareNetworkCallback";
+
 		@Override
 		public void onAvailable(@NonNull Network network) {
 			mCurrentNet = network;
+			Log.d(TAG, "Network available");
 		}
 
 		@Override
 		public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
 			if(mCurrentNetCapabitities == null){
 				mCurrentNetCapabitities = networkCapabilities;
-				start();
 			}
-			else Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+			else {
+				Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+				mCurrentNetCapabitities = networkCapabilities;
+				mCurrentNet = network;
+				start();
+				Log.d(TAG, "start Called");
+			}
 		}
 
 		@Override
@@ -319,6 +332,20 @@ public class RtspClient implements StreamingRecordObserver {
 					restartClient();
 				}
 			});
+			Log.d(TAG, "Network lost");
+		}
+
+		@Override
+		public void onUnavailable() {
+			if(mTotalNetworkRequests++ > MAX_NETWORK_REQUESTS){
+				Log.d(TAG, "Network Unavailable, connection failed");
+				postError(ERROR_CONNECTION_FAILED, null);
+				restartClient();
+			}
+			else{
+				Log.d(TAG, "Network Unavailable, requesting again");
+				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
+			}
 		}
 	}
 
@@ -326,7 +353,7 @@ public class RtspClient implements StreamingRecordObserver {
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				if(mCurrentNetCapabitities != null && mConnManager.bindProcessToNetwork(mCurrentNet)) {
+				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
 					WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) mCurrentNetCapabitities.getTransportInfo();
 					InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
 					int peerPort = peerAwareInfo.getPort();
@@ -591,7 +618,7 @@ public class RtspClient implements StreamingRecordObserver {
 			restartClient();
 		}
 	}
-	
+
 	private void tryLocalStreamingConnection() throws SecurityException, IOException, IllegalStateException, RuntimeException {
 		mLocalStreamingState.mCSeq = 0;
 		String path = mLocalStreamingUUID.toString();
@@ -608,9 +635,9 @@ public class RtspClient implements StreamingRecordObserver {
 		sendRequestSetup(st, path, session, 1);
 		sendRequestRecord(st, path);
 	}
-	
+
 	/**
-	 * Forges and sends the ANNOUNCE request 
+	 * Forges and sends the ANNOUNCE request
 	 */
 	//IOException fallo de conexion
 	//IllegalStateException fallo en protocolo o configuracion de cliente
@@ -688,7 +715,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	/**
-	 * Forges and sends the SETUP request 
+	 * Forges and sends the SETUP request
 	 */
 	private void sendRequestSetup(StreamingState st, String path, Stream stream, int trackNo) throws IllegalStateException, IOException {
 		if (stream != null) {
@@ -777,7 +804,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	/**
-	 * Forges and sends the RECORD request 
+	 * Forges and sends the RECORD request
 	 */
 	private void sendRequestRecord(StreamingState st, String path) throws IOException {
 		String request = "RECORD rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
@@ -790,17 +817,18 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	/**
-	 * Forges and sends the TEARDOWN request 
+	 * Forges and sends the TEARDOWN request
 	 */
 	private void sendRequestTeardown(StreamingState st, String path) throws IOException {
 		String request = "TEARDOWN rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
+		Response.parseResponse(mBufferedReader);
 	}
-	
+
 	/**
-	 * Forges and sends the OPTIONS request 
+	 * Forges and sends the OPTIONS request
 	 */
 	private void sendRequestOption(StreamingState st, String path) throws IOException {
 		String request = "OPTIONS rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" + addHeaders(st);
@@ -808,7 +836,7 @@ public class RtspClient implements StreamingRecordObserver {
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
 		Response.parseResponse(mBufferedReader);
-	}	
+	}
 
 	private String addHeaders(StreamingState st) {
 		return "CSeq: " + (++st.mCSeq) + "\r\n" +
@@ -830,7 +858,7 @@ public class RtspClient implements StreamingRecordObserver {
 					// We poll the RTSP server with OPTION requests
 					StreamingState st = new StreamingState();
 					sendRequestOption(st, "");
-					mHandler.postDelayed(mConnectionMonitor, 6000);
+					mHandler.postDelayed(mConnectionMonitor, 15000);
 				} catch (IOException e) {
 					// Happens if the OPTION request fails
 					postError(ERROR_CONNECTION_LOST, null);
@@ -840,7 +868,7 @@ public class RtspClient implements StreamingRecordObserver {
 			}
 		}
 	};
-	
+
 	final protected static char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
 
 	private static String bytesToHex(byte[] bytes) {
@@ -870,7 +898,7 @@ public class RtspClient implements StreamingRecordObserver {
 			@Override
 			public void run() {
 				if (mCallback != null) {
-					mCallback.onRtspUpdate(message, null); 
+					mCallback.onRtspUpdate(message, null);
 				}
 			}
 		});
@@ -881,13 +909,13 @@ public class RtspClient implements StreamingRecordObserver {
 			@Override
 			public void run() {
 				if (mCallback != null) {
-					mCallback.onRtspUpdate(message, e); 
+					mCallback.onRtspUpdate(message, e);
 				}
 			}
 		});
-	}	
+	}
 
-	static class Response {  //Cuando se utiliza esta clase???
+	static class Response {
 
 		// Parses method & uri
 		public static final Pattern regexStatus = Pattern.compile("RTSP/\\d.\\d (\\d+) (\\w+)",Pattern.CASE_INSENSITIVE);
@@ -917,14 +945,13 @@ public class RtspClient implements StreamingRecordObserver {
 
 			// Parsing headers of the request
 			while ( (line = input.readLine()) != null) {
-				//Log.e(TAG,"l: "+line.length()+", c: "+line);
+				Log.d(TAG,"l: "+line.length()+", c: "+line);
 				if (line.length()>3) {
 					matcher = rexegHeader.matcher(line);
 					matcher.find();
 					response.headers.put(matcher.group(1).toLowerCase(Locale.US),matcher.group(2));
-				} else {
-					break;
 				}
+				if(line.length() == 0) break;
 			}
 			if (line==null) throw new SocketException("Connection lost");
 

@@ -51,10 +51,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
-        if(!mAwareModel.sessionCreated()){
-            initialWork();
-        }
+        mAwareModel = new ViewModelProvider(getActivity()).get(WifiAwareViewModel.class);
+        initialWork();
         StreamingRecord.getInstance().addObserver(this);
     }
 
@@ -64,7 +62,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         streams_fragment = new FragmentStreams();
         streams_fragment.setMainActivity(this);
 
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
         transaction.replace(R.id.st_fragment, streams_fragment).commit();
 
         record = root.findViewById(R.id.recordButton);
@@ -108,7 +106,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     private void handleCamera(){

@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".StreamActivity"/>
+        <activity android:name=".StreamActivity" android:theme="@style/AppTheme.NoActionBar"/>
 
         <activity android:name=".ViewStreamActivity"
             android:screenOrientation="landscape"

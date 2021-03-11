@@ -4,7 +4,10 @@ import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -21,9 +24,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import d2d.testing.net.threads.workers.AbstractWorker;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import d2d.testing.MainActivity;
 import d2d.testing.utils.Logger;
+import d2d.testing.net.threads.workers.AbstractWorker;
 
 import static java.lang.Thread.sleep;
 
@@ -97,6 +102,7 @@ public abstract class AbstractSelector implements Runnable{
         //this.initiateConnectionUDP();
     }
 
+
     public void stop(){
         this.mEnabled = false;
     }
@@ -107,6 +113,7 @@ public abstract class AbstractSelector implements Runnable{
             new Thread(this).start();
         }
     }
+
 
     public void run(){
         try {
@@ -219,7 +226,7 @@ public abstract class AbstractSelector implements Runnable{
         mReadBuffer.clear();   //Clear out our read buffer
 
         if (socketChannel instanceof SocketChannel ||
-           (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
+                (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
             try {
                 numRead = ((ByteChannel) socketChannel).read(mReadBuffer); // Attempt to read off the channel
             } catch (IOException e) {
@@ -295,7 +302,7 @@ public abstract class AbstractSelector implements Runnable{
             while (!queue.isEmpty()) {                  // Write until there's not more data ...
                 ByteBuffer buf = (ByteBuffer) queue.get(0);
                 int written = ((ByteChannel) socketChannel).write(buf);
-                //Logger.e("AbstractSelector: Wrote " + written + " bytes in " + this.getClass());
+                Logger.d("AbstractSelector: Wrote " + written + " bytes in " + this.getClass());
                 if (buf.remaining() > 0) {              // ... or the socket's buffer fills up
                     break;
                 }

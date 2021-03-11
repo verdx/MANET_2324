@@ -18,11 +18,11 @@ public class Logger {
     //Methods Log.DEBUG level
     public static void d(String str) {
         //if (Log.isLoggable(TAG, Log.DEBUG))
-            Log.d(TAG, str);
+        Log.d(TAG, str);
     }
     public static void d(String str, Throwable t) {
         //if (Log.isLoggable(TAG, Log.DEBUG))
-            Log.d(TAG, str, t);
+        Log.d(TAG, str, t);
     }
 
     //Methods Log.ERROR level
