@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import d2d.testing.MainActivity;
 import d2d.testing.R;
 import d2d.testing.gui.main.MainFragment;
+import d2d.testing.streaming.StreamingRecord;
 
 
 public class FragmentStreams extends Fragment {
@@ -45,6 +46,7 @@ public class FragmentStreams extends Fragment {
         arrayAdapter = new StreamListAdapter(getContext(), streamList);
         streamsListView.setAdapter(arrayAdapter);
         execListener();
+        if(mainFragment != null) StreamingRecord.getInstance().addObserver(mainFragment);
     }
 
     public void setMainActivity(MainFragment mf){
@@ -75,6 +77,12 @@ public class FragmentStreams extends Fragment {
                mainFragment.openViewStreamActivity(getActivity(),streamList.get(position).getIp());
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        StreamingRecord.getInstance().removeObserver(mainFragment);
     }
 
     public ArrayList<StreamDetail> getStreamList(){

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,7 +54,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         super.onCreate(savedInstanceState);
         mAwareModel = new ViewModelProvider(getActivity()).get(WifiAwareViewModel.class);
         initialWork();
-        StreamingRecord.getInstance().addObserver(this);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -82,7 +82,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void initialWork() {
-        initWifiAware();
+        if(!mAwareModel.sessionCreated()){
+            initWifiAware();
+        }
     }
 
     private void initWifiAware(){
@@ -176,23 +178,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 streams_fragment.updateList(false, path, path);
             }
         });
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mAwareModel.closeSessions();
-        StreamingRecord.getInstance().removeObserver(this);
     }
 
     @Override
