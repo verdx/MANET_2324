@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.net.Uri;
+import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -24,7 +25,9 @@ import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 
 public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener {
@@ -115,6 +118,7 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         Media m = new Media(libvlc, Uri.parse(rtspUrl));
         mMediaPlayer.setMedia(m);
         mMediaPlayer.play();
+
     }
 
     @Override
@@ -186,5 +190,15 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
             default:
                 break;
         }
+    }
+
+    private String createVideoFilePath(){
+        String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+        String filename = sdf.format(cal.getTime());
+        filename = filename.replaceAll(" ", "_");
+        filename = filename.replaceAll(":", "-");
+        return getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/" + filename + ".mp4";
     }
 }

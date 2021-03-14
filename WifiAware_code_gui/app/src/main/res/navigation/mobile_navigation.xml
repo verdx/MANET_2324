@@ -14,13 +14,17 @@
     <fragment
         android:id="@+id/nav_settings"
         android:name="d2d.testing.gui.setting.SettingFragment"
-        android:label="Settings"
-        tools:layout="@layout/fragment_settings" />
+        android:label="Settings"/>
 
     <fragment
         android:id="@+id/nav_infoApp"
         android:name="d2d.testing.gui.info.InfoFragment"
         android:label="Information"
         tools:layout="@layout/fragment_info"/>
+    <fragment
+        android:id="@+id/nav_gallery"
+        android:name="d2d.testing.gui.gallery.GalleryFragment"
+        android:label="Gallery"
+        tools:layout="@layout/fragment_gallery"/>
 
 </navigation>

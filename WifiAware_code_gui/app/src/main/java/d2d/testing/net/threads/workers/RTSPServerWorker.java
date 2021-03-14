@@ -585,7 +585,6 @@ public class RTSPServerWorker extends AbstractWorker {
 
         try {
             if ((line = inputReader.readLine())==null) {
-                //todo para nosotros no es desconectado... simplemente no hay una linea completa?
                 throw new SocketException("Client disconnected");
             }
 
