@@ -42,6 +42,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
     private MutableLiveData<Boolean> available;
     private HandlerThread worker;
     private Handler workerHandle;
+    private int count = 1;
 
     private Map<PeerHandle, RtspClient> mClients;
 
@@ -216,6 +217,19 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
                 @Override
                 public void onMessageSendSucceeded(int messageId) {
+                    int auxCOUNT;
+                    synchronized (WifiAwareViewModel.this){
+                        auxCOUNT = count;
+                        count++;
+                        if(count==5){
+                            count = 1;
+                        }
+                    }
+                    try {
+                        Thread.sleep(auxCOUNT*1500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     RtspClient rtspClient = new RtspClient(WifiAwareViewModel.this);
                     rtspClient.setCallback(activity);
                     synchronized (mClients){

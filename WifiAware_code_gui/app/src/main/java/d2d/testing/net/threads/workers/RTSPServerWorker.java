@@ -246,10 +246,6 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         UUID streamUUID = UUID.fromString(request.path);
-        if(StreamingRecord.getInstance().getStreaming(streamUUID) != null) {
-            response.status = RtspResponse.STATUS_FORBIDDEN;
-            return response;
-        }
 
         mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session));
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
@@ -500,7 +496,14 @@ public class RTSPServerWorker extends AbstractWorker {
         String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
         String name = receiveSession.getPath();
 
-        StreamingRecord.getInstance().addStreaming(mServerSessions.get(channel).get(UUID.fromString(receiveSession.getPath())), false);
+        UUID streamUUID = UUID.fromString(receiveSession.getPath());
+
+        if(StreamingRecord.getInstance().streamingExist(streamUUID)) {
+            response.status = RtspResponse.STATUS_FORBIDDEN;
+            return response;
+        }
+
+        StreamingRecord.getInstance().addStreaming(mServerSessions.get(channel).get(UUID.fromString(receiveSession.getPath())), true);
         //mMainActivity.updateStreamList(true, ip, name);
         //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(true, ip, name));
 

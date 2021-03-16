@@ -598,7 +598,7 @@ public abstract class VideoStream extends MediaStream {
 				Log.e(TAG,e.getMessage()!=null?e.getMessage():"unknown error");
 			}
 			mCamera = null;
-			mCameraLooper.quit();
+			if(mCameraLooper != null) mCameraLooper.quit();
 			mUnlocked = false;
 			mPreviewStarted = false;
 		}	

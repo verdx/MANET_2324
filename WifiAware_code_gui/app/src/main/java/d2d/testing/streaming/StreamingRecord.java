@@ -83,6 +83,13 @@ public class StreamingRecord {
         return null;
     }
 
+    public synchronized boolean streamingExist(UUID id){
+        if(mLocalStreamingUUID != null && mLocalStreamingUUID.equals(id)) return true;
+        Record rec = mRecords.get(id);
+        if(rec != null) return true;
+        return false;
+    }
+
     public synchronized List<Streaming> getStreamings(){
         List<Streaming> list = new ArrayList<>();
         for(Record rec : mRecords.values()){

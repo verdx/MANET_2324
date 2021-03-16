@@ -109,7 +109,7 @@ public class RtspClient implements StreamingRecordObserver {
 	private final static int STATE_STOPPED = 0x03;
 	private int mState = 0;
 
-	private final static int MAX_NETWORK_REQUESTS = 30;
+	private final static int MAX_NETWORK_REQUESTS = 100;
 
 	private class Parameters {
 		public String host;
@@ -294,7 +294,7 @@ public class RtspClient implements StreamingRecordObserver {
 				mNetworkCallback = new WifiAwareNetworkCallback();
 				mTotalNetworkRequests = 0;
 				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
-				Log.d(TAG, "connectionCreated Called ");
+				Log.e(TAG, "connectionCreated Called ");
 			}
 		});
 	}
@@ -306,20 +306,22 @@ public class RtspClient implements StreamingRecordObserver {
 		@Override
 		public void onAvailable(@NonNull Network network) {
 			mCurrentNet = network;
-			Log.d(TAG, "Network available");
+			Log.e(TAG, "Network available");
 		}
 
 		@Override
 		public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
 			if(mCurrentNetCapabitities == null){
-				mCurrentNetCapabitities = networkCapabilities;
-			}
-			else {
-				Log.d(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+				Log.e(TAG, "onCapabilitiesChanged: capabiity 1");
 				mCurrentNetCapabitities = networkCapabilities;
 				mCurrentNet = network;
 				start();
-				Log.d(TAG, "start Called");
+				Log.e(TAG, "start Called");
+			}
+			else {
+				Log.e(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
+				mCurrentNetCapabitities = networkCapabilities;
+
 			}
 		}
 
@@ -332,18 +334,23 @@ public class RtspClient implements StreamingRecordObserver {
 					restartClient();
 				}
 			});
-			Log.d(TAG, "Network lost");
+			Log.e(TAG, "Network lost");
 		}
 
 		@Override
 		public void onUnavailable() {
 			if(mTotalNetworkRequests++ > MAX_NETWORK_REQUESTS){
-				Log.d(TAG, "Network Unavailable, connection failed");
+				Log.e(TAG, "Network Unavailable, connection failed");
 				postError(ERROR_CONNECTION_FAILED, null);
 				restartClient();
 			}
 			else{
-				Log.d(TAG, "Network Unavailable, requesting again");
+				Log.e(TAG, "Network Unavailable, requesting again");
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 			}
 		}
@@ -375,7 +382,8 @@ public class RtspClient implements StreamingRecordObserver {
 						StreamingRecord.getInstance().addObserver(RtspClient.this);
 					} catch (IOException e) {
 						postError(ERROR_CONNECTION_FAILED, e);
-						clearClient();
+						//clearClient();
+						mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 					}
 				}
 			}
@@ -608,6 +616,7 @@ public class RtspClient implements StreamingRecordObserver {
 				//Como de momento solo rechaza por bucles no volvemos a intentar el envio
 				mRebroadcastStreamingStates.remove(streamUUID);
 				mRebroadcastStreamings.remove(streamUUID);
+				session.stop();
 			}
 			finally {
 				mConnManager.bindProcessToNetwork(null);
@@ -806,14 +815,18 @@ public class RtspClient implements StreamingRecordObserver {
 	/**
 	 * Forges and sends the RECORD request
 	 */
-	private void sendRequestRecord(StreamingState st, String path) throws IOException {
+	private void sendRequestRecord(StreamingState st, String path) throws IOException, RuntimeException{
 		String request = "RECORD rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+" RTSP/1.0\r\n" +
 				"Range: npt=0.000-\r\n" +
 				addHeaders(st);
 		Log.i(TAG,request.substring(0, request.indexOf("\r\n")));
 		mOutputStream.write(request.getBytes("UTF-8"));
 		mOutputStream.flush();
-		Response.parseResponse(mBufferedReader);
+		Response response =  Response.parseResponse(mBufferedReader);
+		if (response.status == 403) {
+			Log.d(TAG, "Streaming " + path + " refused by server");
+			throw new RuntimeException("Streaming " + path + " refused by server");
+		}
 	}
 
 	/**
@@ -911,6 +924,12 @@ public class RtspClient implements StreamingRecordObserver {
 				if (mCallback != null) {
 					mCallback.onRtspUpdate(message, e);
 				}
+				Log.e(TAG, String.valueOf(message));
+				if(e != null){
+					Log.e(TAG, e.getLocalizedMessage());
+					e.printStackTrace();
+				}
+
 			}
 		});
 	}
