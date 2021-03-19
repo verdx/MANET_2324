@@ -198,7 +198,7 @@ public class AACStream extends AudioStream {
 	/** Stops the stream. */
 	public synchronized void stop() {
 		if (mStreaming) {
-			if (mMode==MODE_MEDIACODEC_API) {
+			if (mMode==MODE_MEDIACODEC_API || mMode == MODE_MEDIACODEC_API_2) {
 				Log.d(TAG, "Interrupting threads...");
 				AudioPacketizerDispatcher.unsubscribe(mPacketizer);
 			}

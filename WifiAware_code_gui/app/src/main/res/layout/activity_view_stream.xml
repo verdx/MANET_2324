@@ -12,7 +12,7 @@
             tools:context="d2d.testing.ViewStreamActivity">
 
                 <SurfaceView
-                    android:id="@+id/surface"
+                    android:id="@+id/textureView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
         </LinearLayout>

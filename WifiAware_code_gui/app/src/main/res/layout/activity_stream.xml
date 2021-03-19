@@ -8,8 +8,8 @@
     android:color="@android:color/background_light"
     tools:context=".StreamActivity" >
 
-    <d2d.testing.streaming.gl.SurfaceView
-        android:id="@+id/surface"
+    <d2d.testing.AutoFitTextureView
+        android:id="@+id/textureView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

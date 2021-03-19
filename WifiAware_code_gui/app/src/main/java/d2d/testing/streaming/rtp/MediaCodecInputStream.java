@@ -36,17 +36,15 @@ public class MediaCodecInputStream extends BufferInfoInputStream {
 
 	public final String TAG = "MediaCodecInputStream"; 
 
-	private MediaCodec mMediaCodec;
-	private ByteBuffer[] mBuffers;
+	private final MediaCodec mMediaCodec;
 	private ByteBuffer mBuffer = null;
-	private int mIndex = -1;
+	private int mIndex;
 	private boolean mClosed = false;
 	
 	public MediaFormat mMediaFormat;
 
 	public MediaCodecInputStream(MediaCodec mediaCodec) {
 		mMediaCodec = mediaCodec;
-		mBuffers = mMediaCodec.getOutputBuffers();
 	}
 
 	@Override
@@ -69,14 +67,14 @@ public class MediaCodecInputStream extends BufferInfoInputStream {
 					mIndex = mMediaCodec.dequeueOutputBuffer(mBufferInfo, 500000);
 					if (mIndex>=0 ){
 						//Log.d(TAG,"Index: "+mIndex+" Time: "+mBufferInfo.presentationTimeUs+" size: "+mBufferInfo.size);
-						mBuffer = mBuffers[mIndex];
-						mBuffer.position(0);
+						mBuffer = mMediaCodec.getOutputBuffer(mIndex);
+						mMediaFormat = mMediaCodec.getOutputFormat(mIndex);
+						// old mBuffer = mBuffers[mIndex];
+						// old mBuffer.position(0);
 						break;
-					} else if (mIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-						mBuffers = mMediaCodec.getOutputBuffers();
-					} else if (mIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-						mMediaFormat = mMediaCodec.getOutputFormat();
-						Log.i(TAG,mMediaFormat.toString());
+					//} else if (mIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+					//	mMediaFormat = mMediaCodec.getOutputFormat();
+					//	Log.i(TAG,mMediaFormat.toString());
 					} else if (mIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
 						Log.v(TAG,"No buffer available...");
 						//return 0;
@@ -89,7 +87,7 @@ public class MediaCodecInputStream extends BufferInfoInputStream {
 			
 			if (mClosed) throw new IOException("This InputStream was closed");
 			
-			min = length < mBufferInfo.size - mBuffer.position() ? length : mBufferInfo.size - mBuffer.position(); 
+			min = Math.min(length, mBufferInfo.size - mBuffer.position());
 			mBuffer.get(buffer, offset, min);
 			if (mBuffer.position()>=mBufferInfo.size) {
 				mMediaCodec.releaseOutputBuffer(mIndex, false);

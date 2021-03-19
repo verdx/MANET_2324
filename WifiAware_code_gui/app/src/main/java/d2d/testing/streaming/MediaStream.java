@@ -46,13 +46,13 @@ public abstract class MediaStream implements Stream {
 	protected static final String TAG = "MediaStream";
 	
 	/** Raw audio/video will be encoded using the MediaRecorder API. */
-	public static final byte MODE_MEDIARECORDER_API = 0x01;
+	public static final byte MODE_MEDIARECORDER_API = 0x01; //NOT UPDATED DONT USE
 
 	/** Raw audio/video will be encoded using the MediaCodec API with buffers. */
-	public static final byte MODE_MEDIACODEC_API = 0x02;
+	public static final byte MODE_MEDIACODEC_API = 0x02; //NOT IMPLEMENTED FOR VIDEO DONT USE
 
 	/** Raw audio/video will be encoded using the MediaCode API with a surface. */
-	public static final byte MODE_MEDIACODEC_API_2 = 0x05;
+	public static final byte MODE_MEDIACODEC_API_2 = 0x05; //ONLY IMPLEMENTED FOR VIDEO
 
 	/** A LocalSocket will be used to feed the MediaRecorder object */
 	public static final byte PIPE_API_LS = 0x01;
@@ -66,7 +66,7 @@ public abstract class MediaStream implements Stream {
 	/** The packetizer that will read the output of the camera and send RTP packets over the networked. */
 	protected AbstractPacketizer mPacketizer = null;
 
-	protected static byte sSuggestedMode = MODE_MEDIARECORDER_API;
+	protected static byte sSuggestedMode;
 	protected byte mMode, mRequestedMode;
 
 	/** 
@@ -100,13 +100,14 @@ public abstract class MediaStream implements Stream {
 		try {
 			Class.forName("android.media.MediaCodec");
 			// Will be set to MODE_MEDIACODEC_API at some point...
-			sSuggestedMode = MODE_MEDIACODEC_API;
+			sSuggestedMode = MODE_MEDIACODEC_API_2;
 			Log.i(TAG,"Phone supports the MediaCodec API");
 		} catch (ClassNotFoundException e) {
 			sSuggestedMode = MODE_MEDIARECORDER_API;
 			Log.i(TAG,"Phone does not support the MediaCodec API");
 		}
-		
+
+		/*
 		// Starting lollipop, the LocalSocket API cannot be used anymore to feed 
 		// a MediaRecorder object for security reasons
 		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH) {
@@ -114,6 +115,10 @@ public abstract class MediaStream implements Stream {
 		} else {
 			sPipeApi = PIPE_API_LS;
 		}
+
+		 */
+		//BUILD VERSION ALWAYS ABOVE 29
+		sPipeApi = PIPE_API_PFD;
 	}
 
 	public MediaStream() {
@@ -292,13 +297,6 @@ public abstract class MediaStream implements Stream {
 					mMediaRecorder = null;
 					closeSockets();
 					mPacketizer.stop();
-				} else {
-					//mPacketizer.stop();
-					/*
-					mMediaCodec.stop();
-					mMediaCodec.release();
-					mMediaCodec = null;
-					*/
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -64,7 +64,7 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         rtspUrl = "rtsp://127.0.0.1:1234/" + ip;
         Log.d(TAG, "Playing back " + rtspUrl);
 
-        mSurface = (SurfaceView) findViewById(R.id.surface);
+        mSurface = (SurfaceView) findViewById(R.id.textureView);
         holder = mSurface.getHolder();
 
         ArrayList<String> options = new ArrayList<String>();
@@ -94,6 +94,7 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         if (Build.VERSION.SDK_INT >= 19) {
             // include navigation bar
             getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
+            //getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         } else {
             // exclude navigation bar
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);

@@ -202,7 +202,7 @@ public class Session {
 	/** You probably don't need to use that directly, use the {@link SessionBuilder}. */
 	void removeVideoTrack() {
 		if (mVideoStream != null) {
-			mVideoStream.stopPreview();
+			mVideoStream.stop();
 			mVideoStream = null;
 		}
 	}
@@ -270,33 +270,6 @@ public class Session {
 		}
 	}
 
-	/**
-	 * Sets a Surface to show a preview of recorded media (video). <br />
-	 * You can call this method at any time and changes will take 
-	 * effect next time you call {@link #start()} or {@link #startPreview()}.
-	 */
-	public void setSurfaceView(final SurfaceView view) {
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mVideoStream != null) {
-					mVideoStream.setSurfaceView(view);
-				}
-			}				
-		});
-	}
-
-	/** 
-	 * Sets the orientation of the preview. <br />
-	 * You can call this method at any time and changes will take 
-	 * effect next time you call {@link #configure()}.
-	 * @param orientation The orientation of the preview
-	 */
-	public void setPreviewOrientation(int orientation) {
-		if (mVideoStream != null) {
-			mVideoStream.setPreviewOrientation(orientation);
-		}
-	}	
 
 	/** 
 	 * Sets the configuration of the stream. <br />
@@ -546,111 +519,7 @@ public class Session {
 		postSessionStopped();
 	}
 
-	/**
-	 * Asynchronously starts the camera preview. <br />
-	 * You should of course pass a {@link SurfaceView} to {@link #setSurfaceView(SurfaceView)}
-	 * before calling this method. Otherwise, the {@link Callback#onSessionError(int, int, Exception)}
-	 * callback will be called with {@link #ERROR_INVALID_SURFACE}.
-	 */
-	public void startPreview() {
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mVideoStream != null) {
-					try {
-						mVideoStream.startPreview();
-						postPreviewStarted();
-						mVideoStream.configure();
-					} catch (CameraInUseException e) {
-						postError(ERROR_CAMERA_ALREADY_IN_USE , STREAM_VIDEO, e);
-					} catch (ConfNotSupportedException e) {
-						postError(ERROR_CONFIGURATION_NOT_SUPPORTED , STREAM_VIDEO, e);
-					} catch (InvalidSurfaceException e) {
-						postError(ERROR_INVALID_SURFACE , STREAM_VIDEO, e);
-					} catch (RuntimeException e) {
-						postError(ERROR_OTHER, STREAM_VIDEO, e);
-					} catch (StorageUnavailableException e) {
-						postError(ERROR_STORAGE_NOT_READY, STREAM_VIDEO, e);
-					} catch (IOException e) {
-						postError(ERROR_OTHER, STREAM_VIDEO, e);
-					}
-				}
-			}
-		});
-	}
 
-	/**
-	 * Asynchronously stops the camera preview.
-	 */
-	public void stopPreview() {
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mVideoStream != null) {
-					mVideoStream.stopCamera();
-				}
-			}
-		});
-	}	
-
-	/**	Switch between the front facing and the back facing camera of the phone. <br />
-	 * If {@link #startPreview()} has been called, the preview will be  briefly interrupted. <br />
-	 * If {@link #start()} has been called, the stream will be  briefly interrupted.<br />
-	 * To find out which camera is currently selected, use {@link #getCamera()}
-	 **/
-	public void switchCamera() {
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mVideoStream != null) {
-					try {
-						mVideoStream.switchCamera();
-						postPreviewStarted();
-					} catch (CameraInUseException e) {
-						postError(ERROR_CAMERA_ALREADY_IN_USE , STREAM_VIDEO, e);
-					} catch (ConfNotSupportedException e) {
-						postError(ERROR_CONFIGURATION_NOT_SUPPORTED , STREAM_VIDEO, e);
-					} catch (InvalidSurfaceException e) {
-						postError(ERROR_INVALID_SURFACE , STREAM_VIDEO, e);
-					} catch (IOException e) {
-						postError(ERROR_OTHER, STREAM_VIDEO, e);
-					} catch (RuntimeException e) {
-						postError(ERROR_OTHER, STREAM_VIDEO, e);
-					}
-				}
-			}
-		});
-	}
-
-	/**
-	 * Returns the id of the camera currently selected. <br />
-	 * It can be either {@link CameraInfo#CAMERA_FACING_BACK} or 
-	 * {@link CameraInfo#CAMERA_FACING_FRONT}.
-	 */
-	public int getCamera() {
-		return mVideoStream != null ? mVideoStream.getCamera() : 0;
-
-	}
-
-	/** 
-	 * Toggles the LED of the phone if it has one.
-	 * You can get the current state of the flash with 
-	 * {@link Session#getVideoTrack()} and {@link VideoStream#getFlashState()}.
-	 **/
-	public void toggleFlash() {
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mVideoStream != null) {
-					try {
-						mVideoStream.toggleFlash();
-					} catch (RuntimeException e) {
-						postError(ERROR_CAMERA_HAS_NO_FLASH, STREAM_VIDEO, e);
-					}
-				}
-			}
-		});
-	}	
 
 	/** Deletes all existing tracks & release associated resources. */
 	public void release() {

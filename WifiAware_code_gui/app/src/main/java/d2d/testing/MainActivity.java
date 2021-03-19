@@ -24,6 +24,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import d2d.testing.gui.main.MainFragment;
 import d2d.testing.gui.main.WifiAwareViewModel;
+import d2d.testing.streaming.video.CameraController;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
           Para que funcione hay que iniciarlos en ajustes del telefono, no se porque salta excepcion.
          */
         askPermits();
+        CameraController.initiateInstance(this);
         checkWifiAwareAvailability();
     }
 
