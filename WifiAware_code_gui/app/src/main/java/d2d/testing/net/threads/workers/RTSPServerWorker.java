@@ -500,6 +500,8 @@ public class RTSPServerWorker extends AbstractWorker {
 
         if(StreamingRecord.getInstance().streamingExist(streamUUID)) {
             response.status = RtspResponse.STATUS_FORBIDDEN;
+            receiveSession.stop();
+            mServerSessions.get(channel).remove(UUID.fromString(receiveSession.getPath()));
             return response;
         }
 

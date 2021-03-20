@@ -35,8 +35,8 @@ public class VideoQuality {
 	
 	/** Default video stream quality. */
 	//public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1280,720,15,3000);
-	//public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,30,3500000);
-	public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,60,5000000);
+	public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,30,2000000);
+	//public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,60,5000000);
 
 	/**	Represents a quality for a video stream. */ 
 	public VideoQuality() {}

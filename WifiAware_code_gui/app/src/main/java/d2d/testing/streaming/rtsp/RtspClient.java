@@ -435,7 +435,7 @@ public class RtspClient implements StreamingRecordObserver {
 		RebroadcastSession session = mRebroadcastStreamings.remove(id);
 		if(session != null){
 			try {
-				sendRequestTeardown(mRebroadcastStreamingStates.remove(session), id.toString());
+				sendRequestTeardown(mRebroadcastStreamingStates.remove(id), id.toString());
 			} catch (Exception ignore) {}
 			session.stop();
 		}

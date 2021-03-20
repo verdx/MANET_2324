@@ -137,7 +137,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         }
         surfaces.add(VideoPacketizerDispatcher.getEncoderInputSurface());
 
-        ctrl.startCamera("0", surfaces);
+        ctrl.startCamera(cameraId, surfaces);
     }
 
     @Override

@@ -58,10 +58,10 @@ public class AudioPacketizerDispatcher {
     private Thread mReaderThread;
     private Thread mWriterThread;
 
-    private final AudioRecord mAudioRecord;
-    private final MediaCodec mMediaCodec;
+    private AudioRecord mAudioRecord;
+    private MediaCodec mMediaCodec;
     private final ByteBuffer[] mMediaCodecsBuffers;
-    private final MediaCodecInputStream mMediaCodecInputStream;
+    private MediaCodecInputStream mMediaCodecInputStream;
     private final Map<AbstractPacketizer, InputStream> mPacketizersInputsMap = new HashMap<>();
 
     @SuppressLint("NewApi")
@@ -100,11 +100,11 @@ public class AudioPacketizerDispatcher {
         Log.e(TAG,"Constructor finished");
     }
 
-    public static boolean isRunning() {
+    public static synchronized boolean isRunning() {
         return mInstance != null;
     }
 
-    public static AudioPacketizerDispatcher start() throws IOException {
+    public static synchronized AudioPacketizerDispatcher start() throws IOException {
         if(mInstance == null) {
             mInstance = new AudioPacketizerDispatcher();
 
@@ -138,26 +138,32 @@ public class AudioPacketizerDispatcher {
             Log.e(TAG, "Writer Thread interrupted!");
             mWriterThread = null;
         }
+        mMediaCodecInputStream = null;
+        mReaderThread = null;
+        mWriterThread = null;
 
         Log.e(TAG, "Releasing AudioRecord and Media codec!");
         try {
             mAudioRecord.stop();
             mAudioRecord.release();
+            mAudioRecord = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         mMediaCodec.stop();
         mMediaCodec.release();
+        mMediaCodec = null;
 
         mInstance = null;
     }
 
-    public static void subscribe(AbstractPacketizer packetizer) throws IOException {
-            AudioPacketizerDispatcher.start().addInternalPacketizer(packetizer);
+    public static synchronized void subscribe(AbstractPacketizer packetizer) throws IOException {
+        if(mInstance == null) AudioPacketizerDispatcher.start();
+        mInstance.addInternalPacketizer(packetizer);
     }
 
-    public static void unsubscribe(AbstractPacketizer packetizer) {
+    public static synchronized void unsubscribe(AbstractPacketizer packetizer) {
         if(mInstance != null) {
             mInstance.removeInternalMediaCodec(packetizer);
         }
@@ -174,20 +180,24 @@ public class AudioPacketizerDispatcher {
             ((AACADTSPacketizer) packetizer).setSamplingRate(mQuality.samplingRate);
         }
 
-        mPacketizersInputsMap.put(packetizer, packetizerInput);
+        synchronized (mPacketizersInputsMap){
+            mPacketizersInputsMap.put(packetizer, packetizerInput);
+        }
         packetizer.start();
         Log.e(TAG,"Added internal packetizer to inputStreamMap!");
     }
 
     @SuppressLint("NewApi")
-    private synchronized void removeInternalMediaCodec(AbstractPacketizer packetizer){
-        mPacketizersInputsMap.remove(packetizer);
-        packetizer.stop();
-        Log.e(TAG,"Removed internal media codec from map!");
-        if (mPacketizersInputsMap.isEmpty()) {
-            Log.e(TAG, "No more elements in map lets finish this!");
+    private void removeInternalMediaCodec(AbstractPacketizer packetizer){
+        synchronized (mPacketizersInputsMap){
+            mPacketizersInputsMap.remove(packetizer);
+            packetizer.stop();
+            Log.e(TAG,"Removed internal media codec from map!");
+            if (mPacketizersInputsMap.isEmpty()) {
+                Log.e(TAG, "No more elements in map lets finish this!");
 
-            internalStop();
+                internalStop();
+            }
         }
     }
 
