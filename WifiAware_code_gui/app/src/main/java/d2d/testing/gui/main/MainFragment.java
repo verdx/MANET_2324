@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -49,10 +51,13 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private Button record;
     private WifiAwareViewModel mAwareModel;
 
+    private Boolean isWifiAwareAvailable;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAwareModel = new ViewModelProvider(getActivity()).get(WifiAwareViewModel.class);
+        isWifiAwareAvailable = false;
         initialWork();
     }
 
@@ -76,8 +81,16 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         myAdd = root.findViewById(R.id.my_address);
         myName = root.findViewById(R.id.my_name);
         myStatus = root.findViewById(R.id.my_status);
-        updateMyDeviceStatus();
 
+        mAwareModel.isWifiAwareAvailable().observeForever(new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                isWifiAwareAvailable = aBoolean;
+                myStatus.setText(getDeviceStatus());
+            }
+        });
+        myName.setText("Model:  " +  Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID));
+        myAdd.setText("----------" /*+ mAwareModel.getConnectivityManager().getActiveNetwork().toString()*/);
         return root;
     }
 
@@ -111,14 +124,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void handleCamera(){
-        //openCameraActivity();
         openStreamActivity();
     }
 
     public String getDeviceStatus() {
-        if (mAwareModel.isWifiAwareAvailable().getValue()) {
-            return "Wifi Aware available";
-        }
+        if (isWifiAwareAvailable) return "Wifi Aware available";
         else return "Wifi Aware not available";
     }
 
@@ -146,12 +156,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         Intent streamActivityIntent = new Intent(context, ViewStreamActivity.class);
         streamActivityIntent.putExtra("IP",ip);
         this.startActivity(streamActivityIntent);
-    }
-
-    public void updateMyDeviceStatus () {
-        if(myName != null) myName.setText("Model:  " + Build.MODEL);
-        if(myAdd != null) myAdd.setText("Network: ..." /*+ mAwareModel.getConnectivityManager().getActiveNetwork().toString()*/);
-        if(myStatus != null) myStatus.setText(getDeviceStatus());
     }
 
     @Override

@@ -36,7 +36,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        askPermits();
         setContentView(R.layout.activity_main);
+        checkWifiAwareAvailability();
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
@@ -54,13 +56,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        /*TODO: Revisar los permisos
-          Si la aplicacion esta desinstalada y inicialmente no tiene permisos falla.
-          Para que funcione hay que iniciarlos en ajustes del telefono, no se porque salta excepcion.
-         */
-        askPermits();
         CameraController.initiateInstance(this);
-        checkWifiAwareAvailability();
     }
 
     @Override
