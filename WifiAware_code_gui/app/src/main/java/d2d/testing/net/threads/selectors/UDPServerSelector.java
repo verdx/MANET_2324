@@ -48,6 +48,7 @@ public class UDPServerSelector extends AbstractSelector {
             if(mConManager != null) mConManager.bindProcessToNetwork(null);
             Logger.d("UDPServerSelector: initiateConnection as server listening UDP on port " + mLocalAddress.getHostAddress() + ":" + mPortUDP);
         } catch (IOException e) {
+            mStatusUDP = STATUS_DISCONNECTED;
             e.printStackTrace();
         }
     }

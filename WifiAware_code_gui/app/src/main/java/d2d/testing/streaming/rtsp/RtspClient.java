@@ -61,7 +61,6 @@ import d2d.testing.streaming.rtp.RtpSocket;
 import d2d.testing.streaming.sessions.RebroadcastSession;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.gui.main.WifiAwareViewModel;
 
 /**
  * RFC 2326.
@@ -164,7 +163,6 @@ public class RtspClient implements StreamingRecordObserver {
 	private ConnectivityManager mConnManager;
 	private Network mCurrentNet;
 	private NetworkCapabilities mCurrentNetCapabitities;
-	private PeerHandle mPeerHandle;
 	private WifiAwareNetworkCallback mNetworkCallback;
 	private NetworkRequest mNetworkRequest;
 	private int mTotalNetworkRequests;
@@ -178,7 +176,7 @@ public class RtspClient implements StreamingRecordObserver {
 		void onRtspUpdate(int message, Exception exception);
 	}
 
-	public RtspClient(WifiAwareViewModel awareModel) {
+	public RtspClient() {
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
 		//mTmpParameters.path = "/";
@@ -282,7 +280,6 @@ public class RtspClient implements StreamingRecordObserver {
 				mCurrentNetCapabitities = null;
 				mCurrentNet = null;
 				mConnManager = manager;
-				mPeerHandle = handle;
 				NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
 						.setPskPassphrase("wifiawaretest")
 						.build();
@@ -293,6 +290,7 @@ public class RtspClient implements StreamingRecordObserver {
 				mState = STATE_STARTING;
 				mNetworkCallback = new WifiAwareNetworkCallback();
 				mTotalNetworkRequests = 0;
+				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 				Log.e(TAG, "connectionCreated Called ");
 			}
@@ -342,15 +340,12 @@ public class RtspClient implements StreamingRecordObserver {
 			if(mTotalNetworkRequests++ > MAX_NETWORK_REQUESTS){
 				Log.e(TAG, "Network Unavailable, connection failed");
 				postError(ERROR_CONNECTION_FAILED, null);
+				mNetworkCallback = null;
 				restartClient();
 			}
 			else{
 				Log.e(TAG, "Network Unavailable, requesting again");
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 			}
 		}
@@ -383,6 +378,8 @@ public class RtspClient implements StreamingRecordObserver {
 					} catch (IOException e) {
 						postError(ERROR_CONNECTION_FAILED, e);
 						//clearClient();
+						mConnManager.unregisterNetworkCallback(mNetworkCallback);
+						//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 						mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 					}
 				}
@@ -404,7 +401,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 	public void release() {
 		stop();
-		mHandler.getLooper().quit();
+		mHandler.getLooper().quitSafely();
 	}
 
 

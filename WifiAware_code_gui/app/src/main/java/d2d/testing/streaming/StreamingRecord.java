@@ -13,7 +13,7 @@ public class StreamingRecord {
 
     static private StreamingRecord INSTANCE = null;
 
-    private class Record{
+    private static class Record{
         private Streaming mStreaming;
         private boolean mAllowDispatch;
 
@@ -30,7 +30,7 @@ public class StreamingRecord {
     private List<StreamingRecordObserver> mObservers;
 
 
-    public static StreamingRecord getInstance(){
+    public static synchronized StreamingRecord getInstance(){
         if(INSTANCE == null) {
             INSTANCE = new StreamingRecord();
         }

@@ -34,28 +34,34 @@ import d2d.testing.streaming.rtsp.RtspClient;
 
 public class WifiAwareViewModel extends AndroidViewModel {
 
-    private static ConnectivityManager connectivityManager;
-    private WifiAwareManager manager;
-    private WifiAwareSession session;
-    private PublishDiscoverySession publishSession;
-    private SubscribeDiscoverySession subscribeSession;
-    private MutableLiveData<Boolean> available;
-    private HandlerThread worker;
+    private static ConnectivityManager mConManager;
+    private final WifiAwareManager mWifiAwareManager;
+    private WifiAwareSession mWifiAwareSession;
+    private PublishDiscoverySession mPublishSession;
+    private SubscribeDiscoverySession mSubscribeSession;
+    private final MutableLiveData<Boolean> mIsWifiAwareAvailable;
+    private final HandlerThread worker;
     private Handler workerHandle;
     private int count = 1;
 
-    private Map<PeerHandle, RtspClient> mClients;
+    private int mLastSubscriberMessageID;
+    private final Map<Integer, PeerHandle> mPeerHandles;
+    private final Map<PeerHandle, RtspClient> mClients;
+    private RTSPServerSelector mServer;
 
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
-        available = new MutableLiveData<Boolean>(Boolean.FALSE);
+        mIsWifiAwareAvailable = new MutableLiveData<>(Boolean.FALSE);
         mClients = new HashMap<>();
-        session = null;
-        publishSession = null;
-        subscribeSession = null;
+        mPeerHandles = new HashMap<>();
+        mLastSubscriberMessageID = 0;
+        mWifiAwareSession = null;
+        mPublishSession = null;
+        mSubscribeSession = null;
+        mServer = null;
 
         if(!app.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)){
-            manager = null;
+            mWifiAwareManager = null;
             worker = null;
             return;
         }
@@ -63,8 +69,8 @@ public class WifiAwareViewModel extends AndroidViewModel {
         worker.start();
         workerHandle = new Handler(worker.getLooper());
 
-        connectivityManager = (ConnectivityManager) app.getSystemService(app.CONNECTIVITY_SERVICE);
-        manager = (WifiAwareManager)app.getSystemService(app.WIFI_AWARE_SERVICE);
+        mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
+        mWifiAwareManager = (WifiAwareManager)app.getSystemService(Context.WIFI_AWARE_SERVICE);
         IntentFilter filter = new IntentFilter(WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED);
         BroadcastReceiver myReceiver = new BroadcastReceiver() {
             @Override
@@ -79,51 +85,54 @@ public class WifiAwareViewModel extends AndroidViewModel {
     @Override
     protected void onCleared() {
         closeSessions();
+        worker.quitSafely();
     }
 
     public boolean isWifiAwareSupported(){
-        return manager != null;
+        return mWifiAwareManager != null;
     }
 
     private void checkWifiAwareAvailability(){
         closeSessions();
-        if(manager.isAvailable()){
-            available.postValue(Boolean.TRUE);
+        if(mWifiAwareManager.isAvailable()){
+            mIsWifiAwareAvailable.postValue(Boolean.TRUE);
         }
         else{
-            available.postValue(Boolean.FALSE);
+            mIsWifiAwareAvailable.postValue(Boolean.FALSE);
         }
     }
 
     public boolean sessionCreated(){
-        return session != null;
+        return mWifiAwareSession != null;
     }
 
     public LiveData<Boolean> isWifiAwareAvailable(){
-        return available;
+        return mIsWifiAwareAvailable;
     }
 
     public boolean publishSessionCreated(){
-        return publishSession != null;
+        return mPublishSession != null;
     }
 
     public boolean subscribeSessionCreated(){
-        return subscribeSession != null;
+        return mSubscribeSession != null;
     }
+
 
     public static ConnectivityManager getConnectivityManager() {
-        return connectivityManager;
+        return mConManager;
     }
 
+
     public boolean createSession() throws InterruptedException {
-        if(manager == null) return false;
-        if(session != null) return true;
+        if(mWifiAwareManager == null) return false;
+        if(mWifiAwareSession != null) return true;
         synchronized (this){
-            manager.attach(new AttachCallback(){
+            mWifiAwareManager.attach(new AttachCallback(){
                 @Override
                 public void onAttached(WifiAwareSession session) {
                     synchronized (WifiAwareViewModel.this){
-                        WifiAwareViewModel.this.session = session;
+                        WifiAwareViewModel.this.mWifiAwareSession = session;
                         WifiAwareViewModel.this.notify();
                     }
                 }
@@ -131,32 +140,35 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onAttachFailed() {
                     synchronized (WifiAwareViewModel.this){
-                        session = null;
+                        mWifiAwareSession = null;
                         WifiAwareViewModel.this.notify();
                     }
                 }
             }, workerHandle);
             this.wait();
-            return session != null;
+            return mWifiAwareSession != null;
         }
     }
 
-    public boolean publishService(String serviceName, final MainFragment activity) throws InterruptedException {
-        if(session == null) return false;
+    public boolean publishService(String serviceName) throws InterruptedException {
+        if(mWifiAwareSession == null) return false;
         synchronized (WifiAwareViewModel.this){
             PublishConfig config = new PublishConfig.Builder().setServiceName(serviceName).build();
 
-            session.publish(config, new DiscoverySessionCallback(){
+            mWifiAwareSession.publish(config, new DiscoverySessionCallback(){
                 @Override
                 public void onPublishStarted(@NonNull PublishDiscoverySession session) {
                     synchronized (WifiAwareViewModel.this){
-                        publishSession = session;
+                        mPublishSession = session;
                         try {
-                            RTSPServerSelector.initiateInstance(activity, connectivityManager).start();
-                            RTSPServerSelector.getInstance().addNewConnection("127.0.0.1", 1234);
+                            mServer = new RTSPServerSelector(mConManager);
+                            mServer.start();
+                            if(!mServer.addNewConnection("127.0.0.1", 1234)){
+                                throw new IOException();
+                            }
                         } catch (IOException e) {
                             session.close();
-                            publishSession = null;
+                            mPublishSession = null;
                         }
                         WifiAwareViewModel.this.notify();
                     }
@@ -165,38 +177,33 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onSessionConfigFailed() {
                     synchronized (WifiAwareViewModel.this){
-                        publishSession = null;
+                        mPublishSession = null;
                         WifiAwareViewModel.this.notify();
                     }
                 }
 
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    try {
-                        RTSPServerSelector.getInstance().addNewConnection(publishSession, peerHandle);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    mServer.addNewConnection(mPublishSession, peerHandle);
                 }
 
             }, workerHandle);
 
             this.wait();
-            return publishSession != null;
+            return mPublishSession != null;
         }
     }
 
     public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
-        if(session == null) return false;
+        if(mWifiAwareSession == null) return false;
         synchronized (WifiAwareViewModel.this){
             SubscribeConfig config = new SubscribeConfig.Builder().setServiceName(serviceName).build();
-            session.subscribe(config, new DiscoverySessionCallback(){
+            mWifiAwareSession.subscribe(config, new DiscoverySessionCallback(){
 
-                private PeerHandle lastPeerHandle;
                 @Override
                 public void onSubscribeStarted(@NonNull SubscribeDiscoverySession session) {
                     synchronized (WifiAwareViewModel.this){
-                        subscribeSession = session;
+                        mSubscribeSession = session;
                         WifiAwareViewModel.this.notify();
                     }
                 }
@@ -204,15 +211,19 @@ public class WifiAwareViewModel extends AndroidViewModel {
                 @Override
                 public void onSessionConfigFailed() {
                     synchronized (WifiAwareViewModel.this){
-                        subscribeSession = null;
+                        mSubscribeSession = null;
                         WifiAwareViewModel.this.notify();
                     }
                 }
 
                 @Override
                 public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
-                    lastPeerHandle = peerHandle;
-                    subscribeSession.sendMessage(peerHandle, 0, (new String("connect")).getBytes());
+                    int messageId;
+                    synchronized (mPeerHandles){
+                        messageId = mLastSubscriberMessageID++;
+                        mPeerHandles.put(messageId, peerHandle);
+                    }
+                    mSubscribeSession.sendMessage(peerHandle, messageId, ("connect").getBytes());
                 }
 
                 @Override
@@ -230,49 +241,57 @@ public class WifiAwareViewModel extends AndroidViewModel {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    RtspClient rtspClient = new RtspClient(WifiAwareViewModel.this);
+                    PeerHandle peerHandle;
+                    synchronized (mPeerHandles){
+                        peerHandle = mPeerHandles.remove(messageId);
+                    }
+                    RtspClient rtspClient = new RtspClient();
                     rtspClient.setCallback(activity);
                     synchronized (mClients){
-                        mClients.put(lastPeerHandle, rtspClient);
+                        mClients.put(peerHandle, rtspClient);
                     }
-                    rtspClient.connectionCreated(connectivityManager, subscribeSession, lastPeerHandle);
+                    rtspClient.connectionCreated(mConManager, mSubscribeSession, peerHandle);
                 }
 
-
+                @Override
+                public void onMessageSendFailed(int messageId) {
+                    synchronized (mPeerHandles){
+                        mPeerHandles.remove(messageId);
+                    }
+                }
             }, workerHandle);
 
             this.wait();
-            return subscribeSession != null;
-        }
-    }
-
-    public void removeClient(PeerHandle handle){
-        synchronized (mClients){
-            mClients.remove(handle);
+            return mSubscribeSession != null;
         }
     }
 
     public void closeSessions(){
+        synchronized (mPeerHandles){
+            mLastSubscriberMessageID = 0;
+            mPeerHandles.clear();
+        }
         synchronized (mClients){
             for(RtspClient client : mClients.values()){
                 client.release();
             }
             mClients.clear();
         }
-        try {
-            if(RTSPServerSelector.itsInitialized()) RTSPServerSelector.getInstance().stop();
-        } catch (IOException e) {}
-        if(publishSession != null){
-            publishSession.close();
-            publishSession = null;
+        if(mServer != null){
+            mServer.stop();
+            mServer = null;
         }
-        if(subscribeSession != null){
-            subscribeSession.close();
-            subscribeSession = null;
+        if(mPublishSession != null){
+            mPublishSession.close();
+            mPublishSession = null;
         }
-        if(session != null){
-            session.close();
-            session = null;
+        if(mSubscribeSession != null){
+            mSubscribeSession.close();
+            mSubscribeSession = null;
+        }
+        if(mWifiAwareSession != null){
+            mWifiAwareSession.close();
+            mWifiAwareSession = null;
         }
     }
 }

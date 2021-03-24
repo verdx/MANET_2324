@@ -1,13 +1,10 @@
 package d2d.testing.gui.main;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,14 +14,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -35,7 +28,6 @@ import d2d.testing.ViewStreamActivity;
 import d2d.testing.gui.FragmentStreams;
 import d2d.testing.gui.StreamDetail;
 import d2d.testing.streaming.Streaming;
-import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
@@ -56,8 +48,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAwareModel = new ViewModelProvider(getActivity()).get(WifiAwareViewModel.class);
-        isWifiAwareAvailable = false;
+        mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
         initialWork();
     }
 
@@ -82,11 +73,14 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         myName = root.findViewById(R.id.my_name);
         myStatus = root.findViewById(R.id.my_status);
 
-        mAwareModel.isWifiAwareAvailable().observeForever(new Observer<Boolean>() {
+        mAwareModel.isWifiAwareAvailable().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
                 isWifiAwareAvailable = aBoolean;
                 myStatus.setText(getDeviceStatus());
+                if(isWifiAwareAvailable && !mAwareModel.sessionCreated()){
+                    initWifiAware();
+                }
             }
         });
         myName.setText("Model:  " +  Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID));
@@ -95,28 +89,26 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void initialWork() {
-        if(!mAwareModel.sessionCreated()){
-            initWifiAware();
-        }
+
     }
 
     private void initWifiAware(){
         try {
             if(mAwareModel.createSession()){
-                if(mAwareModel.publishService("Server", this)){
-                    Toast.makeText(getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
+                if(mAwareModel.publishService("Server")){
+                    Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
                 }
                 if(mAwareModel.subscribeToService("Server", this)){
-                    Toast.makeText(getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
                 }
             }else {
-                Toast.makeText(getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -167,7 +159,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void streamingAvailable(Streaming streaming, boolean bAllowDispatch) {
         final String path = streaming.getUUID().toString();
-        getActivity().runOnUiThread(new Runnable() {
+        requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(true, path, path);
             }
@@ -177,7 +169,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void streamingUnavailable(Streaming streaming) {
         final String path = streaming.getUUID().toString();
-        getActivity().runOnUiThread(new Runnable() {
+        requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(false, path, path);
             }

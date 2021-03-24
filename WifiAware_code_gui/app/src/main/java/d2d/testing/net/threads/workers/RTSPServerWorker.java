@@ -103,17 +103,15 @@ public class RTSPServerWorker extends AbstractWorker {
     boolean allowLiveStreaming = false;
 
     /** Credentials for Basic Auth */
-    private String mUsername;
-    private String mPassword;
+    private final String mUsername;
+    private final String mPassword;
 
-    private MainFragment mMainFragment;
-    private RTSPServerSelector mServerSelector;
+    private final RTSPServerSelector mServerSelector;
 
-    public RTSPServerWorker(String username, String password, MainFragment mainFragment, RTSPServerSelector serverSelector) {
+    public RTSPServerWorker(String username, String password, RTSPServerSelector serverSelector) {
         super();
         this.mUsername = username;
         this.mPassword = password;
-        this.mMainFragment = mainFragment;
         this.mServerSelector = serverSelector;
     }
 
@@ -753,41 +751,64 @@ public class RTSPServerWorker extends AbstractWorker {
      * Cerramos las sesiones asociadas al socket
      * @param channel
      */
-    public void onClientDisconnected(SelectableChannel channel) {
-        Session streamingSession = mSessions.get(channel);
+    public synchronized void onClientDisconnected(SelectableChannel channel) {
+        Session streamingSession = mSessions.remove(channel);
         if(streamingSession != null) {
-            if (streamingSession.isStreaming()) {
-                streamingSession.syncStop();
-            }
-
-            streamingSession.release();
-            mSessions.remove(channel);
+            onSessionDisconnected(streamingSession);
         }
 
-        ReceiveSession receiveSession = null;
         Map<UUID, Streaming> streamings = mServerSessions.remove(channel);
         if(streamings != null){
             for(Streaming streaming : streamings.values()){
-                receiveSession = streaming.getReceiveSession();
-                if(receiveSession != null) {
-                    String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
-                    String name = receiveSession.getPath();
-
-                    StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
-                    //mMainActivity.updateStreamList(false, ip, name);
-                    //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(false, ip, name));
-
-                    receiveSession.stop();
-                    receiveSession.release();
-                }
+                onReceiveSessionDisconnected(streaming);
             }
             streamings.clear();
         }
 
-        RebroadcastSession rebroadcastSession = mRebroadcastSessions.get(channel);
+        RebroadcastSession rebroadcastSession = mRebroadcastSessions.remove(channel);
         if(rebroadcastSession != null) {
-            rebroadcastSession.stop();
-            mRebroadcastSessions.remove(channel);
+            onRebroadcastSessionDisconnected(rebroadcastSession);
         }
+    }
+
+    private void onSessionDisconnected(Session streamingSession){
+        if (streamingSession.isStreaming()) {
+            streamingSession.syncStop();
+        }
+        streamingSession.release();
+    }
+
+    private void onReceiveSessionDisconnected(Streaming streaming){
+        ReceiveSession receiveSession = streaming.getReceiveSession();
+        if(receiveSession != null) {
+            StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
+
+            receiveSession.stop();
+            receiveSession.release();
+        }
+    }
+
+    private void onRebroadcastSessionDisconnected(RebroadcastSession rebroadcastSession){
+        rebroadcastSession.stop();
+    }
+
+
+    @Override
+    protected synchronized void onWorkerRelease() {
+        for(Session session : mSessions.values()){
+            onSessionDisconnected(session);
+        }
+        mSessions.clear();
+        for(Map<UUID, Streaming> streamings : mServerSessions.values()){
+            for(Streaming streaming : streamings.values()){
+                onReceiveSessionDisconnected(streaming);
+            }
+            streamings.clear();
+        }
+        mServerSessions.clear();
+        for(RebroadcastSession rebroadcastSession : mRebroadcastSessions.values()){
+            onRebroadcastSessionDisconnected(rebroadcastSession);
+        }
+        mRebroadcastSessions.clear();
     }
 }

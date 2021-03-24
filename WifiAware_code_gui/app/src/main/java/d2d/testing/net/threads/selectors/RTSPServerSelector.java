@@ -22,8 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import d2d.testing.MainActivity;
-import d2d.testing.gui.main.MainFragment;
 import d2d.testing.net.threads.workers.RTSPServerWorker;
 
 /**
@@ -33,54 +31,26 @@ import d2d.testing.net.threads.workers.RTSPServerWorker;
  * Cuando se comuniquen por el canal se guardaran los datos en mReadBuffer y se pasaran al thread del RTSPServerWorker, que es creado por esta clase.
  */
 public class RTSPServerSelector extends AbstractSelector {
-    static private RTSPServerSelector INSTANCE = null;
 
-    private Map<PeerHandle, Connection> mConnectionsMap;
-    private Map<ServerSocketChannel, Connection> mServerChannelsMap;
+    private final Map<PeerHandle, Connection> mConnectionsMap;
+    private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
-    private RTSPServerSelector(ConnectivityManager connManager) throws IOException {
+
+    public RTSPServerSelector(ConnectivityManager connManager) throws IOException {
         super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
 
-        mWorker = new RTSPServerWorker(null, null, null, this);
+        mWorker = new RTSPServerWorker(null, null, this);
         mWorker.start();
-    }
-
-    private RTSPServerSelector(MainFragment mainFragment, ConnectivityManager connManager) throws IOException {
-        super(connManager);
-        mConnectionsMap = new HashMap<>();
-        mServerChannelsMap = new HashMap<>();
-        mWorker = new RTSPServerWorker(null, null, mainFragment, this);
-        mWorker.start();
-    }
-
-    public static RTSPServerSelector getInstance() throws IOException {
-        if(INSTANCE == null) {
-            INSTANCE = new RTSPServerSelector(null);
-        }
-
-        return INSTANCE;
-    }
-
-    public static RTSPServerSelector initiateInstance(MainFragment mainFragment, ConnectivityManager connManager) throws IOException {
-        if(INSTANCE == null) {
-            INSTANCE = new RTSPServerSelector(mainFragment,connManager);
-        }
-
-        return INSTANCE;
-    }
-
-    public static boolean itsInitialized(){
-        return INSTANCE != null;
     }
 
 
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
+        if(!mEnabled.get()) return false;
         if(mConnectionsMap.get(handle) != null){
             return true;
         }
-        if(!mEnabled) return false;
 
         ServerSocketChannel serverSocketChannel = null;
         int mServerPort;
@@ -98,10 +68,11 @@ public class RTSPServerSelector extends AbstractSelector {
                     .setNetworkSpecifier(networkSpecifier)
                     .build();
             this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
-            Connection conn = new Connection(serverSocketChannel, handle);
+            Connection conn = new Connection(serverSocketChannel, handle, new WifiAwareNetworkCallback(this, handle, mConManager));
             mConnectionsMap.put(handle, conn);
             mServerChannelsMap.put(serverSocketChannel, conn);
-            mConManager.requestNetwork(networkRequest, new WifiAwareNetworkCallback(handle));
+            //mNetRequestMan.requestNetwork(networkRequest, conn.mNetCallback);
+            mConManager.requestNetwork(networkRequest, conn.mNetCallback);
         } catch (IOException e) {
             return false;
         }
@@ -109,7 +80,7 @@ public class RTSPServerSelector extends AbstractSelector {
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){
-        if(!mEnabled) return false;
+        if(!mEnabled.get()) return false;
         ServerSocketChannel serverSocketChannel = null;
         try {
             serverSocketChannel = ServerSocketChannel.open();
@@ -130,7 +101,7 @@ public class RTSPServerSelector extends AbstractSelector {
             return;
         }
         serverChan = conn.mServerSocketChannel;
-        conn.closeConnection(this);
+        conn.closeConnection(this, mConManager);
         mConnectionsMap.remove(handle);
         mServerChannelsMap.remove(serverChan);
     }
@@ -152,8 +123,15 @@ public class RTSPServerSelector extends AbstractSelector {
             } catch (IOException e) {
                 mConnectionsMap.remove(conn.handle);
                 mServerChannelsMap.remove(serverChan);
-                conn.closeConnection(this);
+                conn.closeConnection(this, mConManager);
             }
+        }
+    }
+
+    private synchronized void addNetToConnection(Network net, PeerHandle conHandle){
+        Connection conn = mConnectionsMap.get(conHandle);
+        if(conn != null){
+            conn.net = net;
         }
     }
 
@@ -175,6 +153,15 @@ public class RTSPServerSelector extends AbstractSelector {
         }
     }
 
+    @Override
+    protected synchronized void onServerRelease() {
+        for(Connection conn : mConnectionsMap.values()){
+            conn.closeConnection(this, mConManager);
+        }
+        mConnectionsMap.clear();
+        mServerChannelsMap.clear();
+    }
+
     public synchronized Network getChannelNetwork(SelectableChannel chan){
         for(Map.Entry<ServerSocketChannel, Connection> entry : mServerChannelsMap.entrySet()){
             if(entry.getKey().equals(chan)){
@@ -189,14 +176,11 @@ public class RTSPServerSelector extends AbstractSelector {
         return null;
     }
 
-    public void setAllowLiveStreaming(boolean allow) {
-        ((RTSPServerWorker) mWorker).setAllowLiveStreaming(allow);
-    }
+    private static class Connection{
 
-    public class Connection{
-
-        public Connection(ServerSocketChannel serverChan, PeerHandle handle){
+        public Connection(ServerSocketChannel serverChan, PeerHandle handle, ConnectivityManager.NetworkCallback netCallback){
             mServerSocketChannel = serverChan;
+            mNetCallback = netCallback;
             this.handle = handle;
             mComChannels = new ArrayList<>();
         }
@@ -204,8 +188,9 @@ public class RTSPServerSelector extends AbstractSelector {
         public PeerHandle handle;
         public Network net;
         public List<SocketChannel> mComChannels;
+        public ConnectivityManager.NetworkCallback mNetCallback;
 
-        public void closeConnection(RTSPServerSelector serverSelector){
+        public void closeConnection(RTSPServerSelector serverSelector, ConnectivityManager conManager){
             serverSelector.addChangeRequest(new ChangeRequest(mServerSocketChannel, ChangeRequest.REMOVE, 0));
             for(SocketChannel chan : this.mComChannels){
                 serverSelector.addChangeRequest(new ChangeRequest(chan, ChangeRequest.REMOVE, 0));
@@ -214,34 +199,36 @@ public class RTSPServerSelector extends AbstractSelector {
             this.mServerSocketChannel = null;
             this.handle = null;
             this.net = null;
+            conManager.unregisterNetworkCallback(mNetCallback);
             this.mComChannels.clear();
         }
     }
 
-    private class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
+    private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
-        PeerHandle mConnectionHandle;
+        private final PeerHandle mConnectionHandle;
+        private final RTSPServerSelector mServer;
+        private final ConnectivityManager mConManager;
 
-        public WifiAwareNetworkCallback(PeerHandle connectionHandle){
+        public WifiAwareNetworkCallback(RTSPServerSelector server, PeerHandle connectionHandle, ConnectivityManager conManager){
             this.mConnectionHandle = connectionHandle;
+            this.mServer = server;
+            mConManager = conManager;
         }
 
         @Override
         public void onAvailable(@NonNull Network network) {
-            synchronized (RTSPServerSelector.this){
-                Connection conn = mConnectionsMap.get(mConnectionHandle);
-                if(conn == null){
-                    return;
-                }
-                conn.net = network;
-            }
+            mServer.addNetToConnection(network, mConnectionHandle);
         }
 
+        @Override
+        public void onUnavailable() {
+            mServer.removeConnection(mConnectionHandle);
+        }
 
         @Override
         public void onLost(@NonNull Network network) {
-            mConManager.unregisterNetworkCallback(this);
-            removeConnection(mConnectionHandle);
+            mServer.removeConnection(mConnectionHandle);
         }
     }
 
