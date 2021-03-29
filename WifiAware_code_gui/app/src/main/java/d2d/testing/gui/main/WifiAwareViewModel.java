@@ -26,13 +26,17 @@ import androidx.lifecycle.MutableLiveData;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
 
 public class WifiAwareViewModel extends AndroidViewModel {
+
+    private static final int DELAY_BETWEEN_CONNECTIONS = 500;
 
     private static ConnectivityManager mConManager;
     private final WifiAwareManager mWifiAwareManager;
@@ -42,10 +46,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> mIsWifiAwareAvailable;
     private final HandlerThread worker;
     private Handler workerHandle;
-    private int count = 1;
 
-    private int mLastSubscriberMessageID;
-    private final Map<Integer, PeerHandle> mPeerHandles;
     private final Map<PeerHandle, RtspClient> mClients;
     private RTSPServerSelector mServer;
 
@@ -53,8 +54,6 @@ public class WifiAwareViewModel extends AndroidViewModel {
         super(app);
         mIsWifiAwareAvailable = new MutableLiveData<>(Boolean.FALSE);
         mClients = new HashMap<>();
-        mPeerHandles = new HashMap<>();
-        mLastSubscriberMessageID = 0;
         mWifiAwareSession = null;
         mPublishSession = null;
         mSubscribeSession = null;
@@ -65,7 +64,7 @@ public class WifiAwareViewModel extends AndroidViewModel {
             worker = null;
             return;
         }
-        worker = new HandlerThread("Worker");
+        worker = new HandlerThread("WifiAware Worker");
         worker.start();
         workerHandle = new Handler(worker.getLooper());
 
@@ -118,7 +117,6 @@ public class WifiAwareViewModel extends AndroidViewModel {
         return mSubscribeSession != null;
     }
 
-
     public static ConnectivityManager getConnectivityManager() {
         return mConManager;
     }
@@ -156,6 +154,11 @@ public class WifiAwareViewModel extends AndroidViewModel {
             PublishConfig config = new PublishConfig.Builder().setServiceName(serviceName).build();
 
             mWifiAwareSession.publish(config, new DiscoverySessionCallback(){
+
+                private int mLastMessageID = 0;
+                private boolean mCreatingConnection = false;
+                private final Queue<PeerHandle> mPendingConnections = new LinkedList<>();
+
                 @Override
                 public void onPublishStarted(@NonNull PublishDiscoverySession session) {
                     synchronized (WifiAwareViewModel.this){
@@ -184,8 +187,45 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    mServer.addNewConnection(mPublishSession, peerHandle);
+                    if(mCreatingConnection){
+                        mPendingConnections.add(peerHandle);
+                    }
+                    else{
+                        startConnection(peerHandle);
+                    }
                 }
+
+                @Override
+                public void onMessageSendSucceeded(int messageId) {
+                    processNextConnection();
+                }
+
+                @Override
+                public void onMessageSendFailed(int messageId) {
+                    processNextConnection();
+                }
+
+                private void startConnection(PeerHandle peerHandle){
+                    if(mServer.addNewConnection(mPublishSession, peerHandle)){
+                        int messageId = mLastMessageID++;
+                        mPublishSession.sendMessage(peerHandle, messageId, ("connect").getBytes());
+                        mCreatingConnection = true;
+                    }
+                }
+
+                private void processNextConnection(){
+                    try {
+                        Thread.sleep(DELAY_BETWEEN_CONNECTIONS);
+                    } catch (InterruptedException ignored) {}
+                    if(mPendingConnections.isEmpty()){
+                        mCreatingConnection = false;
+                    }
+                    else{
+                        PeerHandle nextPeerHandle = mPendingConnections.remove();
+                        startConnection(nextPeerHandle);
+                    }
+                }
+
 
             }, workerHandle);
 
@@ -194,11 +234,16 @@ public class WifiAwareViewModel extends AndroidViewModel {
         }
     }
 
+
     public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
         if(mWifiAwareSession == null) return false;
         synchronized (WifiAwareViewModel.this){
             SubscribeConfig config = new SubscribeConfig.Builder().setServiceName(serviceName).build();
             mWifiAwareSession.subscribe(config, new DiscoverySessionCallback(){
+
+                private int mLastMessageID = 0;
+                private boolean mCreatingConnection = false;
+                private final Queue<PeerHandle> mPendingConnections = new LinkedList<>();
 
                 @Override
                 public void onSubscribeStarted(@NonNull SubscribeDiscoverySession session) {
@@ -218,47 +263,48 @@ public class WifiAwareViewModel extends AndroidViewModel {
 
                 @Override
                 public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
-                    int messageId;
-                    synchronized (mPeerHandles){
-                        messageId = mLastSubscriberMessageID++;
-                        mPeerHandles.put(messageId, peerHandle);
+                    if(mCreatingConnection){
+                        mPendingConnections.add(peerHandle);
                     }
-                    mSubscribeSession.sendMessage(peerHandle, messageId, ("connect").getBytes());
-                }
-
-                @Override
-                public void onMessageSendSucceeded(int messageId) {
-                    int auxCOUNT;
-                    synchronized (WifiAwareViewModel.this){
-                        auxCOUNT = count;
-                        count++;
-                        if(count==5){
-                            count = 1;
-                        }
+                    else{
+                        startConnection(peerHandle);
                     }
-                    try {
-                        Thread.sleep(auxCOUNT*1500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    PeerHandle peerHandle;
-                    synchronized (mPeerHandles){
-                        peerHandle = mPeerHandles.remove(messageId);
-                    }
-                    RtspClient rtspClient = new RtspClient();
-                    rtspClient.setCallback(activity);
-                    synchronized (mClients){
-                        mClients.put(peerHandle, rtspClient);
-                    }
-                    rtspClient.connectionCreated(mConManager, mSubscribeSession, peerHandle);
                 }
 
                 @Override
                 public void onMessageSendFailed(int messageId) {
-                    synchronized (mPeerHandles){
-                        mPeerHandles.remove(messageId);
+                    processNextConnection();
+                }
+
+                @Override
+                public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
+                    RtspClient rtspClient = new RtspClient();
+                    rtspClient.setCallback(activity); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
+                    mClients.put(peerHandle, rtspClient);
+                    rtspClient.connectionCreated(mConManager, mSubscribeSession, peerHandle);
+
+                    processNextConnection();
+                }
+
+                private void startConnection(PeerHandle peerHandle){
+                    mCreatingConnection = true;
+                    int nextMessageId = mLastMessageID++;
+                    mSubscribeSession.sendMessage(peerHandle, nextMessageId, ("connect").getBytes());
+                }
+
+                private void processNextConnection(){
+                    try {
+                        Thread.sleep(DELAY_BETWEEN_CONNECTIONS);
+                    } catch (InterruptedException ignored) {}
+                    if(mPendingConnections.isEmpty()){
+                        mCreatingConnection = false;
+                    }
+                    else{
+                        PeerHandle nextMessagePeerHandle = mPendingConnections.remove();
+                        startConnection(nextMessagePeerHandle);
                     }
                 }
+
             }, workerHandle);
 
             this.wait();
@@ -266,21 +312,8 @@ public class WifiAwareViewModel extends AndroidViewModel {
         }
     }
 
-    public void closeSessions(){
-        synchronized (mPeerHandles){
-            mLastSubscriberMessageID = 0;
-            mPeerHandles.clear();
-        }
-        synchronized (mClients){
-            for(RtspClient client : mClients.values()){
-                client.release();
-            }
-            mClients.clear();
-        }
-        if(mServer != null){
-            mServer.stop();
-            mServer = null;
-        }
+    //Puede llamarlo el main thread al cambiar la disponibilidad de wifiaware u otro thread
+    public synchronized void closeSessions(){
         if(mPublishSession != null){
             mPublishSession.close();
             mPublishSession = null;
@@ -292,6 +325,14 @@ public class WifiAwareViewModel extends AndroidViewModel {
         if(mWifiAwareSession != null){
             mWifiAwareSession.close();
             mWifiAwareSession = null;
+        }
+        for(RtspClient client : mClients.values()){
+            client.release();
+        }
+        mClients.clear();
+        if(mServer != null){
+            mServer.stop();
+            mServer = null;
         }
     }
 }

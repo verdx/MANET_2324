@@ -157,7 +157,7 @@ public class RtspClient implements StreamingRecordObserver {
 	private BufferedReader mBufferedReader;
 	private OutputStream mOutputStream;
 	private Callback mCallback;
-	private Handler mMainHandler;
+	private final Handler mMainHandler;
 	private Handler mHandler;
 
 	private ConnectivityManager mConnManager;
@@ -406,6 +406,7 @@ public class RtspClient implements StreamingRecordObserver {
 
 
 	private void restartClient(){
+		StreamingRecord.getInstance().removeObserver(this);
 		closeConnections();
 		clearClient();
 	}
@@ -462,6 +463,7 @@ public class RtspClient implements StreamingRecordObserver {
 		mOutputStream = null;
 		if(mNetworkCallback != null) mConnManager.unregisterNetworkCallback(mNetworkCallback);
 		mNetworkCallback = null;
+		mCallback = null;
 		mCurrentNet = null;
 		mCurrentNetCapabitities = null;
 		mConnManager.bindProcessToNetwork(null);
