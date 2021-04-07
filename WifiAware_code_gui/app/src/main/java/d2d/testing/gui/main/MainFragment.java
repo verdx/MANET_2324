@@ -23,10 +23,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import d2d.testing.R;
-import d2d.testing.StreamActivity;
-import d2d.testing.ViewStreamActivity;
-import d2d.testing.gui.FragmentStreams;
-import d2d.testing.gui.StreamDetail;
+import d2d.testing.gui.StreamActivity;
+import d2d.testing.gui.ViewStreamActivity;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
@@ -144,9 +142,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         this.startActivity(streamActivityIntent);
     }
 
-    public void openViewStreamActivity(Context context, String ip) {
+    public void openViewStreamActivity(Context context, String uuid) {
         Intent streamActivityIntent = new Intent(context, ViewStreamActivity.class);
-        streamActivityIntent.putExtra("IP",ip);
+        streamActivityIntent.putExtra("UUID",uuid);
         this.startActivity(streamActivityIntent);
     }
 
@@ -157,21 +155,27 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     public void localStreamingUnavailable() {}
 
     @Override
-    public void streamingAvailable(Streaming streaming, boolean bAllowDispatch) {
+    public void streamingAvailable(final Streaming streaming, boolean bAllowDispatch) {
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
-                streams_fragment.updateList(true, path, path);
+                streams_fragment.updateList(true,
+                                            path,
+                                            streaming.getReceiveSession().getDestinationAddress().toString(),
+                                            streaming.getReceiveSession().getDestinationPort());
             }
         });
     }
 
     @Override
-    public void streamingUnavailable(Streaming streaming) {
+    public void streamingUnavailable(final Streaming streaming) {
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
-                streams_fragment.updateList(false, path, path);
+                streams_fragment.updateList(false,
+                                            path,
+                                            streaming.getReceiveSession().getDestinationAddress().toString(),
+                                            streaming.getReceiveSession().getDestinationPort());
             }
         });
     }

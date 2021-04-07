@@ -19,8 +19,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import d2d.testing.MainActivity;
-import d2d.testing.gui.main.MainFragment;
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
@@ -694,7 +692,6 @@ public class RTSPServerWorker extends AbstractWorker {
         final Pattern regexVideoDescription = Pattern.compile("m=video (\\S+)",Pattern.CASE_INSENSITIVE);
 
         Matcher matcher;
-
 
         while((line = reader.readLine()) != null && line.length()>0) {
             if(regexAudioDescription.matcher(line).find()){

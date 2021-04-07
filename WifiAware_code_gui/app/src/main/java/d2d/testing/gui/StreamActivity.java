@@ -1,4 +1,4 @@
-package d2d.testing;
+package d2d.testing.gui;
 
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
@@ -6,13 +6,13 @@ import android.media.MediaCodec;
 import android.os.Bundle;
 import android.util.Size;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import d2d.testing.R;
 import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;

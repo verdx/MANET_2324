@@ -1,4 +1,4 @@
-package d2d.testing;
+package d2d.testing.gui;
 
 import android.Manifest;
 import android.content.pm.ActivityInfo;
@@ -19,6 +19,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
+import d2d.testing.R;
 import d2d.testing.streaming.video.CameraController;
 
 

@@ -20,38 +20,13 @@ package d2d.testing.streaming.video;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.hardware.Camera;
-import android.hardware.Camera.CameraInfo;
-import android.hardware.Camera.Parameters;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaFormat;
-import android.media.MediaRecorder;
-import android.os.Looper;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import d2d.testing.StreamActivity;
 import d2d.testing.streaming.MediaStream;
 import d2d.testing.streaming.Stream;
-import d2d.testing.streaming.exceptions.CameraInUseException;
 import d2d.testing.streaming.exceptions.ConfNotSupportedException;
-import d2d.testing.streaming.exceptions.InvalidSurfaceException;
-import d2d.testing.streaming.gl.SurfaceView;
-import d2d.testing.streaming.hw.EncoderDebugger;
-import d2d.testing.streaming.rtp.MediaCodecInputStream;
 
 /** 
  * Don't use this class directly.

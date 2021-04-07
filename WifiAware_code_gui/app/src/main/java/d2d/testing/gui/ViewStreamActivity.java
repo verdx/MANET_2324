@@ -1,4 +1,4 @@
-package d2d.testing;
+package d2d.testing.gui;
 
 import android.content.pm.ActivityInfo;
 
@@ -29,6 +29,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import d2d.testing.R;
+
 
 public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener {
     public final static String TAG = "VideoActivity";
@@ -56,7 +58,8 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
 
         this.setContentView(R.layout.activity_view_stream);
 
-        String ip = getIntent().getExtras().getString("IP");
+        String ip = getIntent().getExtras().getString("UUID");
+
         //String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
         //String path= "rtsp://" + ip2;
 

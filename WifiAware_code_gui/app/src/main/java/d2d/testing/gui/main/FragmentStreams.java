@@ -1,7 +1,6 @@
-package d2d.testing.gui;
+package d2d.testing.gui.main;
 
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,13 +11,10 @@ import android.widget.ListView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 
 import java.util.ArrayList;
 
-import d2d.testing.MainActivity;
 import d2d.testing.R;
-import d2d.testing.gui.main.MainFragment;
 import d2d.testing.streaming.StreamingRecord;
 
 
@@ -53,9 +49,9 @@ public class FragmentStreams extends Fragment {
         mainFragment = mf;
     }
 
-    public void updateList(boolean on_off, String ip, String name){
+    public void updateList(boolean on_off, String uuid, String ip, int port ){
         if(!ip.equals("0.0.0.0")) {
-            StreamDetail detail = new StreamDetail(name,ip);
+            StreamDetail detail = new StreamDetail(uuid, ip, port);
             if (on_off) {
                 if (!streamList.contains(detail))
                     streamList.add(detail);
@@ -74,7 +70,7 @@ public class FragmentStreams extends Fragment {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               mainFragment.openViewStreamActivity(getActivity(),streamList.get(position).getIp());
+               mainFragment.openViewStreamActivity(getActivity(),streamList.get(position).getUuid());
             }
         });
     }

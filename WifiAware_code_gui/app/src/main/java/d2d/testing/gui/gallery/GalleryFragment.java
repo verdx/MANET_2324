@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import d2d.testing.R;
-import d2d.testing.ViewStreamActivity;
+import d2d.testing.gui.ViewStreamActivity;
 import wseemann.media.FFmpegMediaMetadataRetriever;
 
 
