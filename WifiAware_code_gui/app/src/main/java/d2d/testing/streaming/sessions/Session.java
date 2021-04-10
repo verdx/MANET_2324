@@ -22,6 +22,7 @@ import android.hardware.Camera.CameraInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -109,6 +110,7 @@ public class Session {
 	private int mTimeToLive = 64;
 	private long mTimestamp;
 	public final String mSessionID;
+	public String mStreamingName;
 
 	private AudioStream mAudioStream = null;
 	private VideoStream mVideoStream = null;
@@ -245,6 +247,10 @@ public class Session {
 		mDestIPv6 = isIPv6;
 	}
 
+	public void setNameStreaming(String name){
+		mStreamingName = name;
+	}
+
 	public void setDestinationPort(int destPort) {
 		mDestPort = destPort;
 	}
@@ -304,7 +310,7 @@ public class Session {
 		// TODO: Add IPV6 support
 		if(mOriginIPv6) sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP6 "+mOrigin.getHostAddress()+"\r\n");
 		else sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin.getHostAddress()+"\r\n");
-		sessionDescription.append("s=Unnamed\r\n");
+		sessionDescription.append("s="+ mStreamingName + "\r\n");
 		sessionDescription.append("i=N/A\r\n");
 		if(mDestIPv6) sessionDescription.append("c=IN IP6 "+mDestination.getHostAddress()+"\r\n");
 		else sessionDescription.append("c=IN IP4 "+mDestination.getHostAddress()+"\r\n");
@@ -319,7 +325,8 @@ public class Session {
 		if (mVideoStream != null) {
 			sessionDescription.append(mVideoStream.getSessionDescription());
 			sessionDescription.append("a=control:trackID="+1+"\r\n");
-		}			
+		}
+		Log.d("prueba2", mStreamingName);
 		return sessionDescription.toString();
 	}
 
@@ -330,6 +337,8 @@ public class Session {
 	//public String getDestination() {return mDestination;}
 
 	public InetAddress getDestinationAddress(){return mDestination;};
+
+	public String getStreamingName(){return mStreamingName;}
 
 	/** Returns an approximation of the bandwidth consumed by the session in bit per second. */
 	public long getBitrate() {

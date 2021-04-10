@@ -6,11 +6,13 @@ import d2d.testing.streaming.sessions.ReceiveSession;
 
 public class Streaming {
     private UUID mUUID;
+    private String mName;
     private ReceiveSession mReceiveSession;
 
-    public Streaming(UUID id, ReceiveSession receiveSession){
+    public Streaming(UUID id, String name, ReceiveSession receiveSession){
         mUUID = id;
         mReceiveSession = receiveSession;
+        mName = name;
     }
 
     public UUID getUUID() {
@@ -19,6 +21,10 @@ public class Streaming {
 
     public ReceiveSession getReceiveSession() {
         return mReceiveSession;
+    }
+
+    public String getName() {
+        return mName;
     }
 
     public void setReceiveSession(ReceiveSession mReceiveSession) {

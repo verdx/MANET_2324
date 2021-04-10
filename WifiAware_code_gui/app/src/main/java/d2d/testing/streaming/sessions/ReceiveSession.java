@@ -20,7 +20,6 @@ public class ReceiveSession {
 
     private TrackInfo mVideoTrackInfo;
     private TrackInfo mAudioTrackInfo;
-    private String mSessionIDessionDescription;
     private String path;
 
     private Network mReceiveNet;

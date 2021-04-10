@@ -242,8 +242,15 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         UUID streamUUID = UUID.fromString(request.path);
+        String streamName;
 
-        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session));
+        Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(request.body);
+        if(matcher.find()) streamName = matcher.group(1);
+        else streamName = "";
+
+
+        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, streamName, session));
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
                               "Content-Type: application/sdp\r\n" +
                               "Session: " + session.getSessionID() + ";timeout=" + session.getTimeout() +"\r\n";

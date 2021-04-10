@@ -4,6 +4,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
@@ -43,8 +44,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     private FloatingActionButton recordButton;
     public boolean mRecording = false;
 
-    private String mNameStreaming = null;
-
+    private String mNameStreaming = "defaultName";
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
 
     @Override
@@ -90,7 +90,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     public void startStreaming() {
         UUID localStreamUUID = UUID.randomUUID();
-        StreamingRecord.getInstance().addLocalStreaming(localStreamUUID, mSessionBuilder);
+        StreamingRecord.getInstance().addLocalStreaming(localStreamUUID, mNameStreaming, mSessionBuilder);
         /*
         //rtspClient.setSession(mSesion);
         rtspClient.setmSessionBuilder(mSessionBuilder);

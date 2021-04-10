@@ -144,6 +144,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	private UUID mLocalStreamingUUID = null;
+	String mLocalStreamingName = null;
 	private Session mLocalStreamingSession;
 	private StreamingState mLocalStreamingState;
 
@@ -426,6 +427,7 @@ public class RtspClient implements StreamingRecordObserver {
 		mLocalStreamingSession = null;
 		mLocalStreamingState = null;
 		mLocalStreamingUUID = null;
+		mLocalStreamingName = null;
 		mSessionBuilder = null;
 	}
 
@@ -471,12 +473,13 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	@Override
-	public void localStreamingAvailable(final UUID id, final SessionBuilder sessionBuilder) {
+	public void localStreamingAvailable(final UUID id, final String name, final SessionBuilder sessionBuilder) {
 		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
 				mLocalStreamingUUID = id;
 				mSessionBuilder = sessionBuilder;
+				mLocalStreamingName = name;
 				mLocalStreamingState = new StreamingState();
 				sendLocalStreaming();
 			}
@@ -538,6 +541,7 @@ public class RtspClient implements StreamingRecordObserver {
 		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
 			try {
 				mLocalStreamingSession = mSessionBuilder.build();
+				mLocalStreamingSession.setNameStreaming(mLocalStreamingName);
 				mLocalStreamingSession.setDestinationAddress(InetAddress.getByName(mParameters.host), true);
 				mLocalStreamingSession.setDestinationPort(mParameters.port);
 				mLocalStreamingSession.setOriginAddress(mSocket.getLocalAddress(), true);

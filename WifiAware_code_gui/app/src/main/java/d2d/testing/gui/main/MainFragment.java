@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -149,18 +152,18 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     @Override
-    public void localStreamingAvailable(UUID id, SessionBuilder sessionBuilder) {}
+    public void localStreamingAvailable(UUID id, String name, SessionBuilder sessionBuilder) {}
 
     @Override
     public void localStreamingUnavailable() {}
 
     @Override
     public void streamingAvailable(final Streaming streaming, boolean bAllowDispatch) {
-        final String path = streaming.getUUID().toString();
+        final String path = uuidToBase64(streaming.getUUID().toString());
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(true,
-                                            path,
+                                            streaming.getName().equals("defaultName")? path : streaming.getName(),
                                             streaming.getReceiveSession().getDestinationAddress().toString(),
                                             streaming.getReceiveSession().getDestinationPort());
             }
@@ -169,15 +172,23 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @Override
     public void streamingUnavailable(final Streaming streaming) {
-        final String path = streaming.getUUID().toString();
+        final String path = uuidToBase64(streaming.getUUID().toString());
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(false,
-                                            path,
+                                            streaming.getName().equals("defaultName")? path : streaming.getName(),
                                             streaming.getReceiveSession().getDestinationAddress().toString(),
                                             streaming.getReceiveSession().getDestinationPort());
             }
         });
+    }
+
+    private String uuidToBase64(String str) {
+        UUID uuid = UUID.fromString(str);
+        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return Base64.encodeToString(bb.array(), Base64.DEFAULT);
     }
 
     @Override

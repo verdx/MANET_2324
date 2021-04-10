@@ -26,6 +26,7 @@ public class StreamingRecord {
     private final Map<UUID, Record> mRecords;
     private SessionBuilder mLocalStreamingBuilder;
     private UUID mLocalStreamingUUID;
+    private String mLocalStreamingName;
 
     private List<StreamingRecordObserver> mObservers;
 
@@ -60,16 +61,18 @@ public class StreamingRecord {
         }
     }
 
-    public synchronized void addLocalStreaming(UUID id, SessionBuilder sessionBuilder){
+    public synchronized void addLocalStreaming(UUID id, String name, SessionBuilder sessionBuilder){
         mLocalStreamingUUID = id;
+        mLocalStreamingName = name;
         mLocalStreamingBuilder = sessionBuilder;
         for(StreamingRecordObserver ob : mObservers){
-            ob.localStreamingAvailable(id, sessionBuilder);
+            ob.localStreamingAvailable(id, name ,sessionBuilder);
         }
     }
 
     public synchronized void removeLocalStreaming(){
         mLocalStreamingUUID = null;
+        mLocalStreamingName = null;
         mLocalStreamingBuilder = null;
         for(StreamingRecordObserver ob : mObservers){
             ob.localStreamingUnavailable();
@@ -111,7 +114,7 @@ public class StreamingRecord {
     public synchronized void addObserver(StreamingRecordObserver ob){
         mObservers.add(ob);
         if(mLocalStreamingUUID != null){
-            ob.localStreamingAvailable(mLocalStreamingUUID, mLocalStreamingBuilder);
+            ob.localStreamingAvailable(mLocalStreamingUUID, mLocalStreamingName, mLocalStreamingBuilder);
         }
         for(Record rec : mRecords.values()){
             ob.streamingAvailable(rec.mStreaming, rec.mAllowDispatch);

@@ -20,7 +20,7 @@ public class CustomDialogFragment extends DialogFragment {
 
     private static final String TAG = "Dialog";
     private CustomDialogListener mListener;
-    private String name;
+    private String name = "defaultName";
     private EditText nameText;
 
     public CustomDialogFragment() {
@@ -56,7 +56,7 @@ public class CustomDialogFragment extends DialogFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mListener.onDialogNegative(null);
+        mListener.onDialogNegative("defaultName");
     }
 
     @Override
@@ -75,11 +75,9 @@ public class CustomDialogFragment extends DialogFragment {
                         // sign in the user ...
                         if(mListener!=null){
                             if(validateForm()) {
-                                String message = String.format("Name of streaming %s", name);
-                                Log.v(TAG, message);
-
-                                mListener.onDialogPositive(message);
+                                mListener.onDialogPositive(name);
                             }
+                            else mListener.onDialogPositive("defaultName");
                         }
                     }
                 })
@@ -87,7 +85,7 @@ public class CustomDialogFragment extends DialogFragment {
                     public void onClick(DialogInterface dialog, int id) {
                         CustomDialogFragment.this.getDialog().cancel();
                         if(mListener!=null){
-                            mListener.onDialogNegative(null);
+                            mListener.onDialogNegative("defaultName");
                         }
                     }
                 });
@@ -95,8 +93,8 @@ public class CustomDialogFragment extends DialogFragment {
     }
 
     private boolean validateForm() {
-        name = nameText.getText().toString().trim();
-        if(name.isEmpty())return false;
+        name = nameText.getText().toString();
+        if(name.isEmpty()) return false;
         return true;
     }
 }
