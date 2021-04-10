@@ -29,7 +29,6 @@ public class StreamingRecord {
 
     private List<StreamingRecordObserver> mObservers;
 
-
     public static synchronized StreamingRecord getInstance(){
         if(INSTANCE == null) {
             INSTANCE = new StreamingRecord();

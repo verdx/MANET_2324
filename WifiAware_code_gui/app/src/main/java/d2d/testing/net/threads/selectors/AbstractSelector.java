@@ -206,7 +206,6 @@ public abstract class AbstractSelector implements Runnable{
         SocketChannel socketChannel = (SocketChannel) key.channel();
         try {
             if(socketChannel.finishConnect()) { //Finish connecting.
-                //todo negociar algo sobre la conexion?? donde ??
                 this.mStatusTCP = STATUS_CONNECTED;
                 key.interestOps(SelectionKey.OP_READ);  // Register an interest in reading till send
                 Logger.d("AbstractSelector: client (" + socketChannel.socket().getLocalAddress() + ") finished connecting...");

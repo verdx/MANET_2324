@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context=".gui.main.dialogName.CustomDialogFragment">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="37dp"
+        android:background="@color/colorPrimaryDark"
+        android:contentDescription="@string/app_name"
+        android:gravity="center"
+        android:text="NAME OF STREAMING?"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="4dp"
+        android:text="If you want to name the streaming, enter it here."
+        android:textAlignment="center"
+        android:textSize="15sp"
+        android:textStyle="italic" />
+
+    <EditText
+        android:id="@+id/nameStream"
+        android:layout_width="267dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="4dp"
+        android:hint="Name of streaming"
+        android:inputType="textEmailAddress"
+        android:textAlignment="center"
+        android:textSize="18sp" />
+
+</LinearLayout>

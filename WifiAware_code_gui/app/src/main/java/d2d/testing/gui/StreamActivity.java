@@ -12,6 +12,8 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import d2d.testing.R;
+import d2d.testing.gui.main.dialogName.CustomDialogFragment;
+import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
@@ -30,7 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 
-public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback {
+public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener {
 
     private final static String TAG = "StreamActivity";
 
@@ -41,6 +43,8 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     private FloatingActionButton recordButton;
     public boolean mRecording = false;
 
+    private String mNameStreaming = null;
+
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
 
     @Override
@@ -49,6 +53,9 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         setContentView(R.layout.activity_stream);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        CustomDialogFragment dialog = new CustomDialogFragment();
+        dialog.show(getSupportFragmentManager(), "CustomDialogFragment");
 
         mTextureView = findViewById(R.id.textureView);
 
@@ -169,5 +176,20 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     @Override
     public void cameraClosed() {
         //Toast.makeText(this, "Camera closed", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onAction(Object object) {
+
+    }
+
+    @Override
+    public void onDialogPositive(Object object) {
+        mNameStreaming = (String)object;
+    }
+
+    @Override
+    public void onDialogNegative(Object object) {
+
     }
 }

@@ -58,13 +58,13 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
 
         this.setContentView(R.layout.activity_view_stream);
 
-        String ip = getIntent().getExtras().getString("UUID");
+        String uuid = getIntent().getExtras().getString("UUID");
 
         //String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
         //String path= "rtsp://" + ip2;
 
         // Get URL
-        rtspUrl = "rtsp://127.0.0.1:1234/" + ip;
+        rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
         Log.d(TAG, "Playing back " + rtspUrl);
 
         mSurface = (SurfaceView) findViewById(R.id.textureView);
