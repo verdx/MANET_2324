@@ -3,14 +3,16 @@ package d2d.testing.gui.main;
 public class StreamDetail {
     private String ip;
     private String uuid;
+    private String name;
     private int port;
     private boolean download;
 
-    public StreamDetail(String uuid, String ip, int port){
+    public StreamDetail(String uuid, String name, String ip, int port){
         this.uuid = uuid;
         this.ip = ip;
         this.download = false;
         this.port = port;
+        this.name = name;
     }
 
     public String getUuid() {
@@ -19,6 +21,15 @@ public class StreamDetail {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getIp() {

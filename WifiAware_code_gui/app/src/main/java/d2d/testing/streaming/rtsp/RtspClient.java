@@ -634,6 +634,7 @@ public class RtspClient implements StreamingRecordObserver {
 	private void tryLocalStreamingConnection() throws SecurityException, IOException, IllegalStateException, RuntimeException {
 		mLocalStreamingState.mCSeq = 0;
 		String path = mLocalStreamingUUID.toString();
+		Log.d(TAG, "pipi" +  path);
 		sendRequestAnnounce(mLocalStreamingState, path, mLocalStreamingSession.getSessionDescription());
 		sendRequestSetup(mLocalStreamingState, path, mLocalStreamingSession.getTrack(0), 0);
 		sendRequestSetup(mLocalStreamingState, path, mLocalStreamingSession.getTrack(1), 1);

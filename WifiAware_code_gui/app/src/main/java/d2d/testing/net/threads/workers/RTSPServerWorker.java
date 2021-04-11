@@ -242,15 +242,10 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         UUID streamUUID = UUID.fromString(request.path);
-        String streamName;
 
-        Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(request.body);
-        if(matcher.find()) streamName = matcher.group(1);
-        else streamName = "";
+        Log.d(TAG, "keke: " + session.getStreamingName());
 
-
-        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, streamName, session));
+        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session.getStreamingName(), session));
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
                               "Content-Type: application/sdp\r\n" +
                               "Session: " + session.getSessionID() + ";timeout=" + session.getTimeout() +"\r\n";
@@ -509,8 +504,6 @@ public class RTSPServerWorker extends AbstractWorker {
         }
 
         StreamingRecord.getInstance().addStreaming(mServerSessions.get(channel).get(UUID.fromString(receiveSession.getPath())), true);
-        //mMainActivity.updateStreamList(true, ip, name);
-        //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(true, ip, name));
 
         return response;
     }
@@ -544,8 +537,6 @@ public class RTSPServerWorker extends AbstractWorker {
         String name = session.getPath();
 
         StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
-        //mMainActivity.updateStreamList(false, ip, name);
-        //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(false, ip, name));
 
         return response;
     }
@@ -697,8 +688,10 @@ public class RTSPServerWorker extends AbstractWorker {
 
         final Pattern regexAudioDescription = Pattern.compile("m=audio (\\S+)",Pattern.CASE_INSENSITIVE);
         final Pattern regexVideoDescription = Pattern.compile("m=video (\\S+)",Pattern.CASE_INSENSITIVE);
+        final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
         Matcher matcher;
+        String streamName = "defaultName";
 
         while((line = reader.readLine()) != null && line.length()>0) {
             if(regexAudioDescription.matcher(line).find()){
@@ -712,7 +705,15 @@ public class RTSPServerWorker extends AbstractWorker {
                 trackInfo.setSessionDescription(line +"\r\n"+ reader.readLine() +"\r\n"+ reader.readLine() +"\r\n");
                 session.addVideoTrack(trackInfo);
             }
+
+            matcher = pattern.matcher(line);
+            if(matcher.find()){
+                streamName = matcher.group(1);
+            }
         }
+
+        session.setStreamingName(streamName);
+        Log.d(TAG,"StreamingName = " + streamName);
 
         Log.d(TAG,"handleServerRequest: Origin" + client.getInetAddress().getHostAddress());
         session.setOrigin(client.getInetAddress()); //CLIENTE
@@ -741,6 +742,9 @@ public class RTSPServerWorker extends AbstractWorker {
         if(receiveSession == null) {
             throw new IllegalArgumentException();
         }
+
+        session.setNameStreaming(receiveSession.getStreamingName());
+
 
         Log.d(TAG,"handleRequest: Origin" + client.getLocalAddress().getHostAddress());
         session.setOriginAddress(client.getLocalAddress(), false);

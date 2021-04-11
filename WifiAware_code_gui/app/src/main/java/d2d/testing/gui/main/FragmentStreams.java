@@ -50,9 +50,9 @@ public class FragmentStreams extends Fragment {
         mainFragment = mf;
     }
 
-    public void updateList(boolean on_off, String uuid, String ip, int port ){
+    public void updateList(boolean on_off, String uuid, String name, String ip, int port ){
         if(!ip.equals("0.0.0.0")) {
-            StreamDetail detail = new StreamDetail(uuid, ip, port);
+            StreamDetail detail = new StreamDetail(uuid, name, ip, port);
             if (on_off) {
                 if (!streamList.contains(detail))
                     streamList.add(detail);

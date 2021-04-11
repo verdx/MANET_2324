@@ -159,11 +159,12 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @Override
     public void streamingAvailable(final Streaming streaming, boolean bAllowDispatch) {
-        final String path = uuidToBase64(streaming.getUUID().toString());
+        final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(true,
-                                            streaming.getName().equals("defaultName")? path : streaming.getName(),
+                                            path,
+                                            streaming.getName(),
                                             streaming.getReceiveSession().getDestinationAddress().toString(),
                                             streaming.getReceiveSession().getDestinationPort());
             }
@@ -172,23 +173,16 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @Override
     public void streamingUnavailable(final Streaming streaming) {
-        final String path = uuidToBase64(streaming.getUUID().toString());
+        final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
                 streams_fragment.updateList(false,
-                                            streaming.getName().equals("defaultName")? path : streaming.getName(),
+                                            path,
+                                            streaming.getName(),
                                             streaming.getReceiveSession().getDestinationAddress().toString(),
                                             streaming.getReceiveSession().getDestinationPort());
             }
         });
-    }
-
-    private String uuidToBase64(String str) {
-        UUID uuid = UUID.fromString(str);
-        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-        bb.putLong(uuid.getMostSignificantBits());
-        bb.putLong(uuid.getLeastSignificantBits());
-        return Base64.encodeToString(bb.array(), Base64.DEFAULT);
     }
 
     @Override

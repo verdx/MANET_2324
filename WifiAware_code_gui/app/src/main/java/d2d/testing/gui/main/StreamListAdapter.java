@@ -14,6 +14,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import d2d.testing.R;
+import d2d.testing.utils.IOUtils;
 
 public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
     private Context mContext;
@@ -26,7 +27,13 @@ public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        String uuid = getItem(position).getUuid();
+
+        String desc;
+        if(getItem(position).getName().equals("defaultName")){
+             desc = IOUtils.uuidToBase64(getItem(position).getUuid());
+        }
+        else desc = getItem(position).getName();
+
 
         LayoutInflater inflater = LayoutInflater.from(mContext);
         convertView = inflater.inflate(R.layout.stream_detail,null);
@@ -45,7 +52,7 @@ public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
             }
         });
 
-        stream_nam.setText(uuid);
+        stream_nam.setText(desc);
         stream_download.setBackgroundColor(getItem(position).isDownload()? Color.rgb(9, 148, 185) : Color.GRAY);
 
         return convertView;

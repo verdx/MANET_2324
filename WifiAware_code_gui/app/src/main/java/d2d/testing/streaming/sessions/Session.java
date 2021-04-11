@@ -326,7 +326,6 @@ public class Session {
 			sessionDescription.append(mVideoStream.getSessionDescription());
 			sessionDescription.append("a=control:trackID="+1+"\r\n");
 		}
-		Log.d("prueba2", mStreamingName);
 		return sessionDescription.toString();
 	}
 

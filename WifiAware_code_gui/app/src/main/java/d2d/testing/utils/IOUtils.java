@@ -1,12 +1,15 @@
 package d2d.testing.utils;
 
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.UUID;
 
 public class IOUtils {
 
@@ -41,5 +44,13 @@ public class IOUtils {
         } else {
             return Arrays.copyOfRange(byteArr, offset, byteArr.length);
         }
+    }
+
+    public static String uuidToBase64(String str) {
+        UUID uuid = UUID.fromString(str);
+        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return Base64.encodeToString(bb.array(), Base64.DEFAULT);
     }
 }
