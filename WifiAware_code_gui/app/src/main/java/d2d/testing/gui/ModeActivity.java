@@ -33,7 +33,7 @@ public class ModeActivity extends AppCompatActivity {
         witness.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openMainActivity("w");
+                openMainActivity(getString(R.string.mode_witness));
             }
         });
 
@@ -41,7 +41,7 @@ public class ModeActivity extends AppCompatActivity {
         humanitarian.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openMainActivity("h");
+                openMainActivity(getString(R.string.mode_humanitarian));
             }
         });
     }

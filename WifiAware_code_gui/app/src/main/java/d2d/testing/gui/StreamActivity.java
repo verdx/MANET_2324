@@ -54,8 +54,10 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        CustomDialogFragment dialog = new CustomDialogFragment();
-        dialog.show(getSupportFragmentManager(), "CustomDialogFragment");
+        if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))){
+            CustomDialogFragment dialog = new CustomDialogFragment();
+            dialog.show(getSupportFragmentManager(), "CustomDialogFragment");
+        }
 
         mTextureView = findViewById(R.id.textureView);
 
@@ -91,14 +93,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     public void startStreaming() {
         UUID localStreamUUID = UUID.randomUUID();
         StreamingRecord.getInstance().addLocalStreaming(localStreamUUID, mNameStreaming, mSessionBuilder);
-        /*
-        //rtspClient.setSession(mSesion);
-        rtspClient.setmSessionBuilder(mSessionBuilder);
-        rtspClient.setStreamPath("/Cliente1");
-        //rtspClient.setServerAddress("192.168.49.1", 12345);
-        rtspClient.startStream();
-        Toast.makeText(this,"Retransmitting streaming to server for multihopping", Toast.LENGTH_SHORT).show();
-        */
+
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
         mRecording = true;
     }
@@ -118,9 +113,6 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         CameraController.getInstance().stopCamera();
 
         super.onDestroy();
-        //mSesion.stop();
-        //this.stopService(mIntent);
-        //mSesion.stopPreview();
     }
 
     @Override

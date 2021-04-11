@@ -20,5 +20,7 @@
 	<string name="humanitarian">Humanitarian</string>
 	<string name="description_mode">In order to use the application, you must select the corresponding mode.</string>
 	<string name="todo">TODO</string>
+	<string name="mode_witness">w</string>
+	<string name="mode_humanitarian">h</string>
 
 </resources>
