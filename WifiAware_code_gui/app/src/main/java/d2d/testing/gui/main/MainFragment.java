@@ -20,6 +20,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -29,13 +31,12 @@ import d2d.testing.R;
 import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
 import d2d.testing.streaming.Streaming;
+import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
-
-    private FragmentStreams streams_fragment;
 
     private TextView myName;
     private TextView myAdd;
@@ -44,23 +45,32 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private Button record;
     private WifiAwareViewModel mAwareModel;
 
+    private TextView numStreams;
+
+    private ArrayList<StreamDetail> streamList = new ArrayList();
+    private StreamListAdapter arrayAdapter;
+    private RecyclerView streamsListView;
+
     private Boolean isWifiAwareAvailable;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
-        initialWork();
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_main, container, false);
 
-        streams_fragment = new FragmentStreams();
-        streams_fragment.setMainActivity(this);
+        streamsListView = root.findViewById(R.id.streamListView);
+        streamsListView.setLayoutManager(new LinearLayoutManager(getContext()));
+        arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
+        streamsListView.setAdapter(arrayAdapter);
 
-        FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
-        transaction.replace(R.id.st_fragment, streams_fragment).commit();
+        numStreams = root.findViewById(R.id.streams_available);
+        numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
+
+        StreamingRecord.getInstance().addObserver(this);
 
         record = root.findViewById(R.id.recordButton);
         record.setOnClickListener(new View.OnClickListener() {
@@ -89,8 +99,34 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         return root;
     }
 
-    private void initialWork() {
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        StreamingRecord.getInstance().removeObserver(this);
+    }
 
+    public ArrayList<StreamDetail> getStreamList(){
+        return this.streamList;
+    }
+
+    public void updateList(boolean on_off, String uuid, String name, String ip, int port ){
+        if(!ip.equals("0.0.0.0")) {
+            StreamDetail detail = new StreamDetail(uuid, name, ip, port);
+            if (on_off) {
+                if (!streamList.contains(detail))
+                    streamList.add(detail);
+            } else {
+                if (streamList.contains(detail))
+                    streamList.remove(detail);
+            }
+            numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
+            arrayAdapter.setStreamsData(streamList);
+            streamsListView.getAdapter().notifyDataSetChanged();
+        }
+    }
+
+    public void openStreamActivity(String uuid) {
+        openViewStreamActivity(getActivity(), uuid);
     }
 
     private void initWifiAware(){
@@ -136,10 +172,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         }
     }
 
-    public ArrayList<StreamDetail> getStreamlist(){
-        return streams_fragment.getStreamList();
-    }
-
     private void openStreamActivity() {
         Intent streamActivityIntent = new Intent(getActivity(), StreamActivity.class);
         this.startActivity(streamActivityIntent);
@@ -162,11 +194,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
-                streams_fragment.updateList(true,
-                                            path,
-                                            streaming.getName(),
-                                            streaming.getReceiveSession().getDestinationAddress().toString(),
-                                            streaming.getReceiveSession().getDestinationPort());
+                updateList(true,
+                        path,
+                        streaming.getName(),
+                        streaming.getReceiveSession().getDestinationAddress().toString(),
+                        streaming.getReceiveSession().getDestinationPort());
             }
         });
     }
@@ -176,11 +208,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
-                streams_fragment.updateList(false,
-                                            path,
-                                            streaming.getName(),
-                                            streaming.getReceiveSession().getDestinationAddress().toString(),
-                                            streaming.getReceiveSession().getDestinationPort());
+                updateList(false,
+                        path,
+                        streaming.getName(),
+                        streaming.getReceiveSession().getDestinationAddress().toString(),
+                        streaming.getReceiveSession().getDestinationPort());
             }
         });
     }

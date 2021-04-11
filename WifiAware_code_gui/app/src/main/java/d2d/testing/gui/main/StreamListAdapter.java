@@ -1,64 +1,100 @@
 package d2d.testing.gui.main;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 import d2d.testing.R;
 import d2d.testing.utils.IOUtils;
 
-public class StreamListAdapter extends ArrayAdapter<StreamDetail> {
+public class StreamListAdapter extends RecyclerView.Adapter<StreamListAdapter.ViewHolder> {
     private Context mContext;
+    private ArrayList<StreamDetail> mStreams;
+    private StreamDetail sd;
+    private MainFragment fragment;
 
-    public StreamListAdapter(Context context , ArrayList<StreamDetail> objects) {
-        super(context, -1, objects);
+    public StreamListAdapter(Context context , ArrayList<StreamDetail> objects, MainFragment fragment) {
+        this.mStreams = objects;
         this.mContext = context;
+        this.fragment = fragment;
     }
 
+    private void startDownload() {
+        Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
+    }
+
+    @NonNull
+    @Override
+    public StreamListAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.stream_detail, parent, false);
+        return new ViewHolder(view);
+    }
 
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
+    public void onBindViewHolder(@NonNull StreamListAdapter.ViewHolder holder, final int position) {
+        sd = mStreams.get(position);
 
         String desc;
-        if(getItem(position).getName().equals("defaultName")){
-             desc = IOUtils.uuidToBase64(getItem(position).getUuid());
+        if(sd.getName().equals("defaultName")){
+            desc = IOUtils.uuidToBase64(sd.getUuid());
         }
-        else desc = getItem(position).getName();
+        else desc = sd.getName();
 
+        holder.stream_nam.setText(desc);
 
-        LayoutInflater inflater = LayoutInflater.from(mContext);
-        convertView = inflater.inflate(R.layout.stream_detail,null);
-
-        TextView stream_nam = convertView.findViewById(R.id.stream_name);
-        ImageButton stream_download = convertView.findViewById(R.id.downloadButton);
-
-        stream_download.setOnClickListener(new View.OnClickListener() {
+        holder.stream_download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!getItem(position).isDownload()){
-                    getItem(position).setDownload(true);
+                if(!sd.isDownload()){
+                    sd.setDownload(true);
                     notifyDataSetChanged();
                     startDownload();
                 }
             }
         });
 
-        stream_nam.setText(desc);
-        stream_download.setBackgroundColor(getItem(position).isDownload()? Color.rgb(9, 148, 185) : Color.GRAY);
+        holder.stream_download.setBackgroundResource(sd.isDownload()?
+                        R.drawable.button_download_pressed :
+                        R.drawable.button_download);
 
-        return convertView;
+        holder.stream_layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                fragment.openStreamActivity(sd.getUuid());
+            }
+        });
     }
 
-    private void startDownload() {
-        Toast.makeText(getContext().getApplicationContext(), "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
+    @Override
+    public int getItemCount() {
+        return mStreams.size();
+    }
+
+    public void setStreamsData(ArrayList<StreamDetail> data){
+        mStreams = data;
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder{
+
+        TextView stream_nam;
+        ImageButton stream_download;
+        LinearLayout stream_layout;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            stream_nam = itemView.findViewById(R.id.stream_name);
+            stream_download = itemView.findViewById(R.id.downloadButton);
+            stream_layout = itemView.findViewById(R.id.stream_item_list);
+        }
     }
 }

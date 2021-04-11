@@ -2,9 +2,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:shape="rectangle"
-	app:cardElevation="6dp">
+	android:elevation="10dp">
 	<!-- el boton tiene color rojo de fondo, por ejemplo -->
-	<solid android:color="#FF0000" />
-	<corners android:radius="100dp" />
+	<solid android:color="#DCDCDC" />
+	<corners android:radius="15dp" />
 
 </shape>

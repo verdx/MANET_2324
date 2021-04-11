@@ -7,56 +7,86 @@
 	android:layout_height="match_parent"
 	tools:context="d2d.testing.gui.main.MainFragment">
 
-	<TextView android:id="@+id/textView"
-		android:layout_width="346dp" android:layout_height="wrap_content"
+	<TextView
+		android:id="@+id/textView"
+		android:layout_width="346dp"
+		android:layout_height="wrap_content"
 		android:layout_alignParentStart="true"
 		android:layout_alignParentTop="true"
-		android:layout_alignParentEnd="true" android:layout_marginStart="30dp"
-		android:layout_marginTop="20dp" android:layout_marginEnd="35dp"
-		android:text="@string/mi_dispositivo" android:textStyle="bold" />
+		android:layout_alignParentEnd="true"
+		android:layout_marginStart="30dp"
+		android:layout_marginTop="20dp"
+		android:layout_marginEnd="35dp"
+		android:text="@string/mi_dispositivo"
+		android:textStyle="bold" />
 
-	<LinearLayout android:id="@+id/linearLayout2"
-		android:layout_width="wrap_content" android:layout_height="85dp"
+	<LinearLayout
+		android:id="@+id/linearLayout2"
+		android:layout_width="wrap_content"
+		android:layout_height="85dp"
 		android:layout_below="@id/textView"
 		android:layout_alignParentStart="true"
-		android:layout_alignParentEnd="true" android:layout_marginStart="15dp"
-		android:layout_marginTop="10dp" android:layout_marginEnd="15dp"
-		android:background="#162E8DA6" android:padding="3dip">
+		android:layout_alignParentEnd="true"
+		android:layout_marginStart="10dp"
+		android:layout_marginTop="5dp"
+		android:layout_marginEnd="10dp"
+		android:background="@drawable/my_device_background"
+		android:elevation="5dp"
+		android:padding="3dip">
 
-		<ImageView android:id="@+id/icon"
-			android:layout_width="58dp" android:layout_height="85dp"
-			android:layout_marginEnd="15dp" android:backgroundTint="#FFFFFF"
+		<ImageView
+			android:id="@+id/icon"
+			android:layout_width="58dp"
+			android:layout_height="85dp"
+			android:layout_marginEnd="15dp"
+			android:backgroundTint="#FFFFFF"
 			android:src="@drawable/machine" />
 
-		<LinearLayout android:layout_width="298dp"
-			android:layout_height="match_parent" android:orientation="vertical">
+		<LinearLayout
+			android:layout_width="298dp"
+			android:layout_height="match_parent"
+			android:orientation="vertical">
 
-			<TextView android:id="@+id/my_name"
-				android:layout_width="match_parent" android:layout_height="0dp"
-				android:layout_weight="1" android:gravity="center_vertical"
+			<TextView
+				android:id="@+id/my_name"
+				android:layout_width="match_parent"
+				android:layout_height="0dp"
+				android:layout_weight="1"
+				android:gravity="center_vertical"
 				tools:ignore="NestedWeights" />
 
-			<TextView android:id="@+id/my_address"
-				android:layout_width="fill_parent" android:layout_height="0dp"
-				android:layout_weight="1" android:ellipsize="marquee"
+			<TextView
+				android:id="@+id/my_address"
+				android:layout_width="fill_parent"
+				android:layout_height="6dp"
+				android:layout_weight="1"
+				android:ellipsize="marquee"
 				android:singleLine="true" />
 
-			<TextView android:id="@+id/my_status"
-				android:layout_width="fill_parent" android:layout_height="3dp"
-				android:layout_weight="1" android:ellipsize="marquee"
+			<TextView
+				android:id="@+id/my_status"
+				android:layout_width="fill_parent"
+				android:layout_height="3dp"
+				android:layout_weight="1"
+				android:ellipsize="marquee"
 				android:singleLine="true" />
 		</LinearLayout>
 
 	</LinearLayout>
 
-	<TextView android:id="@+id/stream_list"
-		android:layout_width="330dp" android:layout_height="wrap_content"
+	<TextView
+		android:id="@+id/streams_available"
+		android:layout_width="330dp"
+		android:layout_height="wrap_content"
 		android:layout_below="@id/linearLayout2"
 		android:layout_alignParentStart="true"
-		android:layout_alignParentEnd="true" android:layout_marginStart="30dp"
-		android:layout_marginTop="20dp" android:layout_marginEnd="40dp"
+		android:layout_alignParentEnd="true"
+		android:layout_marginStart="30dp"
+		android:layout_marginTop="45dp"
+		android:layout_marginEnd="30dp"
 		android:text="@string/dispositivos_encontrados"
-		android:textAlignment="textStart" android:textAllCaps="false"
+		android:textAlignment="textStart"
+		android:textAllCaps="false"
 		android:textStyle="bold" />
 
 	<Button
@@ -68,32 +98,34 @@
 		android:layout_alignParentBottom="true"
 		android:layout_marginStart="34dp"
 		android:layout_marginEnd="46dp"
-		android:layout_marginBottom="0dp"
+		android:layout_marginBottom="35dp"
 		android:background="@drawable/button_design"
 		android:drawableStart="@android:drawable/ic_media_play"
 		android:fontFamily="sans-serif"
 		android:paddingLeft="40dp"
 		android:paddingRight="40dp"
-		android:shadowRadius="3"
 		android:text="@string/boton_record"
 		android:textAlignment="center"
 		android:textColor="#FFFFFF"
 		android:textSize="45sp"
 		android:textStyle="bold" />
 
-	<androidx.fragment.app.FragmentContainerView
-		android:id="@+id/st_fragment"
-		android:name="d2d.testing.gui.main.FragmentStreams"
-		android:layout_width="wrap_content"
-		android:layout_height="432dp"
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/streamListView"
+		android:layout_width="match_parent"
+		android:layout_height="435dp"
 		android:layout_above="@+id/recordButton"
-		android:layout_below="@+id/stream_list"
+		android:layout_below="@+id/streams_available"
 		android:layout_alignParentStart="true"
 		android:layout_alignParentEnd="true"
-		android:layout_marginStart="20dp"
-		android:layout_marginTop="15dp"
-		android:layout_marginEnd="20dp"
-		android:layout_marginBottom="15dp"
-		tools:layout="@layout/streams_fragment" />
+		android:layout_marginStart="0dp"
+		android:layout_marginTop="5dp"
+		android:layout_marginEnd="0dp"
+		android:layout_marginBottom="45dp"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintHorizontal_bias="0.0"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
 
 </RelativeLayout>

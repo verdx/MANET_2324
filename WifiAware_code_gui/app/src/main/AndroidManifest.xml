@@ -40,12 +40,13 @@
 	<uses-feature
 		android:name="android.hardware.camera.autofocus" />
 
+
 	<application android:allowBackup="true"
 		android:icon="@mipmap/ic_launcher" android:label="@string/app_name"
 		android:roundIcon="@mipmap/ic_launcher_round"
 		android:supportsRtl="true" android:theme="@style/AppTheme">
 
-		<activity android:name=".gui.MainActivity"
+		<activity android:name=".gui.ModeActivity"
 			android:theme="@style/AppTheme.NoActionBar">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -54,6 +55,9 @@
 		</activity>
 
 		<activity android:name=".gui.StreamActivity"
+			android:theme="@style/AppTheme.NoActionBar" />
+
+		<activity android:name=".gui.MainActivity"
 			android:theme="@style/AppTheme.NoActionBar" />
 
 		<activity android:name=".gui.ViewStreamActivity"
