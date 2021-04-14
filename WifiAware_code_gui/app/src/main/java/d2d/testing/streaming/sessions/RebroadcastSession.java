@@ -153,6 +153,7 @@ public class RebroadcastSession {
 
     public void setServerSession(ReceiveSession receiveSession) {
         this.mReceiveSession = receiveSession;
+        this.setNameStreaming(receiveSession.getStreamingName());
     }
 
     public RebroadcastTrackInfo getRebroadcastTrack(int trackId) {
