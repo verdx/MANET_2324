@@ -9,13 +9,9 @@ import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
-import java.util.Iterator;
 
-import d2d.testing.MainActivity;
-import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.EchoWorker;
-
-import static java.lang.Thread.sleep;
+import d2d.testing.utils.Logger;
 
 public class UDPServerSelector extends AbstractSelector {
     private DatagramChannel mDatagramChannel;
@@ -52,6 +48,7 @@ public class UDPServerSelector extends AbstractSelector {
             if(mConManager != null) mConManager.bindProcessToNetwork(null);
             Logger.d("UDPServerSelector: initiateConnection as server listening UDP on port " + mLocalAddress.getHostAddress() + ":" + mPortUDP);
         } catch (IOException e) {
+            mStatusUDP = STATUS_DISCONNECTED;
             e.printStackTrace();
         }
     }

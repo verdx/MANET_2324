@@ -20,8 +20,9 @@ public class ReceiveSession {
 
     private TrackInfo mVideoTrackInfo;
     private TrackInfo mAudioTrackInfo;
-    private String mSessionIDessionDescription;
     private String path;
+
+    public String mStreamingName;
 
     private Network mReceiveNet;
 
@@ -67,6 +68,14 @@ public class ReceiveSession {
 
     public void setDestinationPort(int port){
         mDestPort = port;
+    }
+
+    public void setStreamingName(String name) {
+        mStreamingName = name;
+    }
+
+    public String getStreamingName(){
+        return mStreamingName;
     }
 
     public int getDestinationPort(){

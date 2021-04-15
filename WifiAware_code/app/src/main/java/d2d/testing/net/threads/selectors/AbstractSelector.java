@@ -4,10 +4,7 @@ import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -24,10 +21,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import d2d.testing.MainActivity;
 import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.AbstractWorker;
 
@@ -64,8 +59,8 @@ import static java.lang.Thread.sleep;
 public abstract class AbstractSelector implements Runnable{
     private static final int BUFFER_SIZE = 8192;
 
-    protected static final int PORT_TCP = 3462;
-    protected static final int PORT_UDP = 3463;
+    //protected static final int PORT_TCP = 3462;
+    //protected static final int PORT_UDP = 3463;
 
     protected static final int STATUS_DISCONNECTED = 0;
     protected static final int STATUS_LISTENING = 1;
@@ -82,14 +77,15 @@ public abstract class AbstractSelector implements Runnable{
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 
 
-    protected int mPortTCP = PORT_TCP;
+    //protected int mPortTCP = PORT_TCP;
 
-    protected boolean mEnabled = false;
+    protected AtomicBoolean mEnabled;
     protected int mStatusTCP = STATUS_DISCONNECTED;
     protected int mStatusUDP = STATUS_DISCONNECTED;
 
 
     protected AbstractWorker mWorker;
+    protected Thread mSelectorThread;
 
     public abstract void send(byte[] data);
     protected abstract void initiateConnection();
@@ -97,6 +93,7 @@ public abstract class AbstractSelector implements Runnable{
 
     public AbstractSelector(ConnectivityManager connManager) throws IOException {
         mConManager = connManager;
+        mEnabled = new AtomicBoolean(false);
 
         this.mSelector = SelectorProvider.provider().openSelector();
         //Lo mismo que Selector.open();
@@ -105,50 +102,50 @@ public abstract class AbstractSelector implements Runnable{
 
 
     public void stop(){
-        this.mEnabled = false;
+        if(mEnabled.compareAndSet(true, false)){
+            mSelectorThread.interrupt();
+            try {
+                mSelectorThread.join();
+            } catch (InterruptedException ignored) {}
+            mSelectorThread = null;
+        }
     }
 
     public void start() {
-        if(!mEnabled) {
-            mEnabled = true;
-            new Thread(this).start();
+        if(mEnabled.compareAndSet(false, true)) {
+            mSelectorThread = new Thread(this);
+            mSelectorThread.start();
         }
     }
 
 
     public void run(){
         try {
-            while(mEnabled) {
-                this.initiateConnection();
+            this.initiateConnection();
+            while (mEnabled.get() && (mStatusTCP != STATUS_DISCONNECTED || mStatusUDP != STATUS_DISCONNECTED)) {
+                this.processChangeRequests();
 
-                while (mStatusTCP != STATUS_DISCONNECTED || mStatusUDP != STATUS_DISCONNECTED) {
-                    this.processChangeRequests();
+                mSelector.select();
 
-                    mSelector.select();
+                Iterator<SelectionKey> itKeys = mSelector.selectedKeys().iterator();
+                while (itKeys.hasNext()) {
+                    SelectionKey myKey = itKeys.next();
+                    itKeys.remove();
 
-                    Iterator<SelectionKey> itKeys = mSelector.selectedKeys().iterator();
-                    while (itKeys.hasNext()) {
-                        SelectionKey myKey = itKeys.next();
-                        itKeys.remove();
+                    if (!myKey.isValid()) {
+                        continue;
+                    }
 
-                        if (!myKey.isValid()) {
-                            continue;
-                        }
-
-                        if (myKey.isAcceptable()) {
-                            this.accept(myKey);
-                        } else if (myKey.isConnectable()) {
-                            this.finishConnection(myKey);
-                        } else if (myKey.isReadable()) {
-                            this.read(myKey);
-                        } else if (myKey.isWritable()) {
-                            this.write(myKey);
-                        }
+                    if (myKey.isAcceptable()) {
+                        this.accept(myKey);
+                    } else if (myKey.isConnectable()) {
+                        this.finishConnection(myKey);
+                    } else if (myKey.isReadable()) {
+                        this.read(myKey);
+                    } else if (myKey.isWritable()) {
+                        this.write(myKey);
                     }
                 }
-
-                if(mEnabled)
-                    sleep(5000); //nos hemos desconectado esperamos y volvemos a intentarlo
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -168,6 +165,8 @@ public abstract class AbstractSelector implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            mWorker.stop();
+            onServerRelease();
         }
     }
 
@@ -207,7 +206,6 @@ public abstract class AbstractSelector implements Runnable{
         SocketChannel socketChannel = (SocketChannel) key.channel();
         try {
             if(socketChannel.finishConnect()) { //Finish connecting.
-                //todo negociar algo sobre la conexion?? donde ??
                 this.mStatusTCP = STATUS_CONNECTED;
                 key.interestOps(SelectionKey.OP_READ);  // Register an interest in reading till send
                 Logger.d("AbstractSelector: client (" + socketChannel.socket().getLocalAddress() + ") finished connecting...");
@@ -227,7 +225,7 @@ public abstract class AbstractSelector implements Runnable{
         mReadBuffer.clear();   //Clear out our read buffer
 
         if (socketChannel instanceof SocketChannel ||
-           (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
+                (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
             try {
                 numRead = ((ByteChannel) socketChannel).read(mReadBuffer); // Attempt to read off the channel
             } catch (IOException e) {
@@ -286,6 +284,7 @@ public abstract class AbstractSelector implements Runnable{
 
     protected abstract void onClientDisconnected(SelectableChannel socketChannel);
     protected void onClientConnected(SelectableChannel socketChannel) {}
+    protected void onServerRelease(){}
 
     protected void write(SelectionKey key) throws IOException {
         SelectableChannel socketChannel = key.channel();

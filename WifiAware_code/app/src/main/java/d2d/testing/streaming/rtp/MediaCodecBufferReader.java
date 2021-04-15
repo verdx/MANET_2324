@@ -25,7 +25,6 @@ public class MediaCodecBufferReader implements Runnable {
         mPacketizersInputsMap = map;
     }
 
-    @SuppressLint("NewApi")
     @Override
     public void run() {
         byte[] buffer = new byte[mBufferSize];

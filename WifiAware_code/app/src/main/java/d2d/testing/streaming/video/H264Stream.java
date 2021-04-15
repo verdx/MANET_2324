@@ -18,32 +18,24 @@
 
 package d2d.testing.streaming.video;
 
+import android.annotation.SuppressLint;
+
+import android.service.textservice.SpellCheckerService.Session;
+import android.util.Base64;
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
-import d2d.testing.streaming.exceptions.ConfNotSupportedException;
-import d2d.testing.streaming.exceptions.StorageUnavailableException;
 import d2d.testing.streaming.hw.EncoderDebugger;
 import d2d.testing.streaming.mp4.MP4Config;
 import d2d.testing.streaming.rtp.H264Packetizer;
 import d2d.testing.streaming.sessions.SessionBuilder;
 
-import android.annotation.SuppressLint;
-import android.content.SharedPreferences.Editor;
-import android.graphics.ImageFormat;
-import android.hardware.Camera.CameraInfo;
-import android.media.MediaRecorder;
-import android.os.Environment;
-import android.service.textservice.SpellCheckerService.Session;
-import android.util.Base64;
-import android.util.Log;
-
 /**
  * A class for streaming H.264 from the camera of an android device using RTP.
  * You should use a {@link Session} instantiated with {@link SessionBuilder} instead of using this class directly.
- * Call {@link #setDestinationAddress(InetAddress)}, {@link #setDestinationPorts(int)} and {@link #setVideoQuality(VideoQuality)}
+ * Call setDestinationAddress(InetAddress), {@link #setDestinationPorts(int)} and {@link #setVideoQuality(VideoQuality)}
  * to configure the stream. You can then call {@link #start()} to start the RTP stream.
  * Call {@link #stop()} to stop the stream.
  */
@@ -51,27 +43,12 @@ public class H264Stream extends VideoStream {
 
 	public final static String TAG = "H264Stream";
 
-	private Semaphore mLock = new Semaphore(0);
 	private MP4Config mConfig;
 
-	/**
-	 * Constructs the H.264 stream.
-	 * Uses CAMERA_FACING_BACK by default.
-	 */
 	public H264Stream() {
-		this(CameraInfo.CAMERA_FACING_BACK);
-	}
-
-	/**
-	 * Constructs the H.264 stream.
-	 * @param cameraId Can be either CameraInfo.CAMERA_FACING_BACK or CameraInfo.CAMERA_FACING_FRONT
-	 * @throws IOException
-	 */
-	public H264Stream(int cameraId) {
-		super(cameraId);
 		mMimeType = "video/avc";
-		mCameraImageFormat = ImageFormat.NV21;
-		mVideoEncoder = MediaRecorder.VideoEncoder.H264;
+		//mCameraImageFormat = ImageFormat.NV21;
+		//mVideoEncoder = MediaRecorder.VideoEncoder.H264;
 		mPacketizer = new H264Packetizer();
 	}
 
@@ -80,14 +57,13 @@ public class H264Stream extends VideoStream {
 	 */
 	public synchronized String getSessionDescription() throws IllegalStateException {
 		if (mConfig == null) throw new IllegalStateException("You need to call configure() first !");
-		return "m=video "+String.valueOf(getDestinationPorts()[0])+" RTP/AVP 96\r\n" +
+		return "m=video "+getDestinationPorts()[0]+" RTP/AVP 96\r\n" +
 		"a=rtpmap:96 H264/90000\r\n" +
 		"a=fmtp:96 packetization-mode=1;profile-level-id="+mConfig.getProfileLevel()+";sprop-parameter-sets="+mConfig.getB64SPS()+","+mConfig.getB64PPS()+";\r\n";
 	}	
 
 	/**
 	 * Starts the stream.
-	 * This will also open the camera and display the preview if {@link #startPreview()} has not already been called.
 	 */
 	public synchronized void start() throws IllegalStateException, IOException {
 		if (!mStreaming) {
@@ -121,13 +97,7 @@ public class H264Stream extends VideoStream {
 
 	@SuppressLint("NewApi")
 	private MP4Config testMediaCodecAPI() throws RuntimeException, IOException {
-		createCamera();
-		updateCamera();
 		try {
-			if (mQuality.resX>=640) {
-				// Using the MediaCodec API with the buffer method for high resolutions is too slow
-				//mMode = MODE_MEDIARECORDER_API;
-			}
 			EncoderDebugger debugger = EncoderDebugger.debug(mSettings, mQuality.resX, mQuality.resY);
 			return new MP4Config(debugger.getB64SPS(), debugger.getB64PPS());
 		} catch (Exception e) {
@@ -140,6 +110,9 @@ public class H264Stream extends VideoStream {
 
 	// Should not be called by the UI thread
 	private MP4Config testMediaRecorderAPI() throws RuntimeException, IOException {
+
+		throw new RuntimeException("Encoding with MediaRecorder not implemented");
+		/*
 		String key = PREF_PREFIX+"h264-mr-"+mRequestedQuality.framerate+","+mRequestedQuality.resX+","+mRequestedQuality.resY;
 	
 		if (mSettings != null && mSettings.contains(key) ) {
@@ -271,7 +244,7 @@ public class H264Stream extends VideoStream {
 		}
 
 		return config;
-
+	*/
 	}
 	
 }

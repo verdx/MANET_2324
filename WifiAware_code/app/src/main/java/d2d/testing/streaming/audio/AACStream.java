@@ -18,16 +18,6 @@
 
 package d2d.testing.streaming.audio;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.lang.reflect.Field;
-import java.net.InetAddress;
-
-import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.streaming.rtp.AACADTSPacketizer;
-import d2d.testing.streaming.rtp.AACLATMPacketizer;
-
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -36,6 +26,16 @@ import android.os.Build;
 import android.os.Environment;
 import android.service.textservice.SpellCheckerService.Session;
 import android.util.Log;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.reflect.Field;
+import java.net.InetAddress;
+
+import d2d.testing.streaming.rtp.AACADTSPacketizer;
+import d2d.testing.streaming.rtp.AACLATMPacketizer;
+import d2d.testing.streaming.sessions.SessionBuilder;
 
 /**
  * A class for streaming AAC from the camera of an android device using RTP.
@@ -198,7 +198,7 @@ public class AACStream extends AudioStream {
 	/** Stops the stream. */
 	public synchronized void stop() {
 		if (mStreaming) {
-			if (mMode==MODE_MEDIACODEC_API) {
+			if (mMode==MODE_MEDIACODEC_API || mMode == MODE_MEDIACODEC_API_2) {
 				Log.d(TAG, "Interrupting threads...");
 				AudioPacketizerDispatcher.unsubscribe(mPacketizer);
 			}

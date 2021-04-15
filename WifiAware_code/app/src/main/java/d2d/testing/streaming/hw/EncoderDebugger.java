@@ -18,11 +18,6 @@
 
 package d2d.testing.streaming.hw;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.ByteBuffer;
-import d2d.testing.streaming.hw.CodecManager.Codec;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -35,6 +30,13 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.ByteBuffer;
+
+import d2d.testing.streaming.hw.CodecManager.Codec;
 
 /**
  * 
@@ -161,6 +163,7 @@ public class EncoderDebugger {
 		
 		// If testing the phone again is not needed, 
 		// we just restore the result from the shared preferences
+
 		if (!checkTestNeeded()) {
 			String resolution = mWidth+"x"+mHeight+"-";			
 
@@ -182,6 +185,7 @@ public class EncoderDebugger {
 
 			return;
 		}
+
 
 		if (VERBOSE) Log.d(TAG, ">>>> Testing the phone for resolution "+mWidth+"x"+mHeight);
 		
@@ -221,7 +225,10 @@ public class EncoderDebugger {
 					// Starts the encoder
 					configureEncoder();
 					searchSPSandPPS();
-					
+					//mEncoder.release();
+					//if(true) return;
+
+
 					if (VERBOSE) Log.v(TAG, "SPS and PPS in b64: SPS="+mB64SPS+", PPS="+mB64PPS);
 
 					// Feeds the encoder with an image repeatedly to produce some NAL units

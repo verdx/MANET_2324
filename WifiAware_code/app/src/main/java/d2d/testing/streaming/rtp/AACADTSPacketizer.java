@@ -18,10 +18,12 @@
 
 package d2d.testing.streaming.rtp;
 
-import java.io.IOException;
-import d2d.testing.streaming.audio.AACStream;
 import android.os.SystemClock;
 import android.util.Log;
+
+import java.io.IOException;
+
+import d2d.testing.streaming.audio.AACStream;
 
 /**
  *   

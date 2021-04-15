@@ -18,11 +18,12 @@
 
 package d2d.testing.streaming.video;
 
-import java.util.Iterator;
-import java.util.List;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
 import android.util.Log;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A class that represents the quality of a video stream. 
@@ -33,7 +34,9 @@ public class VideoQuality {
 	public final static String TAG = "VideoQuality";
 	
 	/** Default video stream quality. */
-	public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1280,720,15,3000);
+	//public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1280,720,15,3000);
+	public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,30,2000000);
+	//public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920,1080,60,5000000);
 
 	/**	Represents a quality for a video stream. */ 
 	public VideoQuality() {}

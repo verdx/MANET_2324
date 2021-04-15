@@ -18,6 +18,10 @@
 
 package d2d.testing.streaming.rtp;
 
+import android.net.Network;
+import android.os.SystemClock;
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
@@ -25,12 +29,8 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import d2d.testing.streaming.rtcp.SenderReport;
-import d2d.testing.wifip2p.WifiAwareViewModel;
 
-import android.net.Network;
-import android.os.SystemClock;
-import android.util.Log;
+import d2d.testing.streaming.rtcp.SenderReport;
 
 /**
  * A basic implementation of an RTP socket.

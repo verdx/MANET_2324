@@ -18,10 +18,11 @@
 
 package d2d.testing.streaming.mp4;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import android.util.Base64;
 import android.util.Log;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Finds SPS & PPS parameters in mp4 file.
@@ -59,7 +60,7 @@ public class MP4Config {
 	 */
 	public MP4Config (String path) throws IOException, FileNotFoundException {
 
-		StsdBox stsdBox; 
+		StsdBox stsdBox;
 		
 		// We open the mp4 file and parse it
 		try {

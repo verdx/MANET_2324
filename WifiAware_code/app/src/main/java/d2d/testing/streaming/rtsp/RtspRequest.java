@@ -1,6 +1,5 @@
 package d2d.testing.streaming.rtsp;
 
-import android.annotation.SuppressLint;
 import android.util.Log;
 
 import java.io.BufferedReader;

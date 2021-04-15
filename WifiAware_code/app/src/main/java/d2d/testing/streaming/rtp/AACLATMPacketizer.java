@@ -18,10 +18,11 @@
 
 package d2d.testing.streaming.rtp;
 
-import java.io.IOException;
 import android.annotation.SuppressLint;
 import android.media.MediaCodec.BufferInfo;
 import android.util.Log;
+
+import java.io.IOException;
 
 /**
  * RFC 3640.  

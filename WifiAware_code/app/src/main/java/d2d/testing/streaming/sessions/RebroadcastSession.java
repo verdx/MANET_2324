@@ -29,6 +29,7 @@ public class RebroadcastSession {
     private SelectableChannel rtpVideoTrackChannel;
     private SelectableChannel rtcpAudioTrackChannel;
     private SelectableChannel rtpAudioTrackChannel;
+    public String mStreamingName;
 
     /**
      * Creates a streaming session that can be customized by adding tracks.
@@ -68,6 +69,10 @@ public class RebroadcastSession {
         mDestIPv6 = isIPv6;
     }
 
+    public void setNameStreaming(String name){
+        mStreamingName = name;
+    }
+
     /**
      * Returns a Session Description that can be stored in a file or sent to a client with RTSP.
      * @return The Session Description.
@@ -82,7 +87,7 @@ public class RebroadcastSession {
         // TODO: Add IPV6 support
         if(mOriginIPv6) sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP6 "+mOrigin.getHostAddress()+"\r\n");
         else sessionDescription.append("o=- "+mTimestamp+" "+mTimestamp+" IN IP4 "+mOrigin.getHostAddress()+"\r\n");
-        sessionDescription.append("s=Unnamed\r\n");
+        sessionDescription.append("s="+ mStreamingName + "\r\n");
         sessionDescription.append("i=N/A\r\n");
         if(mDestIPv6) sessionDescription.append("c=IN IP6 "+mDestination.getHostAddress()+"\r\n");
         else sessionDescription.append("c=IN IP4 "+mDestination.getHostAddress()+"\r\n");
@@ -122,6 +127,7 @@ public class RebroadcastSession {
 
         //....
     }
+
     /** Stops all existing streams. */
     public void stop() {
         if(serverTrackExists(0)) {
@@ -147,6 +153,7 @@ public class RebroadcastSession {
 
     public void setServerSession(ReceiveSession receiveSession) {
         this.mReceiveSession = receiveSession;
+        this.setNameStreaming(receiveSession.getStreamingName());
     }
 
     public RebroadcastTrackInfo getRebroadcastTrack(int trackId) {

@@ -8,7 +8,7 @@ import java.nio.channels.SelectableChannel;
 import java.util.Random;
 
 import d2d.testing.net.threads.selectors.UDPServerSelector;
-import d2d.testing.wifip2p.WifiAwareViewModel;
+import d2d.testing.gui.main.WifiAwareViewModel;
 
 public class TrackInfo {
     private int mLocalRtpPort;

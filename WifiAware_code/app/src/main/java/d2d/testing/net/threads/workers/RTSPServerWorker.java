@@ -19,19 +19,18 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import d2d.testing.MainActivity;
+import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.sessions.ReceiveSession;
-import d2d.testing.utils.Logger;
-import d2d.testing.net.packets.DataReceived;
-import d2d.testing.streaming.sessions.RebroadcastSession;
-import d2d.testing.streaming.sessions.Session;
-import d2d.testing.streaming.sessions.TrackInfo;
 import d2d.testing.streaming.rtsp.RtspRequest;
 import d2d.testing.streaming.rtsp.RtspResponse;
 import d2d.testing.streaming.rtsp.UriParser;
+import d2d.testing.streaming.sessions.RebroadcastSession;
+import d2d.testing.streaming.sessions.ReceiveSession;
+import d2d.testing.streaming.sessions.Session;
+import d2d.testing.streaming.sessions.TrackInfo;
+import d2d.testing.utils.Logger;
 
 
 /**
@@ -102,17 +101,15 @@ public class RTSPServerWorker extends AbstractWorker {
     boolean allowLiveStreaming = false;
 
     /** Credentials for Basic Auth */
-    private String mUsername;
-    private String mPassword;
+    private final String mUsername;
+    private final String mPassword;
 
-    private MainActivity mMainActivity;
-    private RTSPServerSelector mServerSelector;
+    private final RTSPServerSelector mServerSelector;
 
-    public RTSPServerWorker(String username, String password, MainActivity mainActivity, RTSPServerSelector serverSelector) {
+    public RTSPServerWorker(String username, String password, RTSPServerSelector serverSelector) {
         super();
         this.mUsername = username;
         this.mPassword = password;
-        this.mMainActivity = mainActivity;
         this.mServerSelector = serverSelector;
     }
 
@@ -245,12 +242,10 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         UUID streamUUID = UUID.fromString(request.path);
-        if(StreamingRecord.getInstance().getStreaming(streamUUID) != null) {
-            response.status = RtspResponse.STATUS_FORBIDDEN;
-            return response;
-        }
 
-        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session));
+        Log.d(TAG, "keke: " + session.getStreamingName());
+
+        mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session.getStreamingName(), session));
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
                               "Content-Type: application/sdp\r\n" +
                               "Session: " + session.getSessionID() + ";timeout=" + session.getTimeout() +"\r\n";
@@ -499,9 +494,16 @@ public class RTSPServerWorker extends AbstractWorker {
         String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
         String name = receiveSession.getPath();
 
-        StreamingRecord.getInstance().addStreaming(mServerSessions.get(channel).get(UUID.fromString(receiveSession.getPath())), false);
-        //mMainActivity.updateStreamList(true, ip, name);
-        //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(true, ip, name));
+        UUID streamUUID = UUID.fromString(receiveSession.getPath());
+
+        if(StreamingRecord.getInstance().streamingExist(streamUUID)) {
+            response.status = RtspResponse.STATUS_FORBIDDEN;
+            receiveSession.stop();
+            mServerSessions.get(channel).remove(UUID.fromString(receiveSession.getPath()));
+            return response;
+        }
+
+        StreamingRecord.getInstance().addStreaming(mServerSessions.get(channel).get(UUID.fromString(receiveSession.getPath())), true);
 
         return response;
     }
@@ -535,8 +537,6 @@ public class RTSPServerWorker extends AbstractWorker {
         String name = session.getPath();
 
         StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
-        //mMainActivity.updateStreamList(false, ip, name);
-        //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(false, ip, name));
 
         return response;
     }
@@ -584,7 +584,6 @@ public class RTSPServerWorker extends AbstractWorker {
 
         try {
             if ((line = inputReader.readLine())==null) {
-                //todo para nosotros no es desconectado... simplemente no hay una linea completa?
                 throw new SocketException("Client disconnected");
             }
 
@@ -689,9 +688,10 @@ public class RTSPServerWorker extends AbstractWorker {
 
         final Pattern regexAudioDescription = Pattern.compile("m=audio (\\S+)",Pattern.CASE_INSENSITIVE);
         final Pattern regexVideoDescription = Pattern.compile("m=video (\\S+)",Pattern.CASE_INSENSITIVE);
+        final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
         Matcher matcher;
-
+        String streamName = "defaultName";
 
         while((line = reader.readLine()) != null && line.length()>0) {
             if(regexAudioDescription.matcher(line).find()){
@@ -705,7 +705,15 @@ public class RTSPServerWorker extends AbstractWorker {
                 trackInfo.setSessionDescription(line +"\r\n"+ reader.readLine() +"\r\n"+ reader.readLine() +"\r\n");
                 session.addVideoTrack(trackInfo);
             }
+
+            matcher = pattern.matcher(line);
+            if(matcher.find()){
+                streamName = matcher.group(1);
+            }
         }
+
+        session.setStreamingName(streamName);
+        Log.d(TAG,"StreamingName = " + streamName);
 
         Log.d(TAG,"handleServerRequest: Origin" + client.getInetAddress().getHostAddress());
         session.setOrigin(client.getInetAddress()); //CLIENTE
@@ -735,6 +743,9 @@ public class RTSPServerWorker extends AbstractWorker {
             throw new IllegalArgumentException();
         }
 
+        session.setNameStreaming(receiveSession.getStreamingName());
+
+
         Log.d(TAG,"handleRequest: Origin" + client.getLocalAddress().getHostAddress());
         session.setOriginAddress(client.getLocalAddress(), false);
 
@@ -748,41 +759,64 @@ public class RTSPServerWorker extends AbstractWorker {
      * Cerramos las sesiones asociadas al socket
      * @param channel
      */
-    public void onClientDisconnected(SelectableChannel channel) {
-        Session streamingSession = mSessions.get(channel);
+    public synchronized void onClientDisconnected(SelectableChannel channel) {
+        Session streamingSession = mSessions.remove(channel);
         if(streamingSession != null) {
-            if (streamingSession.isStreaming()) {
-                streamingSession.syncStop();
-            }
-
-            streamingSession.release();
-            mSessions.remove(channel);
+            onSessionDisconnected(streamingSession);
         }
 
-        ReceiveSession receiveSession = null;
         Map<UUID, Streaming> streamings = mServerSessions.remove(channel);
         if(streamings != null){
             for(Streaming streaming : streamings.values()){
-                receiveSession = streaming.getReceiveSession();
-                if(receiveSession != null) {
-                    String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
-                    String name = receiveSession.getPath();
-
-                    StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
-                    //mMainActivity.updateStreamList(false, ip, name);
-                    //WifiP2pController.getInstance().send(DataPacketBuilder.buildStreamNotifier(false, ip, name));
-
-                    receiveSession.stop();
-                    receiveSession.release();
-                }
+                onReceiveSessionDisconnected(streaming);
             }
             streamings.clear();
         }
 
-        RebroadcastSession rebroadcastSession = mRebroadcastSessions.get(channel);
+        RebroadcastSession rebroadcastSession = mRebroadcastSessions.remove(channel);
         if(rebroadcastSession != null) {
-            rebroadcastSession.stop();
-            mRebroadcastSessions.remove(channel);
+            onRebroadcastSessionDisconnected(rebroadcastSession);
         }
+    }
+
+    private void onSessionDisconnected(Session streamingSession){
+        if (streamingSession.isStreaming()) {
+            streamingSession.syncStop();
+        }
+        streamingSession.release();
+    }
+
+    private void onReceiveSessionDisconnected(Streaming streaming){
+        ReceiveSession receiveSession = streaming.getReceiveSession();
+        if(receiveSession != null) {
+            StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
+
+            receiveSession.stop();
+            receiveSession.release();
+        }
+    }
+
+    private void onRebroadcastSessionDisconnected(RebroadcastSession rebroadcastSession){
+        rebroadcastSession.stop();
+    }
+
+
+    @Override
+    protected synchronized void onWorkerRelease() {
+        for(Session session : mSessions.values()){
+            onSessionDisconnected(session);
+        }
+        mSessions.clear();
+        for(Map<UUID, Streaming> streamings : mServerSessions.values()){
+            for(Streaming streaming : streamings.values()){
+                onReceiveSessionDisconnected(streaming);
+            }
+            streamings.clear();
+        }
+        mServerSessions.clear();
+        for(RebroadcastSession rebroadcastSession : mRebroadcastSessions.values()){
+            onRebroadcastSessionDisconnected(rebroadcastSession);
+        }
+        mRebroadcastSessions.clear();
     }
 }

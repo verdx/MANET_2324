@@ -2,15 +2,10 @@ package d2d.testing.streaming.rtp;
 
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
-import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 public class ByteBufferInputStream extends BufferInfoInputStream {
 

@@ -1,51 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:layout_margin="8dp"
+	app:cardCornerRadius="6dp"
+	app:cardElevation="6dp"
+	android:descendantFocusability="blocksDescendants">
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="?android:attr/listPreferredItemHeight"
-        android:background="?android:attr/activatedBackgroundIndicator"
-        android:padding="6dip"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="1dp"
-        tools:ignore="MissingConstraints">
+	<LinearLayout
+		android:id="@+id/stream_item_list"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		android:padding="8dp"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/stream_icon"
-            android:layout_width="44dp"
-            android:layout_height="fill_parent"
-            android:layout_marginEnd="2dip"
-            android:src="@drawable/live" />
+		<ImageView
+			android:id="@+id/stream_icon"
+			android:layout_width="102dp"
+			android:layout_height="74dp"
+			android:src="@drawable/live" />
 
-        <LinearLayout
-            android:layout_width="0dip"
-            android:layout_marginStart="13dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:orientation="vertical">
+		<TextView
+			android:id="@+id/stream_name"
+			android:layout_width="202dp"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center"
+			android:layout_marginEnd="15dp"
+			android:maxLines="2"
+			android:padding="1dp"
+			android:textSize="15sp"
+			android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/stream_name"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                tools:ignore="NestedWeights" />
+		<ImageButton
+			android:id="@+id/downloadButton"
+			android:layout_width="43dp"
+			android:layout_height="43dp"
+			android:layout_gravity="center"
+			android:layout_weight="1"
+			android:background="@drawable/button_download"
+			app:srcCompat="@android:drawable/stat_sys_download" />
 
-
-            <TextView
-                android:id="@+id/stream_ip"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:ellipsize="marquee"
-                android:singleLine="true" />
-
-        </LinearLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+	</LinearLayout>
+</androidx.cardview.widget.CardView>

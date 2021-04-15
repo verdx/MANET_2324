@@ -1,17 +1,11 @@
 package d2d.testing.streaming;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import d2d.testing.streaming.sessions.ReceiveSession;
 import d2d.testing.streaming.sessions.SessionBuilder;
 
 
@@ -19,7 +13,7 @@ public class StreamingRecord {
 
     static private StreamingRecord INSTANCE = null;
 
-    private class Record{
+    private static class Record{
         private Streaming mStreaming;
         private boolean mAllowDispatch;
 
@@ -32,11 +26,11 @@ public class StreamingRecord {
     private final Map<UUID, Record> mRecords;
     private SessionBuilder mLocalStreamingBuilder;
     private UUID mLocalStreamingUUID;
+    private String mLocalStreamingName;
 
     private List<StreamingRecordObserver> mObservers;
 
-
-    public static StreamingRecord getInstance(){
+    public static synchronized StreamingRecord getInstance(){
         if(INSTANCE == null) {
             INSTANCE = new StreamingRecord();
         }
@@ -67,16 +61,18 @@ public class StreamingRecord {
         }
     }
 
-    public synchronized void addLocalStreaming(UUID id, SessionBuilder sessionBuilder){
+    public synchronized void addLocalStreaming(UUID id, String name, SessionBuilder sessionBuilder){
         mLocalStreamingUUID = id;
+        mLocalStreamingName = name;
         mLocalStreamingBuilder = sessionBuilder;
         for(StreamingRecordObserver ob : mObservers){
-            ob.localStreamingAvailable(id, sessionBuilder);
+            ob.localStreamingAvailable(id, name ,sessionBuilder);
         }
     }
 
     public synchronized void removeLocalStreaming(){
         mLocalStreamingUUID = null;
+        mLocalStreamingName = null;
         mLocalStreamingBuilder = null;
         for(StreamingRecordObserver ob : mObservers){
             ob.localStreamingUnavailable();
@@ -87,6 +83,13 @@ public class StreamingRecord {
         Record rec = mRecords.get(id);
         if(rec != null) return rec.mStreaming;
         return null;
+    }
+
+    public synchronized boolean streamingExist(UUID id){
+        if(mLocalStreamingUUID != null && mLocalStreamingUUID.equals(id)) return true;
+        Record rec = mRecords.get(id);
+        if(rec != null) return true;
+        return false;
     }
 
     public synchronized List<Streaming> getStreamings(){
@@ -111,7 +114,7 @@ public class StreamingRecord {
     public synchronized void addObserver(StreamingRecordObserver ob){
         mObservers.add(ob);
         if(mLocalStreamingUUID != null){
-            ob.localStreamingAvailable(mLocalStreamingUUID, mLocalStreamingBuilder);
+            ob.localStreamingAvailable(mLocalStreamingUUID, mLocalStreamingName, mLocalStreamingBuilder);
         }
         for(Record rec : mRecords.values()){
             ob.streamingAvailable(rec.mStreaming, rec.mAllowDispatch);

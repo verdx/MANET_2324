@@ -18,13 +18,14 @@
 
 package d2d.testing.streaming.hw;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import android.annotation.SuppressLint;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressLint("InlinedApi")
 public class CodecManager {

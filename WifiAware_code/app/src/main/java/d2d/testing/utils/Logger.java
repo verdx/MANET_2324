@@ -3,7 +3,7 @@ package d2d.testing.utils;
 import android.util.Log;
 
 public class Logger {
-    public static final String TAG = "WIFI-P2P-NETWORK";
+    public static final String TAG = "WIFI-AWARE-NETWORK";
 
     //Methods Log.VERBOSE level
     public static void v(String str) {
@@ -18,11 +18,11 @@ public class Logger {
     //Methods Log.DEBUG level
     public static void d(String str) {
         //if (Log.isLoggable(TAG, Log.DEBUG))
-            Log.d(TAG, str);
+        Log.d(TAG, str);
     }
     public static void d(String str, Throwable t) {
         //if (Log.isLoggable(TAG, Log.DEBUG))
-            Log.d(TAG, str, t);
+        Log.d(TAG, str, t);
     }
 
     //Methods Log.ERROR level

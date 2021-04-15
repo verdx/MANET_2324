@@ -3,7 +3,6 @@ package d2d.testing.streaming.rtsp;
 import android.util.Log;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class RtspResponse {
     public final static String LOG_TAG = "RtspResponse";

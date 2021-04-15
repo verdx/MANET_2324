@@ -18,10 +18,6 @@
 
 package d2d.testing.streaming.gl;
 
-import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
-import d2d.testing.streaming.MediaStream;
-import d2d.testing.streaming.video.VideoStream;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.graphics.SurfaceTexture.OnFrameAvailableListener;
@@ -31,6 +27,12 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
+
+import d2d.testing.streaming.MediaStream;
+import d2d.testing.streaming.video.VideoStream;
+
 /**
  * An enhanced SurfaceView in which the camera preview will be rendered. 
  * This class was needed for two reasons. <br /> 
@@ -39,13 +41,13 @@ import android.view.SurfaceHolder;
  * using the surface-to-buffer method while rendering it in a surface 
  * visible to the user. To force the surface-to-buffer method in 
  * libstreaming, call {@link MediaStream#setStreamingMethod(byte)}
- * with {@link MediaStream#MODE_MEDIACODEC_API_2}. <br /> 
+ * with {@link MediaStream#MODE_MEDIACODEC_API_2}. <br />
  * 
  * Second, it allows to force the aspect ratio of the SurfaceView 
  * to match the aspect ratio of the camera preview, so that the 
  * preview do not appear distorted to the user of your app. To do 
  * that, call {@link SurfaceView#setAspectRatioMode(int)} with
- * {@link SurfaceView#ASPECT_RATIO_PREVIEW} after creating your 
+ * {@link SurfaceView#ASPECT_RATIO_PREVIEW} after creating your
  * {@link SurfaceView}. <br />
  * 
  */
