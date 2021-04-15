@@ -7,13 +7,10 @@ public class GalleryListData{
     private String path;
     private Bitmap thumbail;
 
-
-
     public GalleryListData(String path, Bitmap thumbail) {
         this.path = path;
         this.thumbail = thumbail;
     }
-
 
     public Bitmap getThumbail() {
         return thumbail;

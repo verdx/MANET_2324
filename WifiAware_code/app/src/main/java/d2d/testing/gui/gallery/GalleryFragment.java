@@ -112,7 +112,8 @@ public class GalleryFragment extends Fragment {
 
     public void startVideo(int position){
         Intent intent = new Intent(getContext(), ViewStreamActivity.class);
-        intent.putExtra("path",videoFiles.get(position).getAbsolutePath());
+        intent.putExtra("isFromGallery", true);
+        intent.putExtra("path", videoFiles.get(position).getAbsolutePath());
         getActivity().startActivity(intent);
     }
 }

@@ -220,6 +220,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     public void openViewStreamActivity(Context context, String uuid) {
         Intent streamActivityIntent = new Intent(context, ViewStreamActivity.class);
+        streamActivityIntent.putExtra("isFromGallery", false);
         streamActivityIntent.putExtra("UUID",uuid);
         this.startActivity(streamActivityIntent);
     }

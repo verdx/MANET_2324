@@ -49,6 +49,7 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
     private ProgressBar bufferSpinner;
 
     private String rtspUrl;
+    private String videoFilePath;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,14 +59,16 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
 
         this.setContentView(R.layout.activity_view_stream);
 
-        String uuid = getIntent().getExtras().getString("UUID");
+        String uuid;
+        Boolean isFromGallery = getIntent().getExtras().getBoolean("isFromGallery");
 
-        //String ip2 = "["+ ip.substring(0, ip.lastIndexOf("%")) + "%25" + ip.substring(ip.lastIndexOf("%") + 1, ip.lastIndexOf(":")) + "]" + ip.substring(ip.lastIndexOf(":"));
-        //String path= "rtsp://" + ip2;
-
-        // Get URL
-        rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
-        Log.d(TAG, "Playing back " + rtspUrl);
+        if(isFromGallery) videoFilePath = getIntent().getExtras().getString("path");
+        else {
+            uuid = getIntent().getExtras().getString("UUID");
+            // Get URL
+            rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
+            Log.d(TAG, "Playing back " + rtspUrl);
+        }
 
         mSurface = (SurfaceView) findViewById(R.id.textureView);
         holder = mSurface.getHolder();
@@ -109,17 +112,10 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         vout.addCallback(this);
         vout.attachViews();
 
-        /*
-        Uri.Builder b = new Uri.Builder();
-        b.scheme("rtsp");
-        b.authority(ip.substring(0, ip.lastIndexOf("/")));
-        b.appendPath(ip.substring(ip.lastIndexOf("/")));
-        Uri ur2 = b.build();
-        String host2 = ur2.getHost();
-        int port2 = ur2.getPort();
-        */
+        Media m;
+        if(isFromGallery) m = new Media(libvlc, videoFilePath);
+        else m = new Media(libvlc, Uri.parse(rtspUrl));
 
-        Media m = new Media(libvlc, Uri.parse(rtspUrl));
         mMediaPlayer.setMedia(m);
         mMediaPlayer.play();
 
