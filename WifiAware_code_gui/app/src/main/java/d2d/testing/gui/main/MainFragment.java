@@ -1,8 +1,10 @@
 package d2d.testing.gui.main;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Base64;
@@ -10,7 +12,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +33,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import d2d.testing.R;
+import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
 import d2d.testing.streaming.Streaming;
@@ -51,6 +57,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private StreamListAdapter arrayAdapter;
     private RecyclerView streamsListView;
 
+    private ProgressBar progressBar;
+
     private Boolean isWifiAwareAvailable;
 
     @Override
@@ -67,6 +75,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
         streamsListView.setAdapter(arrayAdapter);
 
+        progressBar = root.findViewById(R.id.progressBar);
+
         numStreams = root.findViewById(R.id.streams_available);
         numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
 
@@ -79,6 +89,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 if(checkCameraHardware()) handleCamera();
             }
         });
+
+        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.drawable.animate);
+        record.startAnimation(shake);
 
         myAdd = root.findViewById(R.id.my_address);
         myName = root.findViewById(R.id.my_name);
@@ -94,9 +107,24 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 }
             }
         });
-        myName.setText("Model:  " +  Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID));
-        myAdd.setText("----------" /*+ mAwareModel.getConnectivityManager().getActiveNetwork().toString()*/);
+
+        myName.setText("Model: " +  Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID));
+
+        String mode = "";
+
+        if(MainActivity.mode != null){
+            if(MainActivity.mode.equals(getString(R.string.mode_witness))) mode = getString(R.string.witness);
+            if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))) mode = getString(R.string.humanitarian);
+        }
+        myAdd.setText("Mode:   " + mode);
+
         return root;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -120,6 +148,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                     streamList.remove(detail);
             }
             numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
+            if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
+            else progressBar.setVisibility(View.VISIBLE);
             arrayAdapter.setStreamsData(streamList);
             streamsListView.getAdapter().notifyDataSetChanged();
         }
@@ -133,19 +163,19 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         try {
             if(mAwareModel.createSession()){
                 if(mAwareModel.publishService("Server")){
-                    Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
                 }
                 if(mAwareModel.subscribeToService("Server", this)){
-                    Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
                 }
             }else {
-                Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
+                //Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -156,9 +186,20 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         openStreamActivity();
     }
 
+    @SuppressLint("ResourceType")
     public String getDeviceStatus() {
-        if (isWifiAwareAvailable) return "Wifi Aware available";
-        else return "Wifi Aware not available";
+        if (isWifiAwareAvailable) {
+            myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
+            record.setEnabled(true);
+            if(streamList.size() == 0) progressBar.setVisibility(View.VISIBLE);
+            return "Wifi Aware available";
+        }
+        else {
+            myStatus.setTextColor(Color.parseColor(getString(R.color.colorRed)));
+            record.setEnabled(false);
+            progressBar.setVisibility(View.INVISIBLE);
+            return "Wifi Aware unavailable";
+        }
     }
 
     private boolean checkCameraHardware() {

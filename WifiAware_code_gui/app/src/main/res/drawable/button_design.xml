@@ -4,7 +4,7 @@
 	android:shape="rectangle"
 	app:cardElevation="6dp">
 	<!-- el boton tiene color rojo de fondo, por ejemplo -->
-	<solid android:color="#FF0000" />
+	<solid android:color="@color/colorRed" />
 	<corners android:radius="100dp" />
 
 </shape>

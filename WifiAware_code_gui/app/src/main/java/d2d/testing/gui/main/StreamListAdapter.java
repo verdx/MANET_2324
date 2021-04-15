@@ -40,6 +40,7 @@ public class StreamListAdapter extends RecyclerView.Adapter<StreamListAdapter.Vi
         return new ViewHolder(view);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull StreamListAdapter.ViewHolder holder, final int position) {
         sd = mStreams.get(position);

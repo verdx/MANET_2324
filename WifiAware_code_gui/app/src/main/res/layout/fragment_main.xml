@@ -50,7 +50,7 @@
 			<TextView
 				android:id="@+id/my_name"
 				android:layout_width="match_parent"
-				android:layout_height="0dp"
+				android:layout_height="3dp"
 				android:layout_weight="1"
 				android:gravity="center_vertical"
 				tools:ignore="NestedWeights" />
@@ -58,7 +58,7 @@
 			<TextView
 				android:id="@+id/my_address"
 				android:layout_width="fill_parent"
-				android:layout_height="6dp"
+				android:layout_height="3dp"
 				android:layout_weight="1"
 				android:ellipsize="marquee"
 				android:singleLine="true" />
@@ -127,5 +127,19 @@
 		app:layout_constraintHorizontal_bias="0.0"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />
+
+	<ProgressBar
+		android:id="@+id/progressBar"
+		style="?android:attr/progressBarStyle"
+		android:layout_width="71dp"
+		android:layout_height="70dp"
+		android:layout_below="@+id/streams_available"
+		android:layout_alignBottom="@+id/streamListView"
+		android:layout_alignParentStart="true"
+		android:layout_alignParentEnd="true"
+		android:layout_marginStart="169dp"
+		android:layout_marginTop="167dp"
+		android:layout_marginEnd="170dp"
+		android:layout_marginBottom="152dp" />
 
 </RelativeLayout>

@@ -18,6 +18,7 @@ import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import d2d.testing.gui.MainActivity;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
 
