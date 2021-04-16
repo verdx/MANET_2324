@@ -48,7 +48,6 @@ public class GalleryFragment extends Fragment {
         galleryListData = new ArrayList<>(videoFiles.size());
 
         for (int i = 0; i < videoFiles.size(); i++) {
-
             galleryListData.add(new GalleryListData(videoFiles.get(i).getName(), null));
         }
 
@@ -79,6 +78,7 @@ public class GalleryFragment extends Fragment {
                                 }
                             });
                         else break;
+
                     }catch (Exception e){
                         galleryListData.remove(i);
                         videoFiles.remove(i);
@@ -92,7 +92,6 @@ public class GalleryFragment extends Fragment {
                         i -= 1;
                     }
                 }
-
                 mmr.release();
             }
         });
@@ -101,11 +100,9 @@ public class GalleryFragment extends Fragment {
 
     private Bitmap rotateBitmap(Bitmap bitmap){
         Matrix matrix = new Matrix();
-
         matrix.postRotate(90);
 
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), true);
-
         return Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), matrix, true);
     }
 

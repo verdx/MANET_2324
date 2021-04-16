@@ -28,8 +28,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.UUID;
 
 import d2d.testing.R;
@@ -57,8 +60,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private StreamListAdapter arrayAdapter;
     private RecyclerView streamsListView;
 
-    private ProgressBar progressBar;
-
     private Boolean isWifiAwareAvailable;
 
     @Override
@@ -72,13 +73,12 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
         streamsListView = root.findViewById(R.id.streamListView);
         streamsListView.setLayoutManager(new LinearLayoutManager(getContext()));
+        addDefaultItemList();
         arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
         streamsListView.setAdapter(arrayAdapter);
 
-        progressBar = root.findViewById(R.id.progressBar);
-
         numStreams = root.findViewById(R.id.streams_available);
-        numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
+        numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + 0 + ")");
 
         StreamingRecord.getInstance().addObserver(this);
 
@@ -121,10 +121,26 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         return root;
     }
 
+    private void addDefaultItemList(){
+        streamList.clear();
+        streamList.add(null);
+        streamList.add(null);
+        streamList.add(null);
+        streamList.add(null);
+    }
+
+    private void removeDefaultItemList(){
+        for (Iterator<StreamDetail> iterator = streamList.iterator(); iterator.hasNext(); ) {
+            StreamDetail value = iterator.next();
+            if (value == null) {
+                iterator.remove();
+            }
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
-        if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -138,6 +154,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     public void updateList(boolean on_off, String uuid, String name, String ip, int port ){
+        removeDefaultItemList();
         if(!ip.equals("0.0.0.0")) {
             StreamDetail detail = new StreamDetail(uuid, name, ip, port);
             if (on_off) {
@@ -148,8 +165,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                     streamList.remove(detail);
             }
             numStreams.setText(getString(R.string.dispositivos_encontrados) + "  (" + streamList.size() + ")");
-            if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
-            else progressBar.setVisibility(View.VISIBLE);
+            //if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
+            //else progressBar.setVisibility(View.VISIBLE);
+            if(streamList.size() == 0) addDefaultItemList();
             arrayAdapter.setStreamsData(streamList);
             streamsListView.getAdapter().notifyDataSetChanged();
         }
@@ -191,13 +209,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         if (isWifiAwareAvailable) {
             myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
             record.setEnabled(true);
-            if(streamList.size() == 0) progressBar.setVisibility(View.VISIBLE);
             return "Wifi Aware available";
         }
         else {
             myStatus.setTextColor(Color.parseColor(getString(R.color.colorRed)));
             record.setEnabled(false);
-            progressBar.setVisibility(View.INVISIBLE);
             return "Wifi Aware unavailable";
         }
     }
