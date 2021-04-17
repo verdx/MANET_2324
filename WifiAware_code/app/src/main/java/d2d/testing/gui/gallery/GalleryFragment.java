@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,34 +68,29 @@ public class GalleryFragment extends Fragment {
                     try {
                         mmr.setDataSource(videoFiles.get(i).getPath());
                         Bitmap b = mmr.getFrameAtTime(0, FFmpegMediaMetadataRetriever.OPTION_CLOSEST);
-                        galleryListData.get(i).setThumbail(rotateBitmap(b));
-
-                        if (getActivity() != null)
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    adapter.notifyDataSetChanged();
-                                }
-                            });
-                        else break;
+                        galleryListData.get(i).setBitmap(rotateBitmap(b));
 
                     }catch (Exception e){
+                        e.printStackTrace();
                         galleryListData.remove(i);
                         videoFiles.remove(i);
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                adapter.notifyDataSetChanged();
-                            }
-                        });
                         size -= 1;
                         i -= 1;
                     }
                 }
                 mmr.release();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
             }
         });
         t.start();
+
+        adapter.notifyDataSetChanged();
+
     }
 
     private Bitmap rotateBitmap(Bitmap bitmap){

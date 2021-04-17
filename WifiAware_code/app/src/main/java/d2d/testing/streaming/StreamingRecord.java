@@ -61,6 +61,16 @@ public class StreamingRecord {
         }
     }
 
+    public synchronized void changeStreamingDownload(UUID id, boolean isDownload){
+        Record rec = mRecords.get(id);
+        if(rec != null){
+            rec.mStreaming.setDownload(isDownload);
+        }
+        for(StreamingRecordObserver ob : mObservers){
+            ob.streamingUpdate(rec.mStreaming, isDownload);
+        }
+    }
+
     public synchronized void addLocalStreaming(UUID id, String name, SessionBuilder sessionBuilder){
         mLocalStreamingUUID = id;
         mLocalStreamingName = name;

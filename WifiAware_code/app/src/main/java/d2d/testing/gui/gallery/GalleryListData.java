@@ -5,19 +5,19 @@ import android.graphics.Bitmap;
 public class GalleryListData{
 
     private String path;
-    private Bitmap thumbail;
+    private Bitmap bitmap;
 
     public GalleryListData(String path, Bitmap thumbail) {
         this.path = path;
-        this.thumbail = thumbail;
+        this.bitmap = thumbail;
     }
 
-    public Bitmap getThumbail() {
-        return thumbail;
+    public Bitmap getBitmap() {
+        return bitmap;
     }
 
-    public void setThumbail(Bitmap thumbail) {
-        this.thumbail = thumbail;
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 
     public String getPath() {

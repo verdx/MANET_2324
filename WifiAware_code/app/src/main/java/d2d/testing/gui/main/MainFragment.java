@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
@@ -153,10 +154,10 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         return this.streamList;
     }
 
-    public void updateList(boolean on_off, String uuid, String name, String ip, int port ){
+    public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download){
         removeDefaultItemList();
         if(!ip.equals("0.0.0.0")) {
-            StreamDetail detail = new StreamDetail(uuid, name, ip, port);
+            StreamDetail detail = new StreamDetail(uuid, name, ip, port, download);
             if (on_off) {
                 if (!streamList.contains(detail))
                     streamList.add(detail);
@@ -169,7 +170,17 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             //else progressBar.setVisibility(View.VISIBLE);
             if(streamList.size() == 0) addDefaultItemList();
             arrayAdapter.setStreamsData(streamList);
-            streamsListView.getAdapter().notifyDataSetChanged();
+        }
+    }
+
+    public void putStreamDownloading(String uuid, boolean isDownload){
+        for (Iterator<StreamDetail> iterator = streamList.iterator(); iterator.hasNext(); ) {
+            StreamDetail value = iterator.next();
+            if (value.getUuid().equals(uuid)) {
+                value.setDownload(isDownload);
+                arrayAdapter.setStreamsData(streamList);
+                return;
+            }
         }
     }
 
@@ -256,7 +267,18 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         path,
                         streaming.getName(),
                         streaming.getReceiveSession().getDestinationAddress().toString(),
-                        streaming.getReceiveSession().getDestinationPort());
+                        streaming.getReceiveSession().getDestinationPort(),
+                        streaming.isDownload());
+            }
+        });
+    }
+
+    @Override
+    public void streamingUpdate(final Streaming streaming, final boolean bIsDownload) {
+        final String path = streaming.getUUID().toString();
+        requireActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                putStreamDownloading(path, bIsDownload);
             }
         });
     }
@@ -270,7 +292,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         path,
                         streaming.getName(),
                         streaming.getReceiveSession().getDestinationAddress().toString(),
-                        streaming.getReceiveSession().getDestinationPort());
+                        streaming.getReceiveSession().getDestinationPort(),
+                        streaming.isDownload());
             }
         });
     }

@@ -537,6 +537,11 @@ public class RtspClient implements StreamingRecordObserver {
 		});
 	}
 
+	@Override
+	public void streamingUpdate(Streaming streaming, boolean bIsDownload) {
+
+	}
+
 	private void sendLocalStreaming(){
 		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
 			try {

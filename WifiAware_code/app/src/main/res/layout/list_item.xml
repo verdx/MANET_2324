@@ -3,7 +3,7 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:id="@+id/galleryconstraint"
 	android:layout_width="match_parent"
-	android:layout_height="360dp"
+	android:layout_height="325dp"
 	android:layout_margin="8dp"
 	app:cardCornerRadius="6dp"
 	app:cardElevation="6dp">
@@ -14,20 +14,28 @@
 		android:gravity="center"
 		android:orientation="vertical">
 
-		<ImageView
-			android:id="@+id/imageGallery"
-			android:layout_width="259dp"
-			android:layout_height="297dp"
-			android:layout_marginTop="8dp"
-			app:layout_constraintEnd_toEndOf="parent"
-			app:layout_constraintStart_toStartOf="parent"
-			app:layout_constraintTop_toTopOf="parent"
-			app:srcCompat="@drawable/my_device_background" />
+		<com.facebook.shimmer.ShimmerFrameLayout
+			android:id="@+id/shimmer_view_bitmap"
+			android:layout_width="143dp"
+			android:layout_height="262dp">
+
+			<ImageView
+				android:id="@+id/imageGallery"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:layout_marginTop="8dp"
+				app:layout_constraintEnd_toEndOf="parent"
+				app:layout_constraintStart_toStartOf="parent"
+				app:layout_constraintTop_toTopOf="parent"
+				app:srcCompat="@drawable/my_device_background" />
+
+		</com.facebook.shimmer.ShimmerFrameLayout>
 
 		<TextView
 			android:id="@+id/titlegallery"
 			android:layout_width="259dp"
 			android:layout_height="37dp"
+			android:layout_marginTop="5dp"
 			android:gravity="center"
 			android:text="TextView"
 			android:textColor="#606060"

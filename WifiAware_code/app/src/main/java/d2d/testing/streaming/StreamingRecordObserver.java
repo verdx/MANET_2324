@@ -9,4 +9,5 @@ public interface StreamingRecordObserver {
     void localStreamingUnavailable();
     void streamingAvailable(Streaming streaming, boolean bAllowDispatch);
     void streamingUnavailable(Streaming streaming);
+    void streamingUpdate(Streaming streaming, boolean bIsDownload);
 }

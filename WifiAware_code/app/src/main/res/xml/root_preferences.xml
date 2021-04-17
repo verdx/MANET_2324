@@ -5,10 +5,6 @@
 
 		<SwitchPreferenceCompat
 			app:key="saveMyStreaming" app:title="Save my streaming" />
-		<SwitchPreferenceCompat app:key="save"
-			app:title="Save Video visualited" />
-		<SwitchPreferenceCompat app:key="blur"
-			app:title="Blur Faces" />
 
 	</PreferenceCategory>
 </PreferenceScreen>

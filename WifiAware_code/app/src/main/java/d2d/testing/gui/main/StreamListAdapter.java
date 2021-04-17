@@ -15,9 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.facebook.shimmer.ShimmerFrameLayout;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import d2d.testing.R;
 import d2d.testing.gui.SaveStream;
+import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.utils.IOUtils;
 
 public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -32,11 +34,6 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         this.mStreams = objects;
         this.mContext = context;
         this.fragment = fragment;
-    }
-
-    private void startDownload(String uuid) {
-        Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
-        new SaveStream(mContext.getApplicationContext(), uuid);
     }
 
     @NonNull
@@ -77,9 +74,10 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 @Override
                 public void onClick(View v) {
                     if(!sd.isDownload()){
-                        sd.setDownload(true);
-                        notifyDataSetChanged();
-                        startDownload(sd.getUuid());
+                        StreamingRecord.getInstance().changeStreamingDownload(UUID.fromString(sd.getUuid()), true);
+                        Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
+                        SaveStream saveStream = new SaveStream(mContext.getApplicationContext(), sd.getUuid());
+                        saveStream.startDownload();
                     }
                 }
             });
@@ -115,6 +113,7 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public void setStreamsData(ArrayList<StreamDetail> data){
         mStreams = data;
+        notifyDataSetChanged();
     }
 
     class RealViewHolder extends RecyclerView.ViewHolder{
