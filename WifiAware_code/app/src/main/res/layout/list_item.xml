@@ -1,31 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:tools="http://schemas.android.com/tools"
-	android:id="@+id/galleryconstraint" android:layout_width="match_parent"
-	android:layout_height="360dp">
+	android:id="@+id/galleryconstraint"
+	android:layout_width="match_parent"
+	android:layout_height="360dp"
+	android:layout_margin="8dp"
+	app:cardCornerRadius="6dp"
+	app:cardElevation="6dp">
 
-	<ImageView
-		android:id="@+id/imageGallery"
+	<LinearLayout
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
-		android:layout_marginTop="8dp"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintHorizontal_bias="0.0"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintVertical_bias="1.0"
-		app:srcCompat="@drawable/side_nav_bar" />
+		android:gravity="center"
+		android:orientation="vertical">
 
-	<TextView android:id="@+id/titlegallery"
-		android:layout_width="261dp" android:layout_height="37dp"
-		android:gravity="center" android:text="TextView"
-		android:textColor="#FFFFFF"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintVertical_bias="0.90999997" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+		<ImageView
+			android:id="@+id/imageGallery"
+			android:layout_width="259dp"
+			android:layout_height="297dp"
+			android:layout_marginTop="8dp"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent"
+			app:srcCompat="@drawable/my_device_background" />
+
+		<TextView
+			android:id="@+id/titlegallery"
+			android:layout_width="259dp"
+			android:layout_height="37dp"
+			android:gravity="center"
+			android:text="TextView"
+			android:textColor="#606060"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/imageGallery" />
+	</LinearLayout>
+
+</androidx.cardview.widget.CardView>

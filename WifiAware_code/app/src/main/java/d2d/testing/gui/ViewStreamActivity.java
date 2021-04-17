@@ -150,7 +150,6 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
     }
 
 
-
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
@@ -190,15 +189,5 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
             default:
                 break;
         }
-    }
-
-    private String createVideoFilePath(){
-        String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
-        String filename = sdf.format(cal.getTime());
-        filename = filename.replaceAll(" ", "_");
-        filename = filename.replaceAll(":", "-");
-        return getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/" + filename + ".mp4";
     }
 }

@@ -17,6 +17,7 @@ import com.facebook.shimmer.ShimmerFrameLayout;
 import java.util.ArrayList;
 
 import d2d.testing.R;
+import d2d.testing.gui.SaveStream;
 import d2d.testing.utils.IOUtils;
 
 public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -33,8 +34,9 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         this.fragment = fragment;
     }
 
-    private void startDownload() {
+    private void startDownload(String uuid) {
         Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
+        new SaveStream(mContext.getApplicationContext(), uuid);
     }
 
     @NonNull
@@ -77,7 +79,7 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     if(!sd.isDownload()){
                         sd.setDownload(true);
                         notifyDataSetChanged();
-                        startDownload();
+                        startDownload(sd.getUuid());
                     }
                 }
             });

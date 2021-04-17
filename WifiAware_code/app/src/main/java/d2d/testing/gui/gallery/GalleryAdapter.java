@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,10 +36,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
-        final GalleryListData myListData = listdata.get(position);
         holder.textView.setText(listdata.get(position).getPath());
         holder.imageView.setImageBitmap(listdata.get(position).getThumbail());
-        holder.constraintLayout.setOnClickListener(new View.OnClickListener() {
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 fragment.startVideo(position);
@@ -55,13 +55,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private ImageView imageView;
         private TextView textView;
-        private ConstraintLayout constraintLayout;
+        private CardView cardView;
 
         private ViewHolder(View itemView) {
             super(itemView);
             this.imageView = itemView.findViewById(R.id.imageGallery);
             this.textView = itemView.findViewById(R.id.titlegallery);
-            constraintLayout = itemView.findViewById(R.id.galleryconstraint);
+            this.cardView = itemView.findViewById(R.id.galleryconstraint);
         }
     }
 }
