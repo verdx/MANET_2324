@@ -1,5 +1,9 @@
 package d2d.testing.gui.gallery;
 
+import android.annotation.SuppressLint;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,19 +42,57 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         holder.textView.setText(listdata.get(position).getPath());
-        if(!(listdata.get(position).getBitmap()==null)){
+        if(listdata.get(position).getBitmap()!=null){
             holder.shimmer.stopShimmer();
             holder.shimmer.hideShimmer();
-            holder.imageView.setImageBitmap(listdata.get(position).getBitmap());
+            holder.bitmap = listdata.get(position).getBitmap();
+            holder.imageView.setImageBitmap(holder.bitmap);
         }
+
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 fragment.startVideo(position);
             }
         });
+
+        holder.imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                fragment.startVideo(position);
+            }
+        });
+
+        holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return selectedItem(holder, position, v);
+            }
+        });
+
+        holder.imageView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return selectedItem(holder, position, v);
+            }
+        });
+    }
+
+    public boolean selectedItem(final ViewHolder holder, final int position, View v){
+        if(holder.bitmap!=null) {
+            if (!listdata.get(position).isSelected()) {
+                holder.cardView.setBackgroundTintList(ColorStateList.valueOf(fragment.getResources().getColor(R.color.colorGrayDark, null)));
+                holder.imageView.setImageDrawable(fragment.getResources().getDrawable(R.drawable.my_device_background, null));
+                listdata.get(position).setSelected(true);
+            } else {
+                holder.cardView.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+                holder.imageView.setImageBitmap(holder.bitmap);
+                listdata.get(position).setSelected(false);
+            }
+        }
+        return true;
     }
 
 
@@ -64,15 +107,16 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         private TextView textView;
         private CardView cardView;
         private ShimmerFrameLayout shimmer;
+        private Bitmap bitmap;
 
         private ViewHolder(View itemView) {
             super(itemView);
             this.shimmer = itemView.findViewById(R.id.shimmer_view_bitmap);
-
             shimmer.startShimmer();
             this.imageView = itemView.findViewById(R.id.imageGallery);
             this.textView = itemView.findViewById(R.id.titlegallery);
             this.cardView = itemView.findViewById(R.id.galleryconstraint);
+            bitmap = null;
         }
     }
 }

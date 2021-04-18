@@ -6,10 +6,12 @@ public class GalleryListData{
 
     private String path;
     private Bitmap bitmap;
+    private boolean isSelected;
 
     public GalleryListData(String path, Bitmap thumbail) {
         this.path = path;
         this.bitmap = thumbail;
+        this.isSelected = false;
     }
 
     public Bitmap getBitmap() {
@@ -26,5 +28,13 @@ public class GalleryListData{
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
     }
 }

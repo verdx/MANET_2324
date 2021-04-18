@@ -1,12 +1,11 @@
 package d2d.testing.gui;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -59,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
         CameraController.initiateInstance(this);
     }
-
 
     @Override
     public boolean onSupportNavigateUp() {
