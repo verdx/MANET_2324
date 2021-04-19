@@ -44,6 +44,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         holder.textView.setText(listdata.get(position).getPath());
+        holder.cardView.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
         if(listdata.get(position).getBitmap()!=null){
             holder.shimmer.stopShimmer();
             holder.shimmer.hideShimmer();
@@ -83,7 +84,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     public boolean selectedItem(final ViewHolder holder, final int position, View v){
         if(holder.bitmap!=null) {
             if (!listdata.get(position).isSelected()) {
-                holder.cardView.setBackgroundTintList(ColorStateList.valueOf(fragment.getResources().getColor(R.color.colorGrayDark, null)));
+                holder.cardView.setBackgroundTintList(ColorStateList.valueOf(fragment.getResources().getColor(R.color.colorGray, null)));
                 holder.imageView.setImageDrawable(fragment.getResources().getDrawable(R.drawable.my_device_background, null));
                 listdata.get(position).setSelected(true);
             } else {
@@ -95,7 +96,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         return true;
     }
 
-
+    public void setListData(ArrayList<GalleryListData> listData){
+        this.listdata = listData;
+        notifyDataSetChanged();
+    }
 
     @Override
     public int getItemCount() {

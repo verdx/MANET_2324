@@ -66,7 +66,7 @@ public class GalleryFragment extends Fragment {
                     itg.remove();
                 }
             }
-            adapter.notifyDataSetChanged();
+            adapter.setListData(galleryListData);
             return true;
         }
         return super.onOptionsItemSelected(item);
