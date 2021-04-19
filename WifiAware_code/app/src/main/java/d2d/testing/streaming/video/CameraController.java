@@ -91,6 +91,8 @@ public class CameraController {
         }
     };
 
+    public CameraDevice getCameraDevice() { return mCameraDevice;}
+
     private final CameraCaptureSession.StateCallback mCamSessionStCallback = new CameraCaptureSession.StateCallback() {
         @Override
         public void onConfigured(@NonNull CameraCaptureSession session) {

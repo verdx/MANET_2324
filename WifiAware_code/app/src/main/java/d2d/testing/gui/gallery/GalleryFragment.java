@@ -11,6 +11,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,11 +19,13 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import d2d.testing.R;
@@ -34,8 +37,10 @@ public class GalleryFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private GalleryAdapter adapter;
-    private ArrayList<GalleryListData> galleryListData;
+    private ArrayList<GalleryListData> galleryListData = new ArrayList<>();
     private ArrayList<File> videoFiles;
+
+    private SwipeRefreshLayout swipeContainer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,6 +65,7 @@ public class GalleryFragment extends Fragment {
                         File file = itv.next();
                         if(file.getName().equals(value.getPath())){
                             file.delete();
+                            itv.remove();
                             break;
                         }
                     }
@@ -75,23 +81,53 @@ public class GalleryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_gallery, container, false);
+        recyclerView = root.findViewById(R.id.listVideos);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2 , GridLayoutManager.VERTICAL,false));
+
+        swipeContainer = root.findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                findFiles();
+
+            }
+        });
+        // Configure the refreshing colors
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_dark,
+                android.R.color.holo_blue_light,
+                android.R.color.darker_gray);
+
+        findFiles();
+        return root;
+    }
+
+    public void findFiles(){
 
         String path = getActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString();
 
         File directory = new File(path);
         videoFiles = new ArrayList<>(Arrays.asList(directory.listFiles()));
+        videoFiles.sort(new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return o2.getPath().compareTo(o1.getPath());
+            }
+        });
 
         galleryListData = new ArrayList<>(videoFiles.size());
+        adapter = new GalleryAdapter(galleryListData, this);
+        recyclerView.setAdapter(adapter);
 
         for (int i = 0; i < videoFiles.size(); i++) {
             galleryListData.add(new GalleryListData(videoFiles.get(i).getName(), null));
         }
 
-        recyclerView = root.findViewById(R.id.listVideos);
-        adapter = new GalleryAdapter(galleryListData, this);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2 , GridLayoutManager.VERTICAL,false));
-        recyclerView.setAdapter(adapter);
+        adapter.setListData(galleryListData);
+        findBitmaps();
+    }
+
+    public void findBitmaps(){
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -109,6 +145,7 @@ public class GalleryFragment extends Fragment {
 
                     }catch (Exception e){
                         e.printStackTrace();
+                        videoFiles.get(i).delete();
                         galleryListData.remove(i);
                         videoFiles.remove(i);
                         size -= 1;
@@ -116,19 +153,17 @@ public class GalleryFragment extends Fragment {
                     }
                 }
                 mmr.release();
+
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
+                        swipeContainer.setRefreshing(false);
                     }
                 });
             }
         });
         t.start();
-
-        adapter.notifyDataSetChanged();
-
-        return root;
     }
 
     private Bitmap rotateBitmap(Bitmap bitmap){

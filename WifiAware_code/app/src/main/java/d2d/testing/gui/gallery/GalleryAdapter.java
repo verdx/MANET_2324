@@ -25,11 +25,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     private ArrayList<GalleryListData> listdata;
     private GalleryFragment fragment;
+    private Boolean someItemSelected;
 
     // RecyclerView recyclerView;
     public GalleryAdapter(ArrayList<GalleryListData> listdata, GalleryFragment fragment) {
         this.listdata = listdata;
         this.fragment = fragment;
+        this.someItemSelected = false;
     }
 
     @Override
@@ -55,20 +57,27 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fragment.startVideo(position);
+                if(someItemSelected){
+                    selectedItem(holder, position, view);
+                }
+                else fragment.startVideo(position);
             }
         });
 
         holder.imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fragment.startVideo(position);
+                if(someItemSelected) {
+                    selectedItem(holder, position, view);
+                }
+                else fragment.startVideo(position);
             }
         });
 
         holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                someItemSelected = true;
                 return selectedItem(holder, position, v);
             }
         });
@@ -76,6 +85,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         holder.imageView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                someItemSelected = true;
                 return selectedItem(holder, position, v);
             }
         });
@@ -91,13 +101,24 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 holder.cardView.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
                 holder.imageView.setImageBitmap(holder.bitmap);
                 listdata.get(position).setSelected(false);
+                if(!isSomeSelected()){
+                    someItemSelected = false;
+                }
             }
         }
         return true;
     }
 
+    private boolean isSomeSelected(){
+        for(GalleryListData ld : listdata){
+            if(ld.isSelected()) return true;
+        }
+        return false;
+    }
+
     public void setListData(ArrayList<GalleryListData> listData){
         this.listdata = listData;
+        this.someItemSelected = false;
         notifyDataSetChanged();
     }
 

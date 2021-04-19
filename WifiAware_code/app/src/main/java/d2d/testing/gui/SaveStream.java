@@ -17,6 +17,8 @@ import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 
+import d2d.testing.utils.IOUtils;
+
 public class SaveStream implements MediaPlayer.EventListener {
     public final static String TAG = "SaveStream";
 
@@ -36,7 +38,7 @@ public class SaveStream implements MediaPlayer.EventListener {
 
     public void startDownload(){
 
-        String pathSave = createVideoFilePath();
+        String pathSave = IOUtils.createVideoFilePath(context);
         File file = new File(pathSave);
 
         rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
@@ -74,15 +76,7 @@ public class SaveStream implements MediaPlayer.EventListener {
         libvlc = null;
     }
 
-    private String createVideoFilePath(){
-        String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
-        String filename = sdf.format(cal.getTime());
-        filename = filename.replaceAll(" ", "_");
-        filename = filename.replaceAll(":", "");
-        return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/" + filename + ".mp4";
-    }
+
 
     @Override
     public void onEvent(MediaPlayer.Event event) {
@@ -90,9 +84,7 @@ public class SaveStream implements MediaPlayer.EventListener {
         switch(event.type) {
             case MediaPlayer.Event.EndReached:
                 Log.e(TAG, "EL STREAMING EndReached");
-                mMediaPlayer.stop();
-                libvlc.release();
-                libvlc = null;
+                stopDownload();
                 break;
             case MediaPlayer.Event.Buffering:
                 Log.e(TAG, "EL STREAMING Buffering"); break;

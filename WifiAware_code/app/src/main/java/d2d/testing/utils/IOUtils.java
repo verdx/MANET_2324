@@ -1,5 +1,6 @@
 package d2d.testing.utils;
 
+import android.content.Context;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -52,5 +54,15 @@ public class IOUtils {
         bb.putLong(uuid.getMostSignificantBits());
         bb.putLong(uuid.getLeastSignificantBits());
         return Base64.encodeToString(bb.array(), Base64.DEFAULT);
+    }
+
+    public static String createVideoFilePath(Context c){
+        String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+        String filename = sdf.format(cal.getTime());
+        filename = filename.replaceAll(" ", "_");
+        filename = filename.replaceAll(":", "");
+        return c.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/" + filename + ".mp4";
     }
 }

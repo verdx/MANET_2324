@@ -7,4 +7,5 @@
 			app:key="saveMyStreaming" app:title="Save my streaming" />
 
 	</PreferenceCategory>
+
 </PreferenceScreen>

@@ -1,9 +1,14 @@
 package d2d.testing.gui;
 
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.media.MediaCodec;
+import android.media.MediaRecorder;
+import android.net.wifi.aware.WifiAwareSession;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -20,15 +25,21 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;
 import d2d.testing.streaming.video.VideoQuality;
+import d2d.testing.utils.IOUtils;
 
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,6 +57,11 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     private String mNameStreaming = "defaultName";
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
+
+    private MediaRecorder mMediaRecorder;
+    CameraController ctrl;
+
+    Thread cameraThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,12 +112,25 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
         mRecording = true;
+
+        cameraThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    startRecording();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        cameraThread.start();
     }
 
     private void stopStreaming() {
         StreamingRecord.getInstance().removeLocalStreaming();
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.videocam));
         mRecording = false;
+        cameraThread.interrupt();
         Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
     }
 
@@ -117,7 +146,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        CameraController ctrl = CameraController.getInstance();
+        ctrl = CameraController.getInstance();
         List<Surface> surfaces = new ArrayList<>();
         String cameraId = ctrl.getCameraIdList()[0];
         Size[] resolutions = ctrl.getPrivType_2Target_MaxResolutions(cameraId, SurfaceTexture.class, MediaCodec.class);
@@ -183,5 +212,51 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     @Override
     public void onDialogNegative(Object object) {
 
+    }
+
+    private void startRecording() throws IOException {
+
+        ParcelFileDescriptor[] mParcelFileDescriptors = ParcelFileDescriptor.createReliablePipe();
+        ParcelFileDescriptor mParcelRead = new ParcelFileDescriptor(mParcelFileDescriptors[0]);
+        ParcelFileDescriptor mParcelWrite = new ParcelFileDescriptor(mParcelFileDescriptors[1]);
+
+        int video_width = 1920;
+        int video_height = 1080;
+
+        mMediaRecorder = new MediaRecorder();
+
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+        mMediaRecorder.setVideoSize(video_width, video_height);
+        mMediaRecorder.setVideoFrameRate(30);
+
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+
+        mMediaRecorder.setOutputFile(mParcelWrite.getFileDescriptor());
+        mMediaRecorder.prepare();
+        mMediaRecorder.start();
+
+        InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(mParcelRead);
+
+        byte[] buffer = new byte[4096];
+
+        FileOutputStream fos = null;
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        System.out.println("Ajustes: " + preferences.getBoolean("saveMyStreaming", false));
+        if(preferences.getBoolean("saveMyStreaming", false)){
+            String path = IOUtils.createVideoFilePath(getApplicationContext());
+            File file = new File(path);
+            fos = new FileOutputStream(file);
+        }
+
+        int count;
+        while ((count = in.read(buffer))>0 && !Thread.interrupted()){
+            if(fos != null) fos.write(buffer, 0, count);
+        }
+        fos.close();
     }
 }
