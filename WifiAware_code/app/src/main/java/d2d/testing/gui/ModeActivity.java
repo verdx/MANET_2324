@@ -3,10 +3,13 @@ package d2d.testing.gui;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -14,16 +17,35 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
+
 import com.google.android.material.snackbar.Snackbar;
 
 import d2d.testing.R;
+import d2d.testing.gui.setting.ExitActivity;
+import info.guardianproject.panic.Panic;
+import info.guardianproject.panic.PanicResponder;
+import info.guardianproject.panic.PanicTrigger;
+import info.guardianproject.panic.PanicUtils;
 
 public class ModeActivity extends AppCompatActivity {
+    private static final String TAG = "ModeActivity";
     ImageButton witness;
     ImageButton humanitarian;
 
+    public static final String PREF_LOCK_AND_EXIT = "pref_lock_and_exit";
+    public static final String PREF_CLEAR_APP_DATA = "pref_clear_app_data";
+    public static final String PREF_UNINSTALL_THIS_APP = "pref_uninstall_this_app";
+
+    private ListPreference panicAppPref;
+
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         askPermits();
         setContentView(R.layout.activity_mode);
         checkWifiAwareAvailability();
@@ -84,5 +106,46 @@ public class ModeActivity extends AppCompatActivity {
             Snackbar.make(findViewById(android.R.id.content), "No dispones de Wifi Aware, la apliación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
         }
     }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        final boolean lockAndExit = prefs.getBoolean("PREF_LOCK_AND_EXIT", true);
+        final boolean clearAppData = prefs.getBoolean("PREF_CLEAR_APP_DATA", false);
+        final boolean unistallThisApp = prefs.getBoolean("PREF_UNINSTALL_THIS_APP", false);
+
+        String context = PanicResponder.getConnectIntentSender(this);
+        PanicResponder.setTriggerPackageName(this, context);
+
+        if (PanicResponder.receivedTriggerFromConnectedApp(this)) {
+            if (unistallThisApp) {
+                Log.i(TAG, PREF_UNINSTALL_THIS_APP);
+                PanicResponder.deleteAllAppData(this);
+                ExitActivity.exitAndRemoveFromRecentApps(this);
+
+            } else if (clearAppData) {
+                Log.i(TAG, PREF_CLEAR_APP_DATA);
+                PanicResponder.deleteAllAppData(this);
+                ExitActivity.exitAndRemoveFromRecentApps(this);
+
+            } else if (lockAndExit) {
+                Log.i(TAG, PREF_LOCK_AND_EXIT);
+                ExitActivity.exitAndRemoveFromRecentApps(this);
+            }
+            // add other responses here, paying attention to if/else order
+        } else if (PanicResponder.shouldUseDefaultResponseToTrigger(this)) {
+            if (prefs.getBoolean(PREF_LOCK_AND_EXIT, true)) {
+                Log.i(TAG, PREF_LOCK_AND_EXIT);
+                ExitActivity.exitAndRemoveFromRecentApps(this);
+            }
+        }
+
+        //finish();
+    }
+
 
 }

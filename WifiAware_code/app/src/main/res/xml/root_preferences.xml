@@ -1,10 +1,21 @@
 <PreferenceScreen
 	xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<PreferenceCategory app:title="Preferences">
+	<PreferenceCategory app:title="Video preferences">
 
 		<SwitchPreferenceCompat
 			app:key="saveMyStreaming" app:title="Save my streaming" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory app:title="Panic preferences">
+
+		<SwitchPreferenceCompat
+			app:key="PREF_LOCK_AND_EXIT" app:title="Lock and exit" />
+		<SwitchPreferenceCompat
+			app:key="PREF_CLEAR_APP_DATA" app:title="Clear app data" />
+		<SwitchPreferenceCompat
+			app:key="PREF_UNINSTALL_THIS_APP" app:title="Unistall this app" />
 
 	</PreferenceCategory>
 

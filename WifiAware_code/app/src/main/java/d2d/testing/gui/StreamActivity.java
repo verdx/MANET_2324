@@ -17,7 +17,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import d2d.testing.R;
+
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
@@ -26,6 +26,8 @@ import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;
 import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.utils.IOUtils;
+
+import d2d.testing.R;
 
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
