@@ -1,0 +1,22 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion '29.0.2'
+
+    defaultConfig {
+        applicationId "es.ucm.fdi.panic"
+        minSdkVersion 14
+        targetSdkVersion 29
+        versionCode getVersionCode()
+        versionName getVersionName()
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:appcompat-v7:29.1.1'
+    implementation 'com.android.support:recyclerview-v7:29.1.1'
+    implementation 'com.android.support:design:29.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'info.guardianproject.panic:panic:0.5'
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="es.ucm.fdi.panic">
+
+    <application
+        tools:ignore="GoogleAppIndexingWarning"
+        android:allowBackup="true"
+        android:icon="@mipmap/panic_loco"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme.NoActionBar">
+        <activity android:name="es.ucm.fdi.panic.PanicActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="info.guardianproject.panic.action.CONNECT"/>
+                <action android:name="info.guardianproject.panic.action.DISCONNECT"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="es.ucm.fdi.panic.CountDownActivity"
+            android:launchMode="singleTask"/>
+        <activity
+            android:name="es.ucm.fdi.panic.ExitActivity"
+            android:theme="@android:style/Theme.NoDisplay"/>
+    </application>
+
+</manifest>
