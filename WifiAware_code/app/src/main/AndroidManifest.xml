@@ -17,6 +17,7 @@
 		tools:ignore="ScopedStorage" />
 	<uses-permission android:name="android.permission.CAMERA" />
 	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+	<uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
 	<!-- USES-HW-FEATURE: Market filtering -->
 	<uses-feature android:name="android.hardware.wifi.aware"
@@ -27,8 +28,7 @@
 
 
 	<application android:allowBackup="true"
-		android:icon="@mipmap/ic_launcher" android:label="@string/app_name"
-		android:roundIcon="@mipmap/ic_launcher_round"
+		android:icon="@mipmap/logo_multistreaming" android:label="@string/app_name"
 		android:supportsRtl="true" android:theme="@style/AppTheme">
 
 		<activity android:name=".gui.ModeActivity"
@@ -37,6 +37,29 @@
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
+
+			<intent-filter>
+				<action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="info.guardianproject.panic.action.DISCONNECT" />
+
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="info.guardianproject.panic.action.CONNECT" />
+
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+
+			<intent-filter>
+				<action android:name="info.guardianproject.panic.action.TRIGGER" />
+
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+
 		</activity>
 
 		<activity android:name=".gui.StreamActivity"
@@ -47,6 +70,9 @@
 
 		<activity android:name=".gui.ViewStreamActivity"
 			android:screenOrientation="landscape"
+			android:theme="@style/AppTheme.NoActionBar" />
+
+		<activity android:name=".gui.setting.ExitActivity"
 			android:theme="@style/AppTheme.NoActionBar" />
 
 		<service android:name=".streaming.rtsp.RtspServer" />
