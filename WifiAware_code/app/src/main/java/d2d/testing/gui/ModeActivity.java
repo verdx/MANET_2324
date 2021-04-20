@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,6 +26,8 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
+
+import java.util.ArrayList;
 
 import d2d.testing.R;
 import d2d.testing.gui.setting.ExitActivity;
@@ -49,6 +52,7 @@ public class ModeActivity extends AppCompatActivity {
         if (PanicResponder.checkForDisconnectIntent(this)) {
             finish(); return;
         }
+
 
         askPermits();
         setContentView(R.layout.activity_mode);
