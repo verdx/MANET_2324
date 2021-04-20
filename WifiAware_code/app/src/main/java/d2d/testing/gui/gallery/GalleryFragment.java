@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
+import javax.crypto.ShortBufferException;
+
 import d2d.testing.R;
 import d2d.testing.gui.ViewStreamActivity;
 import wseemann.media.FFmpegMediaMetadataRetriever;
@@ -141,15 +143,23 @@ public class GalleryFragment extends Fragment {
                         mmr.setDataSource(videoFiles.get(i).getPath());
                         Bitmap b = mmr.getFrameAtTime(100000, FFmpegMediaMetadataRetriever.OPTION_CLOSEST);
                         if(b != null) galleryListData.get(i).setBitmap(rotateBitmap(b));
-                        else throw new Exception("Video demasiado corto...");
+                        else throw new ShortBufferException("Video demasiado corto...");
 
-                    }catch (Exception e){
+                    } catch (ShortBufferException e) {
                         e.printStackTrace();
                         videoFiles.get(i).delete();
                         galleryListData.remove(i);
                         videoFiles.remove(i);
                         size -= 1;
                         i -= 1;
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
+                        galleryListData.remove(i);
+                        videoFiles.remove(i);
+                        size -= 1;
+                        i -= 1;
+
                     }
                 }
                 mmr.release();
