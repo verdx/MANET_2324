@@ -60,10 +60,10 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     private String mNameStreaming = "defaultName";
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
 
-    private MediaRecorder mMediaRecorder;
+    private boolean isDownload;
     CameraController ctrl;
 
-    SaveStream saveStream;
+    private SaveStream saveStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +116,8 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         mRecording = true;
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        if(preferences.getBoolean("saveMyStreaming", false)) {
+        isDownload = preferences.getBoolean("saveMyStreaming", false);
+        if(isDownload) {
             saveStream = new SaveStream(getApplicationContext(), localStreamUUID.toString());
             saveStream.startDownload();
         }
@@ -126,7 +127,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         StreamingRecord.getInstance().removeLocalStreaming();
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.videocam));
         mRecording = false;
-        saveStream.stopDownload();
+        if(isDownload) saveStream.stopDownload();
         Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
     }
 
