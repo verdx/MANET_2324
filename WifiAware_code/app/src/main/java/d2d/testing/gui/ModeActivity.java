@@ -1,45 +1,39 @@
 package d2d.testing.gui;
 
 import android.Manifest;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import java.util.ArrayList;
-
 import d2d.testing.R;
 import d2d.testing.gui.setting.ExitActivity;
-import info.guardianproject.panic.Panic;
 import info.guardianproject.panic.PanicResponder;
-import info.guardianproject.panic.PanicTrigger;
-import info.guardianproject.panic.PanicUtils;
 
 public class ModeActivity extends AppCompatActivity {
     private static final String TAG = "ModeActivity";
     ImageButton witness;
     ImageButton humanitarian;
+    TextView textWitness;
+    TextView textHumanitarian;
 
     public static final String PREF_LOCK_AND_EXIT = "pref_lock_and_exit";
     public static final String PREF_CLEAR_APP_DATA = "pref_clear_app_data";
@@ -58,6 +52,15 @@ public class ModeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_mode);
         checkWifiAwareAvailability();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        @SuppressLint("ResourceType")
+        Animation right = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animate_slide_right);
+        Animation left = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animate_slide_left);
 
         witness = findViewById(R.id.witnessButton);
         witness.setOnClickListener(new View.OnClickListener() {
@@ -67,6 +70,11 @@ public class ModeActivity extends AppCompatActivity {
             }
         });
 
+        textWitness = findViewById(R.id.textWitness);
+
+        witness.startAnimation(right);
+        textWitness.startAnimation(right);
+
         humanitarian = findViewById(R.id.humanitarianButton);
         humanitarian.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +82,11 @@ public class ModeActivity extends AppCompatActivity {
                 openMainActivity(getString(R.string.mode_humanitarian));
             }
         });
+
+        textHumanitarian = findViewById(R.id.textHumanitarian);
+
+        humanitarian.startAnimation(left);
+        textHumanitarian.startAnimation(left);
     }
 
     /*

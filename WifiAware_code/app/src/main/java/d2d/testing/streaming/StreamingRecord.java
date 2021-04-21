@@ -1,11 +1,14 @@
 package d2d.testing.streaming;
 
+import android.content.Context;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import d2d.testing.gui.SaveStream;
 import d2d.testing.streaming.sessions.SessionBuilder;
 
 
@@ -16,10 +19,12 @@ public class StreamingRecord {
     private static class Record{
         private Streaming mStreaming;
         private boolean mAllowDispatch;
+        private SaveStream mSaveStream;
 
-        public Record(Streaming streaming, boolean allowDispatch){
+        public Record(Streaming streaming, boolean allowDispatch, SaveStream saveStream){
             mStreaming = streaming;
             mAllowDispatch = allowDispatch;
+            mSaveStream =  saveStream;
         }
     }
 
@@ -44,7 +49,7 @@ public class StreamingRecord {
     }
 
     public synchronized void addStreaming(Streaming streaming, boolean allowDispatch){
-        Record record = new Record(streaming, allowDispatch);
+        Record record = new Record(streaming, allowDispatch, null);
         mRecords.put(streaming.getUUID(), record);
         for(StreamingRecordObserver ob : mObservers){
             ob.streamingAvailable(streaming, allowDispatch);
@@ -69,6 +74,18 @@ public class StreamingRecord {
         for(StreamingRecordObserver ob : mObservers){
             ob.streamingUpdate(rec.mStreaming, isDownload);
         }
+    }
+
+    public synchronized void startDownload(final Context c, final UUID id){
+        Record record = mRecords.get(id);
+        SaveStream saveStream = new SaveStream(c, id.toString());
+        record.mSaveStream = saveStream;
+        saveStream.startDownload();
+    }
+
+    public synchronized void stopDownload(UUID id){
+        Record record = mRecords.get(id);
+        record.mSaveStream.stopDownload();
     }
 
     public synchronized void addLocalStreaming(UUID id, String name, SessionBuilder sessionBuilder){
@@ -133,6 +150,18 @@ public class StreamingRecord {
 
     public synchronized void removeObserver(StreamingRecordObserver ob){
         mObservers.remove(ob);
+    }
+
+    public SessionBuilder getLocalStreamingBuilder() {
+        return mLocalStreamingBuilder;
+    }
+
+    public UUID getLocalStreamingUUID() {
+        return mLocalStreamingUUID;
+    }
+
+    public String getLocalStreamingName() {
+        return mLocalStreamingName;
     }
 
 }

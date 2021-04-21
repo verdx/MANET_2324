@@ -145,7 +145,7 @@ public class GalleryFragment extends Fragment {
                         if(b != null) galleryListData.get(i).setBitmap(rotateBitmap(b));
                         else throw new ShortBufferException("Video demasiado corto...");
 
-                    } catch (ShortBufferException e) {
+                    } catch (ShortBufferException | IllegalArgumentException e) {
                         e.printStackTrace();
                         videoFiles.get(i).delete();
                         galleryListData.remove(i);
@@ -159,7 +159,6 @@ public class GalleryFragment extends Fragment {
                         videoFiles.remove(i);
                         size -= 1;
                         i -= 1;
-
                     }
                 }
                 mmr.release();

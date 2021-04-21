@@ -63,7 +63,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     private MediaRecorder mMediaRecorder;
     CameraController ctrl;
 
-    Thread cameraThread;
+    SaveStream saveStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,30 +109,24 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     }
 
     public void startStreaming() {
-        UUID localStreamUUID = UUID.randomUUID();
+        final UUID localStreamUUID = UUID.randomUUID();
         StreamingRecord.getInstance().addLocalStreaming(localStreamUUID, mNameStreaming, mSessionBuilder);
 
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_stop));
         mRecording = true;
 
-        cameraThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    startRecording();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        cameraThread.start();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if(preferences.getBoolean("saveMyStreaming", false)) {
+            saveStream = new SaveStream(getApplicationContext(), localStreamUUID.toString());
+            saveStream.startDownload();
+        }
     }
 
     private void stopStreaming() {
         StreamingRecord.getInstance().removeLocalStreaming();
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.videocam));
         mRecording = false;
-        cameraThread.interrupt();
+        saveStream.stopDownload();
         Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
     }
 
@@ -214,51 +208,5 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     @Override
     public void onDialogNegative(Object object) {
 
-    }
-
-    private void startRecording() throws IOException {
-
-        ParcelFileDescriptor[] mParcelFileDescriptors = ParcelFileDescriptor.createReliablePipe();
-        ParcelFileDescriptor mParcelRead = new ParcelFileDescriptor(mParcelFileDescriptors[0]);
-        ParcelFileDescriptor mParcelWrite = new ParcelFileDescriptor(mParcelFileDescriptors[1]);
-
-        int video_width = 1920;
-        int video_height = 1080;
-
-        mMediaRecorder = new MediaRecorder();
-
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS);
-        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-
-        mMediaRecorder.setVideoSize(video_width, video_height);
-        mMediaRecorder.setVideoFrameRate(30);
-
-        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-
-        mMediaRecorder.setOutputFile(mParcelWrite.getFileDescriptor());
-        mMediaRecorder.prepare();
-        mMediaRecorder.start();
-
-        InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(mParcelRead);
-
-        byte[] buffer = new byte[4096];
-
-        FileOutputStream fos = null;
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        System.out.println("Ajustes: " + preferences.getBoolean("saveMyStreaming", false));
-        if(preferences.getBoolean("saveMyStreaming", false)){
-            String path = IOUtils.createVideoFilePath(getApplicationContext());
-            File file = new File(path);
-            fos = new FileOutputStream(file);
-        }
-
-        int count;
-        while ((count = in.read(buffer))>0 && !Thread.interrupted()){
-            if(fos != null) fos.write(buffer, 0, count);
-        }
-        fos.close();
     }
 }

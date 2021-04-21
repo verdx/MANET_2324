@@ -76,8 +76,13 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     if(!sd.isDownload()){
                         StreamingRecord.getInstance().changeStreamingDownload(UUID.fromString(sd.getUuid()), true);
                         Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
-                        SaveStream saveStream = new SaveStream(mContext.getApplicationContext(), sd.getUuid());
-                        saveStream.startDownload();
+                        StreamingRecord.getInstance().startDownload(mContext, UUID.fromString(sd.getUuid()));
+
+                    }
+                    else{
+                        StreamingRecord.getInstance().changeStreamingDownload(UUID.fromString(sd.getUuid()), false);
+                        StreamingRecord.getInstance().stopDownload(UUID.fromString(sd.getUuid()));
+                        Toast.makeText(mContext, "Finaliza la descarga del stream seleccionado...", Toast.LENGTH_SHORT).show();
                     }
                 }
             });

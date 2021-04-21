@@ -31,6 +31,8 @@ public class SaveStream implements MediaPlayer.EventListener {
     private String rtspUrl;
     private String uuid;
 
+    Thread cameraThread;
+
     public SaveStream(Context context, String uuid){
         this.context = context;
         this.uuid = uuid;
@@ -38,68 +40,77 @@ public class SaveStream implements MediaPlayer.EventListener {
 
     public void startDownload(){
 
-        String pathSave = IOUtils.createVideoFilePath(context);
-        File file = new File(pathSave);
+        cameraThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-        rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
-        Log.d(TAG, "Save video " + rtspUrl);
+                String pathSave = IOUtils.createVideoFilePath(context);
+                File file = new File(pathSave);
 
-        ArrayList<String> options = new ArrayList<String>();
-        options.add("--aout=opensles");
-        options.add("--audio-time-stretch"); // time stretching
-        options.add("-vvv"); // verbosity
-        options.add("--aout=opensles");
-        options.add("--avcodec-codec=h264");
-        options.add("--file-logging");
-        options.add("--logfile=vlc-log.txt");
+                rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
+                Log.d(TAG, "Save video " + rtspUrl);
 
-        libvlc = new LibVLC(context, options);
+                ArrayList<String> options = new ArrayList<String>();
+                options.add("--aout=opensles");
+                options.add("--audio-time-stretch"); // time stretching
+                options.add("-vvv"); // verbosity
+                options.add("--aout=opensles");
+                options.add("--avcodec-codec=h264");
+                options.add("--file-logging");
+                options.add("--logfile=vlc-log.txt");
 
-        // Create media player
-        mMediaPlayer = new MediaPlayer(libvlc);
-        mMediaPlayer.setEventListener(this);
+                libvlc = new LibVLC(context, options);
 
-        Media m = new Media(libvlc, Uri.parse(rtspUrl));
+                // Create media player
+                mMediaPlayer = new MediaPlayer(libvlc);
+                mMediaPlayer.setEventListener(SaveStream.this);
 
-        m.addOption(":sout=#transcode{vcodec=h264,acodec=mp4v,ab=128}");
-        m.addOption(":sout=#file{dst=" + file.getPath() + "}");
-        m.addOption(":sout-keep");
+                Media m = new Media(libvlc, Uri.parse(rtspUrl));
 
-        mMediaPlayer.setMedia(m);
-        mMediaPlayer.play();
+                m.addOption(":sout=#transcode{vcodec=h264,acodec=mp4v,ab=128}");
+                m.addOption(":sout=#file{dst=" + file.getPath() + "}");
+                m.addOption(":sout-keep");
+
+                mMediaPlayer.setMedia(m);
+                mMediaPlayer.play();
+
+            }
+        });
+        cameraThread.start();
 
     }
 
-    public void stopDownload(){
+    public void stopDownload() {
         mMediaPlayer.stop();
         libvlc.release();
         libvlc = null;
+        cameraThread.interrupt();
     }
-
 
 
     @Override
     public void onEvent(MediaPlayer.Event event) {
 
-        switch(event.type) {
+        switch (event.type) {
             case MediaPlayer.Event.EndReached:
-                Log.e(TAG, "EL STREAMING EndReached");
+                Log.d(TAG, "EL STREAMING EndReached");
                 stopDownload();
                 break;
             case MediaPlayer.Event.Buffering:
-                Log.e(TAG, "EL STREAMING Buffering"); break;
+                Log.d(TAG, "EL STREAMING Buffering");
+                break;
             case MediaPlayer.Event.Playing:
-                Log.e(TAG, "EL STREAMING Playing"); break;
+                Log.d(TAG, "EL STREAMING Playing");
+                break;
             case MediaPlayer.Event.Paused:
-                Log.e(TAG, "EL STREAMING Paused"); break;
+                Log.d(TAG, "EL STREAMING Paused");
+                break;
             case MediaPlayer.Event.Stopped:
-                Log.e(TAG, "EL STREAMING Stopped"); break;
+                Log.d(TAG, "EL STREAMING Stopped");
+                break;
             default:
                 break;
         }
 
     }
-}
-
-
-
+};

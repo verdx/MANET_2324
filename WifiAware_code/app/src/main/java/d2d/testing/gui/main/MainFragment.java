@@ -91,7 +91,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             }
         });
 
-        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.drawable.animate);
+        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.animate_record);
         record.startAnimation(shake);
 
         myAdd = root.findViewById(R.id.my_address);
@@ -300,7 +300,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @Override
     public void onRtspUpdate(int message, Exception exception) {
-        Toast.makeText(getContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this.getActivity().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
     }
 
 }

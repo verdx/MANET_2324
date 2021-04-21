@@ -195,8 +195,14 @@ public class RTSPServerWorker extends AbstractWorker {
         Socket socket = ((SocketChannel) channel).socket();
         // Parse the requested URI and configure the session
 
+        boolean isLocalStream;
+        if(StreamingRecord.getInstance().getLocalStreamingUUID() == null){
+            isLocalStream = false;
+        }
+        else isLocalStream = request.path.equals(StreamingRecord.getInstance().getLocalStreamingUUID().toString());
+
         // si no hay un path y no es el de nuestro stream es rebroadcast
-        if(!request.path.equals("") && !request.path.equals("live")) {
+        if(!request.path.equals("") && !isLocalStream) {
             //if es una session para hacer play a un stream de rebroadcast entonces
             try {
                 RebroadcastSession session = handleRebroadcastRequest(request.path, socket);
@@ -224,6 +230,24 @@ public class RTSPServerWorker extends AbstractWorker {
             // If no exception has been thrown, we reply with OK
             response.status = RtspResponse.STATUS_OK;
         }
+        else if(StreamingRecord.getInstance().getLocalStreamingUUID().toString().equals(request.path)){
+
+            Session mLocalStreamingSession = StreamingRecord.getInstance().getLocalStreamingBuilder().build();
+            mLocalStreamingSession.setNameStreaming(StreamingRecord.getInstance().getLocalStreamingName());
+            mLocalStreamingSession.setDestinationAddress(socket.getLocalAddress(), false);
+            mLocalStreamingSession.setDestinationPort(socket.getLocalPort());
+            mLocalStreamingSession.setOriginAddress(socket.getInetAddress(), false);
+
+            mSessions.put(channel, mLocalStreamingSession);
+            mLocalStreamingSession.syncConfigure();
+
+            response.content = mLocalStreamingSession.getSessionDescription();
+            response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
+                    "Content-Type: application/sdp\r\n";
+
+            // If no exception has been thrown, we reply with OK
+            response.status = RtspResponse.STATUS_OK;
+        }
 
         return response;
     }
@@ -242,8 +266,6 @@ public class RTSPServerWorker extends AbstractWorker {
         session.setReceiveNet(mServerSelector.getChannelNetwork(channel));
 
         UUID streamUUID = UUID.fromString(request.path);
-
-        Log.d(TAG, "keke: " + session.getStreamingName());
 
         mServerSessions.get(channel).put(streamUUID, new Streaming(streamUUID, session.getStreamingName(), session));
         response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
@@ -630,7 +652,7 @@ public class RTSPServerWorker extends AbstractWorker {
             e.printStackTrace();
         } catch (IllegalStateException e) {
             response.status = RtspResponse.STATUS_BAD_REQUEST;
-            Logger.e("illegal state with line" + line.toString());
+            Log.e(TAG, "illegal state with line" + line.toString());
             e.printStackTrace();
         }
 

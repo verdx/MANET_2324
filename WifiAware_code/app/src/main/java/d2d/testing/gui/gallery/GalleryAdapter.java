@@ -95,7 +95,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if(holder.bitmap!=null) {
             if (!listdata.get(position).isSelected()) {
                 holder.cardView.setBackgroundTintList(ColorStateList.valueOf(fragment.getResources().getColor(R.color.colorGray, null)));
-                holder.imageView.setImageDrawable(fragment.getResources().getDrawable(R.drawable.my_device_background, null));
+                Drawable d = fragment.getResources().getDrawable(R.drawable.my_device_background, null);
+                d.setTintList(ColorStateList.valueOf(fragment.getResources().getColor(R.color.colorGrayDark, null)));
+                holder.imageView.setImageDrawable(d);
                 listdata.get(position).setSelected(true);
             } else {
                 holder.cardView.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
