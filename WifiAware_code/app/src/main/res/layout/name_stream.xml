@@ -30,6 +30,7 @@
         android:inputType="textEmailAddress"
         android:paddingTop="15dp"
         android:textAlignment="center"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:digits="qwertyuiopñlkjhgfdsazxcvbnmQWERTYUIOPÑLKJHGFDSAZXCVBNM1234567890' '"/>
 
 </LinearLayout>

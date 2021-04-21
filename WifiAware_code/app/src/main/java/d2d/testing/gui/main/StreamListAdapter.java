@@ -62,13 +62,22 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
             RealViewHolder realHolder = (RealViewHolder) holder;
 
-            String desc;
-            if(sd.getName().equals("defaultName")){
-                desc = IOUtils.uuidToBase64(sd.getUuid());
-            }
-            else desc = sd.getName();
 
-            realHolder.stream_name.setText(desc);
+            String[] desc = sd.getName().split("__");
+            String name;
+            String author;
+
+            if(desc[0].equals("defaultName")){
+                name = IOUtils.uuidToBase64(sd.getUuid());
+            }
+            else {
+                name = desc[0].replaceAll("_", " ");
+            }
+
+            author = desc[1].replaceAll("_", " ");
+
+            realHolder.stream_name.setText(name);
+            realHolder.stream_author.setText(author);
 
             realHolder.stream_download.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -126,10 +135,12 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         TextView stream_name;
         ImageButton stream_download;
         LinearLayout stream_layout;
+        TextView stream_author;
 
         public RealViewHolder(@NonNull View itemView) {
             super(itemView);
             stream_name = itemView.findViewById(R.id.stream_name);
+            stream_author = itemView.findViewById(R.id.stream_author);
             stream_download = itemView.findViewById(R.id.downloadButton);
             stream_layout = itemView.findViewById(R.id.stream_item_list);
         }

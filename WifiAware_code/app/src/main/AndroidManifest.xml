@@ -66,7 +66,8 @@
 			android:theme="@style/AppTheme.NoActionBar" />
 
 		<activity android:name=".gui.MainActivity"
-			android:theme="@style/AppTheme.NoActionBar" />
+			android:theme="@style/AppTheme.NoActionBar"
+			android:windowSoftInputMode="adjustPan|adjustResize"/>
 
 		<activity android:name=".gui.ViewStreamActivity"
 			android:screenOrientation="landscape"

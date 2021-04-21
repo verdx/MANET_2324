@@ -13,9 +13,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,7 +50,7 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
 
-    private TextView myName;
+    private  EditText myName;
     private TextView myAdd;
     private TextView myStatus;
 
@@ -109,13 +111,16 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             }
         });
 
-        myName.setText("Model: " +  Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID));
-
         String mode = "";
 
         if(MainActivity.mode != null){
-            if(MainActivity.mode.equals(getString(R.string.mode_witness))) mode = getString(R.string.witness);
-            if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))) mode = getString(R.string.humanitarian);
+            if(MainActivity.mode.equals(getString(R.string.mode_witness))){
+                myName.setEnabled(false);
+                mode = getString(R.string.witness);
+            }
+            if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))){
+                mode = getString(R.string.humanitarian);
+            }
         }
         myAdd.setText("Mode:   " + mode);
 
@@ -242,6 +247,10 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     private void openStreamActivity() {
         Intent streamActivityIntent = new Intent(getActivity(), StreamActivity.class);
+        String author;
+        if(myName.getText().toString().equals("")) author = myName.getHint().toString();
+        else author = myName.getText().toString();
+        streamActivityIntent.putExtra("author", author);
         this.startActivity(streamActivityIntent);
     }
 

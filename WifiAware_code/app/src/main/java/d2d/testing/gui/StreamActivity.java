@@ -16,8 +16,10 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 
+import d2d.testing.gui.main.MainFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
@@ -75,6 +77,9 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))){
             CustomDialogFragment dialog = new CustomDialogFragment();
             dialog.show(getSupportFragmentManager(), "CustomDialogFragment");
+        }
+        else {
+            putAutorInDefaultName();
         }
 
         mTextureView = findViewById(R.id.textureView);
@@ -203,11 +208,30 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     @Override
     public void onDialogPositive(Object object) {
-        mNameStreaming = (String)object;
+        String name = (String)object;
+        String author = getIntent().getStringExtra("author");
+
+        name = name.replaceAll("\\s+$", "");
+        name = name.replaceAll("\\s+", "_");
+
+        author = author.replaceAll("\\s+$", "");
+        author = author.replaceAll("\\s+", "_");
+
+        mNameStreaming = name + "__" + author;
+        Toast.makeText(getApplicationContext(), mNameStreaming, Toast.LENGTH_LONG).show();
+
     }
 
     @Override
     public void onDialogNegative(Object object) {
+        putAutorInDefaultName();
 
+    }
+
+    private void putAutorInDefaultName(){
+        String author = getIntent().getStringExtra("author");
+        author = author.replaceAll("\\s+$", "");
+        author = author.replaceAll("\\s+", "_");
+        mNameStreaming = mNameStreaming +  "__" + author;
     }
 }
