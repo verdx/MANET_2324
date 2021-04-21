@@ -148,17 +148,11 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     class PlaceViewHolder extends RecyclerView.ViewHolder{
 
-        TextView stream_name;
-        ImageButton stream_download;
-        LinearLayout stream_layout;
         ShimmerFrameLayout shimmer;
 
         public PlaceViewHolder(@NonNull View itemView) {
             super(itemView);
             shimmer = itemView.findViewById(R.id.shimmer_view_container);
-            stream_name = itemView.findViewById(R.id.stream_name_placeHolder);
-            stream_download = itemView.findViewById(R.id.downloadButton_placeHolder);
-            stream_layout = itemView.findViewById(R.id.stream_item_list_placeHolder);
         }
     }
 }

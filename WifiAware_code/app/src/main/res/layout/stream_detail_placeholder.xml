@@ -18,43 +18,59 @@
 			android:id="@+id/stream_item_list_placeHolder"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:gravity="center_vertical"
 			android:orientation="horizontal"
 			android:padding="8dp"
 			app:layout_constraintEnd_toEndOf="parent"
 			app:layout_constraintStart_toStartOf="parent"
 			app:layout_constraintTop_toTopOf="parent">
 
-			<Button
-				android:id="@+id/button"
-				android:layout_width="101dp"
-				android:layout_height="67dp"
-				android:layout_marginTop="3dp"
-				android:layout_marginRight="15dp"
-				android:layout_marginBottom="3dp"
-				android:layout_weight="1"
-				android:background="@drawable/live_place_holder"
-				android:backgroundTint="@color/colorGray" />
+			<ImageView
+				android:id="@+id/stream_icon"
+				android:layout_width="102dp"
+				android:layout_height="74dp"
+				android:src="@drawable/live_bw" />
 
-			<TextView
-				android:id="@+id/stream_name_placeHolder"
-				android:layout_width="174dp"
+			<LinearLayout
+				android:layout_width="212dp"
 				android:layout_height="wrap_content"
-				android:layout_gravity="center"
-				android:layout_marginEnd="25dp"
-				android:background="@drawable/live_place_holder"
-				android:backgroundTint="@color/colorGrayDark"
-				android:maxLines="2"
-				android:padding="1dp"
-				android:textSize="15sp"
-				android:textStyle="bold" />
+				android:orientation="vertical">
+
+				<TextView
+					android:id="@+id/stream_name_placeHolder"
+					android:layout_width="180dp"
+					android:layout_height="15dp"
+					android:layout_gravity="left"
+					android:layout_marginStart="10dp"
+					android:layout_marginEnd="10dp"
+					android:layout_marginBottom="15dp"
+					android:background="@drawable/live_place_holder"
+					android:backgroundTint="@color/colorGrayDark"
+					android:gravity="center_vertical"
+					android:maxLines="1"
+					android:textSize="18sp" />
+
+				<TextView
+					android:id="@+id/stream_author_placeHolder"
+					android:layout_width="120dp"
+					android:layout_height="10dp"
+					android:layout_gravity="left"
+					android:layout_marginStart="10dp"
+					android:layout_marginEnd="10dp"
+					android:background="@drawable/live_place_holder"
+					android:backgroundTint="@color/colorGrayDark"
+					android:gravity="center_vertical"
+					android:maxLines="1" />
+			</LinearLayout>
 
 			<ImageButton
-				android:id="@+id/downloadButton_placeHolder"
-				android:layout_width="33dp"
-				android:layout_height="43dp"
+				android:id="@+id/downloadButton"
+				android:layout_width="59dp"
+				android:layout_height="47dp"
 				android:layout_gravity="center"
 				android:layout_weight="1"
-				android:background="@drawable/button_download" />
+				android:background="@drawable/button_download"
+				app:srcCompat="@android:drawable/stat_sys_download" />
 
 		</LinearLayout>
 
@@ -63,3 +79,4 @@
 
 
 </androidx.cardview.widget.CardView>
+
