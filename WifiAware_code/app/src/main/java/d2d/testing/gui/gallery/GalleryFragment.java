@@ -3,8 +3,10 @@ package d2d.testing.gui.gallery;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,7 +34,6 @@ import javax.crypto.ShortBufferException;
 
 import d2d.testing.R;
 import d2d.testing.gui.ViewStreamActivity;
-import wseemann.media.FFmpegMediaMetadataRetriever;
 
 
 public class GalleryFragment extends Fragment {
@@ -135,13 +136,13 @@ public class GalleryFragment extends Fragment {
             @Override
             public void run() {
 
-                FFmpegMediaMetadataRetriever mmr = new FFmpegMediaMetadataRetriever();
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 
                 int size = videoFiles.size();
                 for (int i = 0; i < size; i++) {
                     try {
                         mmr.setDataSource(videoFiles.get(i).getPath());
-                        Bitmap b = mmr.getFrameAtTime(100000, FFmpegMediaMetadataRetriever.OPTION_CLOSEST);
+                        Bitmap b = mmr.getFrameAtTime(1000);
                         if(b != null) galleryListData.get(i).setBitmap(rotateBitmap(b));
                         else throw new ShortBufferException("Video demasiado corto...");
 
