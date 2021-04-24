@@ -27,11 +27,13 @@ public abstract class AbstractWorker implements Runnable {
     private final List<DataReceived> mDataReceivedQueue;
 
     private Thread mThread;
+    protected AbstractSelector mSelector;
     private final AtomicBoolean mEnabled;
 
-    protected AbstractWorker() {
+    protected AbstractWorker(AbstractSelector selector) {
         mDataReceivedQueue = new LinkedList<>();
         mEnabled = new AtomicBoolean(false);
+        mSelector = selector;
     }
 
     public void start(){

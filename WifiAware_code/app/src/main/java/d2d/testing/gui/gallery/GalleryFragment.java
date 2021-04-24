@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -142,20 +143,13 @@ public class GalleryFragment extends Fragment {
                 for (int i = 0; i < size; i++) {
                     try {
                         mmr.setDataSource(videoFiles.get(i).getPath());
-                        Bitmap b = mmr.getFrameAtTime(1000);
+                        Bitmap b = mmr.getFrameAtTime(2000000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
                         if(b != null) galleryListData.get(i).setBitmap(rotateBitmap(b));
                         else throw new ShortBufferException("Video demasiado corto...");
 
-                    } catch (ShortBufferException | IllegalArgumentException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
-                        videoFiles.get(i).delete();
-                        galleryListData.remove(i);
-                        videoFiles.remove(i);
-                        size -= 1;
-                        i -= 1;
-                    }
-                    catch (Exception e){
-                        e.printStackTrace();
+                        //videoFiles.get(i).delete();
                         galleryListData.remove(i);
                         videoFiles.remove(i);
                         size -= 1;
@@ -164,7 +158,9 @@ public class GalleryFragment extends Fragment {
                 }
                 mmr.release();
 
-                getActivity().runOnUiThread(new Runnable() {
+                FragmentActivity fragment = getActivity();
+                //A veces cambias de pestaña y el fragmento es null, entoces crashea
+                if(fragment != null) fragment.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();

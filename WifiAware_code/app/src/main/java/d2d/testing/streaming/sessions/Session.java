@@ -27,6 +27,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
@@ -119,6 +120,7 @@ public class Session {
 	private Handler mMainHandler;
 
 	private Handler mHandler;
+	private UUID mStreamUUID;
 
 	/** 
 	 * Creates a streaming session that can be customized by adding tracks.
@@ -249,6 +251,14 @@ public class Session {
 
 	public void setNameStreaming(String name){
 		mStreamingName = name;
+	}
+
+	public void setStreamUUID(UUID uuid){
+		mStreamUUID = uuid;
+	}
+
+	public UUID getStreamUUID(){
+		return mStreamUUID;
 	}
 
 	public void setDestinationPort(int destPort) {

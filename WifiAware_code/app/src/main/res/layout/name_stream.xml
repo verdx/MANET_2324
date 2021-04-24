@@ -13,7 +13,7 @@
         android:background="@color/colorPrimaryDark"
         android:contentDescription="@string/app_name"
         android:gravity="center"
-        android:text="NAME OF STREAMING"
+        android:text="@string/name_dialog_header"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
         android:textStyle="bold" />
@@ -26,11 +26,11 @@
         android:layout_marginTop="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
-        android:hint="Name of streaming"
-        android:inputType="textEmailAddress"
+        android:digits="qwertyuiopñlkjhgfdsazxcvbnmQWERTYUIOPÑLKJHGFDSAZXCVBNM1234567890' 'áéíóú"
+        android:hint="@string/name_dialog_hint"
+        android:inputType="text"
         android:paddingTop="15dp"
         android:textAlignment="center"
-        android:textSize="18sp"
-        android:digits="qwertyuiopñlkjhgfdsazxcvbnmQWERTYUIOPÑLKJHGFDSAZXCVBNM1234567890' '"/>
+        android:textSize="18sp" />
 
 </LinearLayout>

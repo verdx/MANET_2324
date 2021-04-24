@@ -538,7 +538,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	@Override
-	public void streamingUpdate(Streaming streaming, boolean bIsDownload) {
+	public void streamingDownloadStateChanged(Streaming streaming, boolean bIsDownload) {
 
 	}
 

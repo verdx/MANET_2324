@@ -1,6 +1,11 @@
 package d2d.testing.gui.main;
 
 import android.content.Context;
+import android.graphics.text.LineBreaker;
+import android.os.UserHandle;
+import android.text.Html;
+import android.text.Layout;
+import android.text.method.ReplacementTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +23,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import d2d.testing.R;
-import d2d.testing.gui.SaveStream;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.utils.IOUtils;
 
@@ -69,13 +73,16 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
             if(desc[0].equals("defaultName")){
                 name = IOUtils.uuidToBase64(sd.getUuid());
+                name = name.substring(0, name.length()-3); //Quitamos el ==\n del final que siempre esta
             }
             else {
-                name = desc[0].replaceAll("_", " ");
+                name = desc[0].replace("_", " ");
             }
 
-            author = desc[1].replaceAll("_", " ");
+            author = desc[1].replace("_", " ");
 
+
+            realHolder.stream_name.setTransformationMethod(new WordBreakTransformationMethod());
             realHolder.stream_name.setText(name);
             realHolder.stream_author.setText(author);
 
@@ -83,17 +90,14 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                 @Override
                 public void onClick(View v) {
                     if(!sd.isDownload()){
-                        StreamingRecord.getInstance().changeStreamingDownload(UUID.fromString(sd.getUuid()), true);
-                        Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
-                        StreamingRecord.getInstance().startDownload(mContext, UUID.fromString(sd.getUuid()));
+                        StreamingRecord.getInstance().startStreamDownload(mContext, UUID.fromString(sd.getUuid()));
                         sd.setDownload(true);
-
+                        Toast.makeText(mContext, "Comienza la descarga del stream seleccionado...", Toast.LENGTH_LONG).show();
                     }
                     else{
-                        StreamingRecord.getInstance().changeStreamingDownload(UUID.fromString(sd.getUuid()), false);
-                        StreamingRecord.getInstance().stopDownload(UUID.fromString(sd.getUuid()));
-                        Toast.makeText(mContext, "Finaliza la descarga del stream seleccionado...", Toast.LENGTH_SHORT).show();
+                        StreamingRecord.getInstance().stopStreamDownload(UUID.fromString(sd.getUuid()));
                         sd.setDownload(false);
+                        Toast.makeText(mContext, "Finaliza la descarga del stream seleccionado...", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -157,4 +161,24 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             shimmer = itemView.findViewById(R.id.shimmer_view_container);
         }
     }
+
+    private static class WordBreakTransformationMethod extends ReplacementTransformationMethod {
+        private static final char[] dash = new char[]{'-', '\u2011'};
+        private static final char[] space = new char[]{' ', '\u00A0'};
+        private static final char[] slash = new char[]{'/', '\u2215'};
+
+        private static final char[] original = new char[]{dash[0], space[0], slash[0]};
+        private static final char[] replacement = new char[]{dash[1], space[1], slash[1]};
+
+        @Override
+        protected char[] getOriginal() {
+            return original;
+        }
+
+        @Override
+        protected char[] getReplacement() {
+            return replacement;
+        }
+    }
+
 }

@@ -2,11 +2,9 @@ package d2d.testing.gui;
 
 import android.content.pm.ActivityInfo;
 
-import android.os.Build;
 import android.os.Bundle;
 
 import android.net.Uri;
-import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -15,6 +13,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.ProgressBar;
 
@@ -25,9 +24,7 @@ import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import d2d.testing.R;
 
@@ -35,16 +32,36 @@ import d2d.testing.R;
 public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener {
     public final static String TAG = "VideoActivity";
 
-    // display surface
-    private SurfaceView mSurface;
     private SurfaceHolder holder;
 
     // media player
     private LibVLC libvlc;
     private MediaPlayer mMediaPlayer = null;
-    private int mVideoWidth;
-    private int mVideoHeight;
-    private final static int VideoSizeChanged = -1;
+    private MediaController mMediaController = null;
+    private final MediaController.MediaPlayerControl mPlayerInterface = new MediaController.MediaPlayerControl() {
+        @Override
+        public void start() {mMediaPlayer.play();}
+        @Override
+        public void pause() {mMediaPlayer.pause();}
+        @Override
+        public int getDuration() {return (int) mMediaPlayer.getLength();}
+        @Override
+        public int getCurrentPosition() {return (int) (mMediaPlayer.getPosition()*getDuration());}
+        @Override
+        public void seekTo(int pos) {mMediaPlayer.setPosition((float)pos / getDuration());}
+        @Override
+        public boolean isPlaying() {return mMediaPlayer.isPlaying();}
+        @Override
+        public int getBufferPercentage() {return 0;}
+        @Override
+        public boolean canPause() {return true;}
+        @Override
+        public boolean canSeekBackward() {return true;}
+        @Override
+        public boolean canSeekForward() {return true;}
+        @Override
+        public int getAudioSessionId() {return 0;}
+    };
 
     private ProgressBar bufferSpinner;
 
@@ -60,9 +77,20 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         this.setContentView(R.layout.activity_view_stream);
 
         String uuid;
-        Boolean isFromGallery = getIntent().getExtras().getBoolean("isFromGallery");
+        boolean isFromGallery = getIntent().getExtras().getBoolean("isFromGallery");
 
-        if(isFromGallery) videoFilePath = getIntent().getExtras().getString("path");
+        if(isFromGallery){
+            videoFilePath = getIntent().getExtras().getString("path");
+            mMediaController = new MediaController(this);
+            mMediaController.setMediaPlayer(mPlayerInterface);
+            mMediaController.setAnchorView(findViewById(R.id.video_layout));
+            findViewById(R.id.video_layout).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mMediaController.show(1500);
+                }
+            });
+        }
         else {
             uuid = getIntent().getExtras().getString("UUID");
             // Get URL
@@ -70,7 +98,8 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
             Log.d(TAG, "Playing back " + rtspUrl);
         }
 
-        mSurface = (SurfaceView) findViewById(R.id.textureView);
+        // display surface
+        SurfaceView mSurface = (SurfaceView) findViewById(R.id.textureView);
         holder = mSurface.getHolder();
 
         ArrayList<String> options = new ArrayList<String>();
@@ -97,15 +126,8 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         vout.setVideoView(mSurface);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        if (Build.VERSION.SDK_INT >= 19) {
-            // include navigation bar
-            getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
-            //getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        } else {
-            // exclude navigation bar
-            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        }
-        int mHeight = displayMetrics.heightPixels;
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int mHeight = displayMetrics.heightPixels + 70;
         int mWidth = displayMetrics.widthPixels;
 
         vout.setWindowSize(mWidth,mHeight);
@@ -165,8 +187,6 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         holder = null;
         libvlc.release();
         libvlc = null;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
     }
 
     @Override

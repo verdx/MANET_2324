@@ -3,6 +3,7 @@ package d2d.testing.net.threads.selectors;
 import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -21,7 +22,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import d2d.testing.utils.Logger;
 import d2d.testing.net.threads.workers.AbstractWorker;
@@ -57,6 +62,8 @@ import static java.lang.Thread.sleep;
  * TODO: Si no hay que cambiar a una metodologia multithread.
  */
 public abstract class AbstractSelector implements Runnable{
+    private static final String TAG = "AbstractSelector";
+
     private static final int BUFFER_SIZE = 8192;
 
     //protected static final int PORT_TCP = 3462;
@@ -72,10 +79,9 @@ public abstract class AbstractSelector implements Runnable{
 
     // A list of ChangeRequest instances and Data/socket map
     protected final List<SelectableChannel> mConnections = new ArrayList<>();
-    private final List<ChangeRequest> mPendingChangeRequests = new LinkedList<>();
-    private final Map<SelectableChannel, List> mPendingData = new HashMap<>();
+    protected final List<ChangeRequest> mPendingChangeRequests = new LinkedList<>();
+    protected final Map<SelectableChannel, Queue<ByteBuffer>> mPendingData = new HashMap<>();
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFFER_SIZE);
-
 
     //protected int mPortTCP = PORT_TCP;
 
@@ -85,7 +91,8 @@ public abstract class AbstractSelector implements Runnable{
 
 
     protected AbstractWorker mWorker;
-    protected Thread mSelectorThread;
+    private Thread mSelectorThread;
+    private WriterThread mWriterThread;
 
     public abstract void send(byte[] data);
     protected abstract void initiateConnection();
@@ -103,6 +110,8 @@ public abstract class AbstractSelector implements Runnable{
 
     public void stop(){
         if(mEnabled.compareAndSet(true, false)){
+            mWriterThread.stop();
+            mWriterThread = null;
             mSelectorThread.interrupt();
             try {
                 mSelectorThread.join();
@@ -113,6 +122,8 @@ public abstract class AbstractSelector implements Runnable{
 
     public void start() {
         if(mEnabled.compareAndSet(false, true)) {
+            mWriterThread = new WriterThread(this);
+            mWriterThread.start();
             mSelectorThread = new Thread(this);
             mSelectorThread.start();
         }
@@ -131,62 +142,56 @@ public abstract class AbstractSelector implements Runnable{
                 while (itKeys.hasNext()) {
                     SelectionKey myKey = itKeys.next();
                     itKeys.remove();
-
                     if (!myKey.isValid()) {
                         continue;
                     }
-
-                    if (myKey.isAcceptable()) {
-                        this.accept(myKey);
-                    } else if (myKey.isConnectable()) {
-                        this.finishConnection(myKey);
-                    } else if (myKey.isReadable()) {
-                        this.read(myKey);
-                    } else if (myKey.isWritable()) {
-                        this.write(myKey);
+                    try{
+                        if (myKey.isAcceptable()) {
+                            this.accept(myKey);
+                        } else if (myKey.isConnectable()) {
+                            this.finishConnection(myKey);
+                        } else if (myKey.isReadable()) {
+                            this.read(myKey);
+                        } else if (myKey.isWritable()) {
+                            synchronized (mPendingData){
+                                Queue<ByteBuffer> queue = mPendingData.get(myKey.channel());
+                                if(queue != null && !queue.isEmpty()) this.write(myKey);
+                            }
+                        }
+                    }catch (IOException ex){
+                        removeClient(myKey.channel());
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            onServerRelease();
+            processChangeRequests();
+
             for (SelectionKey key : mSelector.keys()) {
-                try {
-                    key.channel().close();
-                    onClientDisconnected(key.channel());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                key.cancel();
+                removeClient(key.channel(), true, false);
             }
-            //IOUtils.
+
+            mWorker.stop();
+
             try {
                 mSelector.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mWorker.stop();
-            onServerRelease();
+            } catch (IOException ignored) {}
+
         }
     }
 
 
     public void send(SelectableChannel socket, byte[] data) {
-        synchronized(mPendingChangeRequests) {
-            this.mPendingChangeRequests.add(new ChangeRequest(socket, ChangeRequest.CHANGE_OPS, SelectionKey.OP_WRITE));
-
-            synchronized (mPendingData) {  // And queue the data we want written
-                List queue = mPendingData.get(socket);
-                if (queue == null) {
-                    queue = new ArrayList();
-                    mPendingData.put(socket, queue);
-                }
-                queue.add(ByteBuffer.wrap(data));
+        synchronized (mPendingData) {
+            Queue<ByteBuffer> queue = mPendingData.get(socket);
+            if (queue == null) {
+                queue = new LinkedList<>();
+                mPendingData.put(socket, queue);
             }
+            queue.add(ByteBuffer.wrap(data));
         }
-
-        // Finally, wake up our selecting thread so it can make the required changes
-        this.mSelector.wakeup();
     }
 
     protected void accept(SelectionKey key) throws IOException {
@@ -194,10 +199,10 @@ public abstract class AbstractSelector implements Runnable{
         socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
 
         // Register the SocketChannel with our Selector, indicating to be notified for READING
-        socketChannel.register(mSelector, SelectionKey.OP_READ);
+        socketChannel.register(mSelector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         mConnections.add(socketChannel);
         onClientConnected(socketChannel);
-        Logger.d("AbstractSelector: Connection Accepted from IP " + socketChannel.socket().getRemoteSocketAddress());
+        Log.d(TAG,"Connection Accepted from IP " + socketChannel.socket().getInetAddress().toString() + ":" + socketChannel.socket().getPort());
     }
 
 
@@ -208,112 +213,90 @@ public abstract class AbstractSelector implements Runnable{
             if(socketChannel.finishConnect()) { //Finish connecting.
                 this.mStatusTCP = STATUS_CONNECTED;
                 key.interestOps(SelectionKey.OP_READ);  // Register an interest in reading till send
-                Logger.d("AbstractSelector: client (" + socketChannel.socket().getLocalAddress() + ") finished connecting...");
+                Log.d(TAG,"Client (" + socketChannel.socket().getLocalAddress() + ") finished connecting...");
                 onClientConnected(socketChannel);
             }
         } catch (IOException e) {
             this.mStatusTCP = STATUS_DISCONNECTED;
             key.cancel();               // Cancel the channel's registration with our selector
-            Logger.d("AbstractSelector finishConnection: " + e.toString());
+            Log.d(TAG,"FinishConnection: " + e.toString());
         }
     }
 
-    @SuppressLint("NewApi")
     protected void read(SelectionKey key) throws IOException {
         int numRead;
         SelectableChannel socketChannel = key.channel();
         mReadBuffer.clear();   //Clear out our read buffer
 
-        if (socketChannel instanceof SocketChannel ||
-                (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
-            try {
-                numRead = ((ByteChannel) socketChannel).read(mReadBuffer); // Attempt to read off the channel
-            } catch (IOException e) {
-                disconnectClient(socketChannel);
-                return;
-            }
-
+        if (socketChannel instanceof SocketChannel || (socketChannel instanceof DatagramChannel && ((DatagramChannel) socketChannel).isConnected())) {
+            numRead = ((ByteChannel) socketChannel).read(mReadBuffer); // Attempt to read off the channel
             if (numRead == -1) {
-                disconnectClient(socketChannel);
-                return;
+                throw new IOException("Can not read from socket");
             }
 
-            // Hand the data off to our worker thread
-            this.mWorker.addData(this, socketChannel, mReadBuffer.array(), numRead);
+            mWorker.addData(this, socketChannel, mReadBuffer.array(), numRead);
         } else if(socketChannel instanceof DatagramChannel) {
-            try {
-                SocketAddress address = ((DatagramChannel) socketChannel).receive(mReadBuffer); // Attempt to read off the channel
+            ((DatagramChannel) socketChannel).receive(mReadBuffer);
+            mReadBuffer.flip();
 
-                mReadBuffer.flip();
-                //Logger.d("Readen from DatagramChannel: " + mReadBuffer.limit() +
-                //        " bytes from " + ((InetSocketAddress) address).getAddress().getHostAddress() + ":" + ((InetSocketAddress) address).getPort()
-                // + " on address " + ((InetSocketAddress) ((DatagramChannel) socketChannel).getLocalAddress()).getPort());
-
-                if (mReadBuffer.limit() == -1) {
-                    disconnectClient(socketChannel);
-                    return;
-                } else if (mReadBuffer.limit() == 0) {
-                    disconnectClient(socketChannel);
-                    return;
-                }
-
-                this.mWorker.addData(this, socketChannel, mReadBuffer.array(), mReadBuffer.limit());
-            } catch (IOException e) {
-                disconnectClient(socketChannel);
-                return;
+            if (mReadBuffer.limit() <= 0) {
+                throw new IOException("Read buffer limit under 0");
             }
-            // Hand the data off to our worker thread
+
+            mWorker.addData(this, socketChannel, mReadBuffer.array(), mReadBuffer.limit());
         }
     }
 
-    public void disconnectClient(SelectableChannel socketChannel) {
+
+
+    public void disconnectClient(SelectableChannel channel) {
+        this.addChangeRequest(new ChangeRequest(channel, ChangeRequest.REMOVE_AND_NOTIFY, 0));
+    }
+
+    protected void removeClient(SelectableChannel channel) {
+        removeClient(channel, true, true);
+    }
+
+    protected void removeClient(SelectableChannel channel, boolean notify, boolean printLogs) {
         try {
-            socketChannel.keyFor(mSelector).cancel();       // Remote entity shut the socket down cleanly. Do the same
-            socketChannel.close();
-        } catch (Exception e) {
-            //e.printStackTrace();
-        }
-        onClientDisconnected(socketChannel);
-        mConnections.remove(socketChannel);
-        if(socketChannel instanceof SocketChannel) {
-            Logger.d("AbstractSelector: client closed connection... IP: " + ((SocketChannel) socketChannel).socket().getLocalAddress());
-        } else  if (socketChannel instanceof  DatagramChannel) {
-            Logger.d("AbstractSelector: client closed connection... IP: " + ((DatagramChannel) socketChannel).socket().getLocalAddress());
+            SelectionKey key = channel.keyFor(mSelector);
+            if(key == null) return;
+            key.cancel();
+            channel.close();
+        } catch (IOException ignored) {}
+
+        mConnections.remove(channel);
+        if(notify) onClientDisconnected(channel);
+
+        if(printLogs){
+            if(channel instanceof SocketChannel) {
+                SocketChannel sockChan = ((SocketChannel) channel);
+                Log.d(TAG, ": Client " + sockChan.socket().getInetAddress() + ":" + sockChan.socket().getPort() + " disconnected");
+            } else  if (channel instanceof  DatagramChannel) {
+                DatagramChannel datagramChannel = ((DatagramChannel) channel);
+                Log.d(TAG, ": Client " + datagramChannel.socket().getInetAddress() + ":" + datagramChannel.socket().getPort() + " disconnected");
+            }
+            else if (channel instanceof ServerSocketChannel){
+                ServerSocketChannel serverChan = ((ServerSocketChannel) channel);
+                Log.d(TAG, ": Server socket at " + serverChan.socket().getLocalSocketAddress() + ":" + serverChan.socket().getLocalPort() + " disconnected");
+            }
         }
     }
+
 
     protected abstract void onClientDisconnected(SelectableChannel socketChannel);
     protected void onClientConnected(SelectableChannel socketChannel) {}
     protected void onServerRelease(){}
 
-    protected void write(SelectionKey key) throws IOException {
+    protected void write(SelectionKey key){
         SelectableChannel socketChannel = key.channel();
 
-        synchronized (mPendingData) {
-            List queue = mPendingData.get(socketChannel);
-            if(queue == null)
-            {
-                queue = new ArrayList();
-                mPendingData.put(socketChannel, queue);
-                Logger.e("AbstractSelector: Tried to write but socket queue was NULL... this should not happen!!");
-                return;
-            }
-
-            while (!queue.isEmpty()) {                  // Write until there's not more data ...
-                ByteBuffer buf = (ByteBuffer) queue.get(0);
-                int written = ((ByteChannel) socketChannel).write(buf);
-                Logger.d("AbstractSelector: Wrote " + written + " bytes in " + this.getClass());
-                if (buf.remaining() > 0) {              // ... or the socket's buffer fills up
-                    break;
-                }
-                queue.remove(0);
-            }
-
-            if (queue.isEmpty()) {
-                key.interestOps(SelectionKey.OP_READ);  // We wrote away all data, switch back to READING
-            }
+        Queue<ByteBuffer> queue = mPendingData.get(socketChannel);
+        while (!queue.isEmpty()) {
+            mWriterThread.addWrite(socketChannel, queue.poll());
         }
     }
+
 
     public void addChangeRequest(ChangeRequest changeRequest) {
         synchronized(this.mPendingChangeRequests) {         // Queue a channel registration
@@ -321,6 +304,7 @@ public abstract class AbstractSelector implements Runnable{
             mSelector.wakeup();
         }
     }
+
 
     /**
      * Process any pending key changes on our selector
@@ -330,7 +314,7 @@ public abstract class AbstractSelector implements Runnable{
      * @throws Exception
      */
 
-    protected void processChangeRequests() throws Exception {
+    protected void processChangeRequests(){
         synchronized (mPendingChangeRequests) {
             for (ChangeRequest changeRequest : mPendingChangeRequests) {
                 try {
@@ -342,16 +326,104 @@ public abstract class AbstractSelector implements Runnable{
                             changeRequest.getChannel().register(mSelector, changeRequest.getOps());
                             break;
                         case ChangeRequest.REMOVE:
-                            SelectableChannel chan = changeRequest.getChannel();
-                            chan.keyFor(mSelector).cancel();
-                            chan.close();
+                            removeClient(changeRequest.getChannel(), false, true);
+                            break;
+                        case ChangeRequest.REMOVE_AND_NOTIFY:
+                            removeClient(changeRequest.getChannel(), true, true);
                             break;
                     }
                 } catch (Exception e) {
                     Log.e("AbstractSelector", "Error in process change Request probably client disconnected...");
+                    e.printStackTrace();
                 }
             }
             this.mPendingChangeRequests.clear();
+        }
+    }
+
+    static class WriterThread implements Runnable{
+        private Thread mThread;
+        private final AtomicBoolean mEnabled;
+        private final Queue<SelectableChannel> mPendingChannels;
+        private final Map<SelectableChannel, Queue<ByteBuffer>> mPendingBuffers;
+        private final Lock mLock = new ReentrantLock();
+        private final Condition mDataToWrite = mLock.newCondition();
+        private final AbstractSelector mSelector;
+
+        public WriterThread(AbstractSelector selector){
+            mThread = null;
+            mEnabled = new AtomicBoolean(false);
+            mPendingChannels = new LinkedList<>();
+            mPendingBuffers = new HashMap<>();
+            mSelector = selector;
+        }
+
+        public void start(){
+            if(mEnabled.compareAndSet(false, true)){
+                mThread = new Thread(this);
+                mThread.start();
+            }
+        }
+
+        public void stop(){
+            if(mEnabled.compareAndSet(true, false)){
+                mThread.interrupt();
+                try {
+                    mThread.join();
+                } catch (InterruptedException ignored) {}
+                mThread = null;
+            }
+        }
+
+        public void addWrite(SelectableChannel chan, ByteBuffer buff){
+            mLock.lock();
+            Queue<ByteBuffer> buffers = mPendingBuffers.get(chan);
+            if(buffers == null){
+                buffers = new LinkedList<>();
+                mPendingBuffers.put(chan, buffers);
+                mPendingChannels.add(chan);
+            }
+            buffers.add(buff);
+            mDataToWrite.signal();
+            mLock.unlock();
+        }
+
+        @Override
+        public void run() {
+            try{
+                while(mEnabled.get()){
+                    mLock.lock();
+                    while(mPendingChannels.isEmpty()){
+                        mDataToWrite.await();
+                    }
+                    SelectableChannel chan = mPendingChannels.poll();
+                    Queue<ByteBuffer> buffers = mPendingBuffers.get(chan);
+                    ByteBuffer buff = buffers.peek();
+                    try {
+                        ((ByteChannel) chan).write(buff);
+                        if(buff.remaining() <= 0){
+                            buffers.remove();
+                        }
+                        if(buffers.isEmpty()){
+                            mPendingBuffers.remove(chan);
+                        }
+                        else{
+                            mPendingChannels.add(chan);
+                        }
+                    } catch (IOException e) {
+                        mPendingBuffers.remove(chan);
+                        mSelector.disconnectClient(chan);
+                    }
+                    mLock.unlock();
+                }
+            }
+            catch (InterruptedException ignored){
+                mLock.unlock();
+            }
+            finally {
+                mPendingChannels.clear();
+                mPendingBuffers.clear();
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -23,12 +24,14 @@ import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
+import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.rtsp.RtspRequest;
 import d2d.testing.streaming.rtsp.RtspResponse;
 import d2d.testing.streaming.rtsp.UriParser;
 import d2d.testing.streaming.sessions.RebroadcastSession;
 import d2d.testing.streaming.sessions.ReceiveSession;
 import d2d.testing.streaming.sessions.Session;
+import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.sessions.TrackInfo;
 import d2d.testing.utils.Logger;
 
@@ -96,9 +99,8 @@ public class RTSPServerWorker extends AbstractWorker {
     protected HashMap<SelectableChannel, Session> mSessions = new HashMap<>();
     protected HashMap<SelectableChannel, Map<UUID, Streaming>> mServerSessions = new HashMap<>();
     protected HashMap<SelectableChannel, RebroadcastSession> mRebroadcastSessions = new HashMap<>();
+    protected HashMap<UUID, List<RebroadcastSession>> mRebroadcastSessionsUUIDIndex = new HashMap<>();
 
-
-    boolean allowLiveStreaming = false;
 
     /** Credentials for Basic Auth */
     private final String mUsername;
@@ -107,7 +109,7 @@ public class RTSPServerWorker extends AbstractWorker {
     private final RTSPServerSelector mServerSelector;
 
     public RTSPServerWorker(String username, String password, RTSPServerSelector serverSelector) {
-        super();
+        super(serverSelector);
         this.mUsername = username;
         this.mPassword = password;
         this.mServerSelector = serverSelector;
@@ -195,18 +197,24 @@ public class RTSPServerWorker extends AbstractWorker {
         Socket socket = ((SocketChannel) channel).socket();
         // Parse the requested URI and configure the session
 
-        boolean isLocalStream;
-        if(StreamingRecord.getInstance().getLocalStreamingUUID() == null){
-            isLocalStream = false;
-        }
-        else isLocalStream = request.path.equals(StreamingRecord.getInstance().getLocalStreamingUUID().toString());
 
-        // si no hay un path y no es el de nuestro stream es rebroadcast
-        if(!request.path.equals("") && !isLocalStream) {
+        UUID localStreamingUUID = StreamingRecord.getInstance().getLocalStreamingUUID();
+        boolean isLocalStream = localStreamingUUID != null && request.path.equals(localStreamingUUID.toString());
+
+        // Si no es stream local es rebroadcast
+        if(!isLocalStream) {
             //if es una session para hacer play a un stream de rebroadcast entonces
             try {
                 RebroadcastSession session = handleRebroadcastRequest(request.path, socket);
+                session.setRtspChannel(channel);
                 mRebroadcastSessions.put(channel, session);
+                UUID sessionUUID = UUID.fromString(request.path);
+                List<RebroadcastSession> rebroadcastSessionList = mRebroadcastSessionsUUIDIndex.get(sessionUUID);
+                if(rebroadcastSessionList == null){
+                    rebroadcastSessionList = new ArrayList<>();
+                    mRebroadcastSessionsUUIDIndex.put(sessionUUID, rebroadcastSessionList);
+                }
+                rebroadcastSessionList.add(session);
 
                 // If no exception has been thrown, we reply with OK
                 response.content = session.getSessionDescription();
@@ -218,25 +226,20 @@ public class RTSPServerWorker extends AbstractWorker {
                 response.status = RtspResponse.STATUS_BAD_REQUEST;
                 return response;
             }
-        } else if(allowLiveStreaming){ //Reproducir el propio servidor
-            Session session = handleRequest(request.uri, ((SocketChannel) channel).socket());
-            mSessions.put(channel, session);
-            session.syncConfigure();
+        } else {
 
-            response.content = session.getSessionDescription();
-            response.attributes = "Content-Base: " + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + "/\r\n" +
-                                  "Content-Type: application/sdp\r\n";
-
-            // If no exception has been thrown, we reply with OK
-            response.status = RtspResponse.STATUS_OK;
-        }
-        else if(StreamingRecord.getInstance().getLocalStreamingUUID().toString().equals(request.path)){
-
-            Session mLocalStreamingSession = StreamingRecord.getInstance().getLocalStreamingBuilder().build();
-            mLocalStreamingSession.setNameStreaming(StreamingRecord.getInstance().getLocalStreamingName());
-            mLocalStreamingSession.setDestinationAddress(socket.getLocalAddress(), false);
-            mLocalStreamingSession.setDestinationPort(socket.getLocalPort());
-            mLocalStreamingSession.setOriginAddress(socket.getInetAddress(), false);
+            String strLocalStreamName = StreamingRecord.getInstance().getLocalStreamingName();
+            SessionBuilder builder = StreamingRecord.getInstance().getLocalStreamingBuilder();
+            if(builder == null){
+                response.status = RtspResponse.STATUS_NOT_FOUND;
+                return response;
+            }
+            Session mLocalStreamingSession = builder.build();
+            mLocalStreamingSession.setStreamUUID(localStreamingUUID);
+            mLocalStreamingSession.setNameStreaming(strLocalStreamName);
+            mLocalStreamingSession.setDestinationAddress(socket.getInetAddress(), false);
+            mLocalStreamingSession.setDestinationPort(socket.getPort());
+            mLocalStreamingSession.setOriginAddress(socket.getLocalAddress(), false);
 
             mSessions.put(channel, mLocalStreamingSession);
             mLocalStreamingSession.syncConfigure();
@@ -318,20 +321,20 @@ public class RTSPServerWorker extends AbstractWorker {
             } else {
                 p2 = Integer.parseInt(m.group(2));
             }
+
+            session.getTrack(trackId).setDestinationPorts(p1, p2);
         }
 
         ssrc = session.getTrack(trackId).getSSRC();
         srcPorts = session.getTrack(trackId).getLocalPorts();
 
-        session.getTrack(trackId).setDestinationPorts(p1, p2);
-
         session.syncStart(trackId);
 
-        response.attributes = "Transport: RTP/AVP/UDP;" + (InetAddress.getByName(session.getDestinationAddress().getHostAddress()).isMulticastAddress() ? "multicast" : "unicast") +
-                ";destination=" + session.getDestinationAddress().getHostAddress() +
+        response.attributes = "Transport: RTP/AVP/UDP;" + (session.getDestinationAddress().isMulticastAddress() ? "multicast" : "unicast") +
+                ";destination=" + session.getDestinationAddress() +
                 ";client_port=" + p1 + "-" + p2 +
                 ";server_port=" + srcPorts[0] + "-" + srcPorts[1] +
-                ";ssrc=" + Integer.toHexString(ssrc) +
+                //";ssrc=" + Integer.toHexString(ssrc) +
                 ";mode=play\r\n" +
                 "Session: " + session.getSessionID() + "\r\n" +
                 "Cache-Control: no-cache\r\n";
@@ -468,7 +471,7 @@ public class RTSPServerWorker extends AbstractWorker {
     }
 
     // PLAY Implementation for live Sessions...
-    private RtspResponse PLAY(Session requestSession, SelectableChannel channel) {
+    private RtspResponse PLAY(Session requestSession, SelectableChannel channel) throws IOException {
         RtspResponse response = new RtspResponse();
         Socket requestSocket = ((SocketChannel) channel).socket();
         String url = requestSocket.getLocalAddress().getHostAddress() + ":" + requestSocket.getLocalPort();
@@ -513,8 +516,6 @@ public class RTSPServerWorker extends AbstractWorker {
         response.attributes = "Session: " + receiveSession.getSessionID() + ";timeout=" + receiveSession.getTimeout() +"\r\n";
         response.status = RtspResponse.STATUS_OK;
 
-        String ip = receiveSession.getDestinationAddress().getHostAddress() + ":" + receiveSession.getDestinationPort() + "/" + receiveSession.getPath();
-        String name = receiveSession.getPath();
 
         UUID streamUUID = UUID.fromString(receiveSession.getPath());
 
@@ -542,8 +543,12 @@ public class RTSPServerWorker extends AbstractWorker {
     // TEARDOWN Implementation for RebroadcastSessions...
     private RtspResponse TEARDOWN(RebroadcastSession session, SelectableChannel channel) {
         RtspResponse response = new RtspResponse();
-        session.stop();
+
         mRebroadcastSessions.remove(channel);
+        List<RebroadcastSession> rebList = mRebroadcastSessionsUUIDIndex.get(UUID.fromString(session.getPath()));
+        if(rebList != null) rebList.remove(session);
+
+        onRebroadcastSessionDisconnected(session);
         response.status = RtspResponse.STATUS_OK;
         return response;
     }
@@ -551,16 +556,19 @@ public class RTSPServerWorker extends AbstractWorker {
     // TEARDOWN Implementation for ServerSessions...
     private RtspResponse TEARDOWN(ReceiveSession session, SelectableChannel channel) {
         RtspResponse response = new RtspResponse();
-        session.stop();
         Streaming streaming = mServerSessions.get(channel).remove(UUID.fromString(session.getPath()));
+        onReceiveSessionDisconnected(streaming);
+
         response.status = RtspResponse.STATUS_OK;
-
-        String ip = session.getDestinationAddress().getHostAddress() + ":" + session.getDestinationPort() + "/" + session.getPath();
-        String name = session.getPath();
-
-        StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
-
         return response;
+    }
+
+    private void sendTEARDOWN(SelectableChannel channel, String path, String strSessionID){
+        Socket socket = ((SocketChannel) channel).socket();
+        String request = "TEARDOWN rtsp://"+socket.getLocalAddress().toString()+":"+socket.getLocalPort()+"/"+path+" RTSP/1.0\r\n";
+        request += "Session: " + strSessionID + "\r\n" +
+                "Terminate-Reason: Internal-Error" + "\r\n" + "\r\n";
+        mSelector.send(channel, request.getBytes());
     }
 
     private RtspResponse PAUSE() {
@@ -569,28 +577,6 @@ public class RTSPServerWorker extends AbstractWorker {
         return response;
     }
 
-    public void setAllowLiveStreaming(boolean bool) {
-        allowLiveStreaming = bool;
-
-        if(!allowLiveStreaming && !mSessions.isEmpty()) {
-            for (Map.Entry<SelectableChannel, Session> sessionEntry : mSessions.entrySet()) {
-                Session session = sessionEntry.getValue();
-                SelectableChannel channel = sessionEntry.getKey();
-
-                if(sessionEntry != null) {
-                    TEARDOWN(session, channel);
-
-                    if (session.isStreaming()) {
-                        session.syncStop();
-                    }
-
-                    session.release();
-                }
-            }
-
-            mSessions.clear();
-        }
-    }
 
     @Override
     protected void parsePackets(DataReceived dataReceived) {
@@ -797,6 +783,8 @@ public class RTSPServerWorker extends AbstractWorker {
 
         RebroadcastSession rebroadcastSession = mRebroadcastSessions.remove(channel);
         if(rebroadcastSession != null) {
+            List<RebroadcastSession> rebList = mRebroadcastSessionsUUIDIndex.get(UUID.fromString(rebroadcastSession.getPath()));
+            if(rebList != null) rebList.remove(rebroadcastSession);
             onRebroadcastSessionDisconnected(rebroadcastSession);
         }
     }
@@ -812,6 +800,15 @@ public class RTSPServerWorker extends AbstractWorker {
         ReceiveSession receiveSession = streaming.getReceiveSession();
         if(receiveSession != null) {
             StreamingRecord.getInstance().removeStreaming(streaming.getUUID());
+
+            List<RebroadcastSession> rebList = mRebroadcastSessionsUUIDIndex.remove(streaming.getUUID());
+            if(rebList != null){
+                for(RebroadcastSession rebroadcastSession : rebList){
+                    sendTEARDOWN(rebroadcastSession.getRtspChannel(), rebroadcastSession.getPath(), rebroadcastSession.getSessionID());
+                    mRebroadcastSessions.remove(rebroadcastSession.getRtspChannel());
+                    onRebroadcastSessionDisconnected(rebroadcastSession);
+                }
+            }
 
             receiveSession.stop();
             receiveSession.release();
@@ -840,5 +837,6 @@ public class RTSPServerWorker extends AbstractWorker {
             onRebroadcastSessionDisconnected(rebroadcastSession);
         }
         mRebroadcastSessions.clear();
+        mRebroadcastSessionsUUIDIndex.clear();
     }
 }

@@ -29,11 +29,13 @@ public class StreamingRecord {
     }
 
     private final Map<UUID, Record> mRecords;
-    private SessionBuilder mLocalStreamingBuilder;
+
+
     private UUID mLocalStreamingUUID;
     private String mLocalStreamingName;
+    private SessionBuilder mLocalStreamingBuilder;
 
-    private List<StreamingRecordObserver> mObservers;
+    private final List<StreamingRecordObserver> mObservers;
 
     public static synchronized StreamingRecord getInstance(){
         if(INSTANCE == null) {
@@ -60,32 +62,36 @@ public class StreamingRecord {
         Record rec = mRecords.get(id);
         if(rec != null){
             rec.mAllowDispatch = allowDispatch;
-        }
-        for(StreamingRecordObserver ob : mObservers){
-            ob.streamingAvailable(rec.mStreaming, allowDispatch);
+            for(StreamingRecordObserver ob : mObservers){
+                ob.streamingAvailable(rec.mStreaming, allowDispatch);
+            }
         }
     }
 
-    public synchronized void changeStreamingDownload(UUID id, boolean isDownload){
+
+    public synchronized void startStreamDownload(Context c, UUID id){
         Record rec = mRecords.get(id);
         if(rec != null){
-            rec.mStreaming.setDownload(isDownload);
-        }
-        for(StreamingRecordObserver ob : mObservers){
-            ob.streamingUpdate(rec.mStreaming, isDownload);
+            rec.mStreaming.setDownloadState(true);
+            SaveStream saveStream = new SaveStream(c, id.toString());
+            rec.mSaveStream = saveStream;
+            saveStream.startDownload();
+            for(StreamingRecordObserver ob : mObservers){
+                ob.streamingDownloadStateChanged(rec.mStreaming, true);
+            }
         }
     }
 
-    public synchronized void startDownload(final Context c, final UUID id){
-        Record record = mRecords.get(id);
-        SaveStream saveStream = new SaveStream(c, id.toString());
-        record.mSaveStream = saveStream;
-        saveStream.startDownload();
-    }
-
-    public synchronized void stopDownload(UUID id){
-        Record record = mRecords.get(id);
-        record.mSaveStream.stopDownload();
+    public synchronized void stopStreamDownload(UUID id){
+        Record rec = mRecords.get(id);
+        if(rec != null){
+            rec.mStreaming.setDownloadState(false);
+            rec.mSaveStream.stopDownload();
+            rec.mSaveStream = null;
+            for(StreamingRecordObserver ob : mObservers){
+                ob.streamingDownloadStateChanged(rec.mStreaming, false);
+            }
+        }
     }
 
     public synchronized void addLocalStreaming(UUID id, String name, SessionBuilder sessionBuilder){
@@ -115,8 +121,7 @@ public class StreamingRecord {
     public synchronized boolean streamingExist(UUID id){
         if(mLocalStreamingUUID != null && mLocalStreamingUUID.equals(id)) return true;
         Record rec = mRecords.get(id);
-        if(rec != null) return true;
-        return false;
+        return rec != null;
     }
 
     public synchronized List<Streaming> getStreamings(){
@@ -152,15 +157,15 @@ public class StreamingRecord {
         mObservers.remove(ob);
     }
 
-    public SessionBuilder getLocalStreamingBuilder() {
+    public synchronized SessionBuilder getLocalStreamingBuilder() {
         return mLocalStreamingBuilder;
     }
 
-    public UUID getLocalStreamingUUID() {
+    public synchronized UUID getLocalStreamingUUID() {
         return mLocalStreamingUUID;
     }
 
-    public String getLocalStreamingName() {
+    public synchronized String getLocalStreamingName() {
         return mLocalStreamingName;
     }
 

@@ -10,7 +10,7 @@
 	<string name="boton_record">RECORD</string>
 	<string name="record_video">play</string>
 	<string name="change_camera">change camera</string>
-	<string name="dispositivos_encontrados">STREAMS AVAILABLE</string>
+	<string name="dispositivos_encontrados">AVAILABLE STREAMS (%1$d)</string>
 	<string name="connection_status">Connection Status</string>
 	<string name="home">Home</string>
 	<string name="settings">Settings</string>
@@ -18,9 +18,16 @@
 	<string name="menu_gallery">Gallery</string>
     <string name="witness">Witness</string>
 	<string name="humanitarian">Humanitarian</string>
-	<string name="description_mode">In order to use the application, you must select the corresponding mode.</string>
+	<string name="description_mode">Select the app use scenario</string>
+	<string name="witness_desc">To broadcast videos privately in oppressive regimes</string>
+    <string name="humanitarian_desc">To alert of risk situations when there is no internet connection. <b><i>Metadata like location may be shared</i></b></string>
 	<string name="todo">TODO</string>
 	<string name="mode_witness">w</string>
 	<string name="mode_humanitarian">h</string>
+	<string name="name_dialog_header">STREAM NAME</string>
+	<string name="name_dialog_hint">Stream name</string>
+	<string name="my_device_info_mode">Mode:</string>
+	<string name="my_device_info_name">Name:</string>
+	<string name="record_not_available">Wifi Aware is not available, you can not record</string>
 
 </resources>

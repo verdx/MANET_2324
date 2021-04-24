@@ -125,7 +125,7 @@ public class ModeActivity extends AppCompatActivity {
 
     private void checkWifiAwareAvailability(){
         if (!getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
-            Snackbar.make(findViewById(android.R.id.content), "No dispones de Wifi Aware, la apliación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+            Snackbar.make(findViewById(android.R.id.content), "No dispones de Wifi Aware, la aplicación no funcionará correctamente", Snackbar.LENGTH_LONG).setAction("Action", null).show();
         }
     }
 

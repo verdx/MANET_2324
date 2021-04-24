@@ -29,6 +29,7 @@ public class RebroadcastSession {
     private SelectableChannel rtpVideoTrackChannel;
     private SelectableChannel rtcpAudioTrackChannel;
     private SelectableChannel rtpAudioTrackChannel;
+    private SelectableChannel mRtspChannel;
     public String mStreamingName;
 
     /**
@@ -71,6 +72,21 @@ public class RebroadcastSession {
 
     public void setNameStreaming(String name){
         mStreamingName = name;
+    }
+
+    public String getPath(){
+        if(mReceiveSession != null){
+            return mReceiveSession.getPath();
+        }
+        return null;
+    }
+
+    public void setRtspChannel(SelectableChannel chan){
+        mRtspChannel = chan;
+    }
+
+    public SelectableChannel getRtspChannel(){
+        return mRtspChannel;
     }
 
     /**

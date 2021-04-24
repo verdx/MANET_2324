@@ -76,11 +76,11 @@ public class TrackInfo {
     }
 
     public void removeSession(SelectableChannel rtcpChannel, SelectableChannel rtpChannel) {
-        if(mRtcpUdpServer != null) {
+        if(mRtcpUdpServer != null && rtcpChannel != null) {
             mRtcpUdpServer.disconnectClient(rtcpChannel);
         }
 
-        if(mRtpUdpServer != null) {
+        if(mRtpUdpServer != null && rtpChannel != null) {
             mRtpUdpServer.disconnectClient(rtpChannel);
         }
     }

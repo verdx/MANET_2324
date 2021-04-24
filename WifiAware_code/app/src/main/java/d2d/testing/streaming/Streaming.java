@@ -8,14 +8,14 @@ public class Streaming {
     private UUID mUUID;
     private String mName;
 
-    private boolean isDownload;
+    private boolean isDownloading;
     private ReceiveSession mReceiveSession;
 
     public Streaming(UUID id, String name, ReceiveSession receiveSession){
         mUUID = id;
         mReceiveSession = receiveSession;
         mName = name;
-        isDownload = false;
+        isDownloading = false;
     }
 
     public UUID getUUID() {
@@ -34,11 +34,11 @@ public class Streaming {
         this.mReceiveSession = mReceiveSession;
     }
 
-    public boolean isDownload() {
-        return isDownload;
+    public boolean isDownloading() {
+        return isDownloading;
     }
 
-    public void setDownload(boolean download) {
-        isDownload = download;
+    public void setDownloadState(boolean downloading) {
+        isDownloading = downloading;
     }
 }

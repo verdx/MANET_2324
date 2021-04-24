@@ -218,7 +218,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         author = author.replaceAll("\\s+", "_");
 
         mNameStreaming = name + "__" + author;
-        Toast.makeText(getApplicationContext(), mNameStreaming, Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), mNameStreaming, Toast.LENGTH_LONG).show();
 
     }
 

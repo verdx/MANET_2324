@@ -118,7 +118,7 @@ public class RTSPServerSelector extends AbstractSelector {
             try {
                 socketChannel = serverChan.accept();
                 socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
-                socketChannel.register(mSelector, SelectionKey.OP_READ);
+                socketChannel.register(mSelector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                 conn.mComChannels.add(socketChannel);
             } catch (IOException e) {
                 mConnectionsMap.remove(conn.handle);
@@ -193,8 +193,7 @@ public class RTSPServerSelector extends AbstractSelector {
         public void closeConnection(RTSPServerSelector serverSelector, ConnectivityManager conManager){
             serverSelector.addChangeRequest(new ChangeRequest(mServerSocketChannel, ChangeRequest.REMOVE, 0));
             for(SocketChannel chan : this.mComChannels){
-                serverSelector.addChangeRequest(new ChangeRequest(chan, ChangeRequest.REMOVE, 0));
-                serverSelector.onClientDisconnected(chan);
+                serverSelector.addChangeRequest(new ChangeRequest(chan, ChangeRequest.REMOVE_AND_NOTIFY, 0));
             }
             this.mServerSocketChannel = null;
             this.handle = null;

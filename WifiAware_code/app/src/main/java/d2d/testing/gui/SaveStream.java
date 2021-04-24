@@ -50,7 +50,7 @@ public class SaveStream implements MediaPlayer.EventListener {
                 rtspUrl = "rtsp://127.0.0.1:1234/" + uuid;
                 Log.d(TAG, "Save video " + rtspUrl);
 
-                ArrayList<String> options = new ArrayList<String>();
+                ArrayList<String> options = new ArrayList<>();
                 options.add("--aout=opensles");
                 options.add("--audio-time-stretch"); // time stretching
                 options.add("-vvv"); // verbosity
