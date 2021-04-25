@@ -2,6 +2,7 @@ package d2d.testing.gui;
 
 import android.content.pm.ActivityInfo;
 
+import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 
 import android.net.Uri;
@@ -10,12 +11,15 @@ import android.util.Log;
 
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ProgressBar;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -29,7 +33,7 @@ import java.util.ArrayList;
 import d2d.testing.R;
 
 
-public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener {
+public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Callback,MediaPlayer.EventListener, TextureView.SurfaceTextureListener {
     public final static String TAG = "VideoActivity";
 
     private SurfaceHolder holder;
@@ -68,23 +72,27 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
     private String rtspUrl;
     private String videoFilePath;
 
+    private boolean isFromGallery;
+    private TextureView mTextureView;
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         this.setContentView(R.layout.activity_view_stream);
 
         String uuid;
-        boolean isFromGallery = getIntent().getExtras().getBoolean("isFromGallery");
+        isFromGallery = getIntent().getExtras().getBoolean("isFromGallery");
+
 
         if(isFromGallery){
             videoFilePath = getIntent().getExtras().getString("path");
             mMediaController = new MediaController(this);
             mMediaController.setMediaPlayer(mPlayerInterface);
-            mMediaController.setAnchorView(findViewById(R.id.video_layout));
-            findViewById(R.id.video_layout).setOnClickListener(new View.OnClickListener() {
+            mMediaController.setAnchorView(findViewById(R.id.videoView3));
+            findViewById(R.id.constrainLayout).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     mMediaController.show(1500);
@@ -99,9 +107,12 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         }
 
         // display surface
-        SurfaceView mSurface = (SurfaceView) findViewById(R.id.textureView);
-        holder = mSurface.getHolder();
+        mTextureView = (TextureView) findViewById(R.id.videoplayer);
+        mTextureView.setRotation(90);
+        mTextureView.setSurfaceTextureListener(this);
+    }
 
+    private void startPlayVideo(){
         ArrayList<String> options = new ArrayList<String>();
         options.add("--aout=opensles");
         options.add("--audio-time-stretch"); // time stretching
@@ -110,12 +121,12 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         options.add("--avcodec-codec=h264");
         options.add("--file-logging");
         options.add("--logfile=vlc-log.txt");
+        options.add("--video-filter=rotate {angle=90}");
         //options.add("--video-filter=rotate {angle=270}");
 
         bufferSpinner = findViewById(R.id.bufferSpinner);
 
         libvlc = new LibVLC(getApplicationContext(), options);
-        holder.setKeepScreenOn(true);
 
         // Create media player
         mMediaPlayer = new MediaPlayer(libvlc);
@@ -123,14 +134,12 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
 
         // Set up video output
         final IVLCVout vout = mMediaPlayer.getVLCVout();
-        vout.setVideoView(mSurface);
+        vout.setVideoView(mTextureView);
 
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int mHeight = displayMetrics.heightPixels + 70;
-        int mWidth = displayMetrics.widthPixels;
+        int mHeight = mTextureView.getHeight();
+        int mWidth = mTextureView.getWidth();
 
-        vout.setWindowSize(mWidth,mHeight);
+        vout.setWindowSize(mWidth, mHeight);
         vout.addCallback(this);
         vout.attachViews();
 
@@ -140,7 +149,6 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
 
         mMediaPlayer.setMedia(m);
         mMediaPlayer.play();
-
     }
 
     @Override
@@ -160,6 +168,27 @@ public class ViewStreamActivity extends AppCompatActivity implements IVLCVout.Ca
         super.onDestroy();
         releasePlayer();
     }
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        startPlayVideo();
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+
+    }
+
 
     @Override
     public void onSurfacesCreated(IVLCVout vlcVout) {
