@@ -54,7 +54,6 @@ public class SaveStream implements MediaPlayer.EventListener {
                 options.add("--aout=opensles");
                 options.add("--audio-time-stretch"); // time stretching
                 options.add("-vvv"); // verbosity
-                options.add("--aout=opensles");
                 options.add("--avcodec-codec=h264");
                 options.add("--file-logging");
                 options.add("--logfile=vlc-log.txt");
@@ -67,9 +66,10 @@ public class SaveStream implements MediaPlayer.EventListener {
 
                 Media m = new Media(libvlc, Uri.parse(rtspUrl));
 
-                m.addOption(":sout=#transcode{vcodec=h264,acodec=mp4v,ab=128}");
-                m.addOption(":sout=#file{dst=" + file.getPath() + "}");
-                m.addOption(":sout-keep");
+                m.addOption(":sout=#std{access=file,mux=ts,dst=" + file.getPath() + "}");
+                //m.addOption(":sout=#transcode{vcodec=h264,acodec=mp4v,ab=128}");
+                //m.addOption(":sout=#file{dst=" + file.getPath() + "}");
+                //m.addOption(":sout-keep");
 
                 mMediaPlayer.setMedia(m);
                 mMediaPlayer.play();
