@@ -19,7 +19,7 @@
     <string name="witness">Witness</string>
 	<string name="humanitarian">Humanitarian</string>
 	<string name="description_mode">Select the app use scenario</string>
-	<string name="witness_desc">To broadcast videos privately in oppressive regimes</string>
+	<string name="witness_desc">To broadcast videos privately</string>
     <string name="humanitarian_desc">To alert of risk situations when there is no internet connection. <b><i>Metadata like location may be shared</i></b></string>
 	<string name="todo">TODO</string>
 	<string name="mode_witness">w</string>
