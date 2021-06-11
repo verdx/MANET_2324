@@ -71,8 +71,6 @@ public abstract class AbstractWorker implements Runnable {
         onWorkerRelease();
     }
 
-    protected void onWorkerRelease(){}
-
     public void addData(AbstractSelector selectorThread, SelectableChannel socket, byte[] data, int count) {
         byte[] dataCopy = new byte[count];
         System.arraycopy(data, 0, dataCopy, 0, count);
@@ -82,5 +80,6 @@ public abstract class AbstractWorker implements Runnable {
         }
     }
 
-    protected void parsePackets(DataReceived dataReceived) {}  //los worker RTSPServerWorker y EchoWorker la implementan para tratar los bytes recibidos.
+    protected abstract void onWorkerRelease();
+    protected abstract void parsePackets(DataReceived dataReceived);  //los worker RTSPServerWorker y EchoWorker la implementan para tratar los bytes recibidos.
 }

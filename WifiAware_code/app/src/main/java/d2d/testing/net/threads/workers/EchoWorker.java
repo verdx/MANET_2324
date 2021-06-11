@@ -12,10 +12,11 @@ public class EchoWorker extends AbstractWorker {
         super(selector);
     }
 
+    @Override
+    protected void onWorkerRelease() {}
 
     @Override
     protected void parsePackets(DataReceived dataReceived) {
-        //hacemos echo
         dataReceived.getSelector().send(dataReceived.getData());
     }
 
