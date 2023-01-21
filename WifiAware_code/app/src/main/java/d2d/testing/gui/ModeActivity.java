@@ -47,7 +47,6 @@ public class ModeActivity extends AppCompatActivity {
             finish(); return;
         }
 
-
         askPermits();
         setContentView(R.layout.activity_mode);
         checkWifiAwareAvailability();
@@ -63,30 +62,38 @@ public class ModeActivity extends AppCompatActivity {
         Animation left = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.animate_slide_left);
 
         witness = findViewById(R.id.witnessButton);
+        /*
         witness.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openMainActivity(getString(R.string.mode_witness));
+
             }
         });
-
+        */
         textWitness = findViewById(R.id.textWitness);
-
         witness.startAnimation(right);
         textWitness.startAnimation(right);
 
         humanitarian = findViewById(R.id.humanitarianButton);
+        /*
         humanitarian.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openMainActivity(getString(R.string.mode_humanitarian));
             }
         });
-
+        */
         textHumanitarian = findViewById(R.id.textHumanitarian);
-
         humanitarian.startAnimation(left);
         textHumanitarian.startAnimation(left);
+    }
+
+    public void witnessMode(View v){
+        openMainActivity(getString(R.string.mode_witness));
+    }
+
+    public void humanitarianMode(View v){
+        openMainActivity(getString(R.string.mode_humanitarian));
     }
 
     /*

@@ -292,6 +292,7 @@ public class RtspClient implements StreamingRecordObserver {
 				mNetworkCallback = new WifiAwareNetworkCallback();
 				mTotalNetworkRequests = 0;
 				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
+				//Si no obtienes el network antes del timeout, se produce el código de error 0x2
 				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 				Log.e(TAG, "connectionCreated Called ");
 			}
@@ -356,6 +357,10 @@ public class RtspClient implements StreamingRecordObserver {
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
+				//mConnManager.bindProcessToNetwork(mCurrentNet) Sirve que los siguientes sockets creados
+				// se vinculen a la red actual y no la de por defecto
+
+				//WFA pasa peerhandle al cliente. Hay que usarlo para obtener mCurrentNet
 				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
 					WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) mCurrentNetCapabitities.getTransportInfo();
 					InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();

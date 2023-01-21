@@ -6,7 +6,6 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.SelectableChannel;
@@ -24,7 +23,6 @@ import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.rtsp.RtspRequest;
 import d2d.testing.streaming.rtsp.RtspResponse;
 import d2d.testing.streaming.rtsp.UriParser;
@@ -53,7 +51,7 @@ import d2d.testing.utils.Logger;
  *      -Primero el cliente envia un mensaje DESCRIBE, en el que en funcion de la uri que envie, el servidor contesta con informacion del streaming asociado
  *      -Luego el cliente envia un mensaje SETUP por cada canal en el que este interesado (Audio y video) y especifica como va a ser la transmision.
  *      -Por ultimo el cliente envia un mensaje PLAY, indicando al servidor que empiece a enviar.
- * El mensaje TEARDOWN se envia desde cualquiera de los extremos para finalizaz el streaming.
+ * El mensaje TEARDOWN se envia desde cualquiera de los extremos para finalizar el streaming.
  * El mensaje PAUSE deberia parar el envio de datos.
  *
  * En la clase RTSPServer de libstreaming solo esta implementada la modalidad 2, y solo siendo posible la transmision desde la camara del servidor.

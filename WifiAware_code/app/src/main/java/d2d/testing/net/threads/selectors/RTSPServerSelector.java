@@ -52,13 +52,16 @@ public class RTSPServerSelector extends AbstractSelector {
             return true;
         }
 
+        //https://developer.android.com/guide/topics/connectivity/wifi-aware#create_a_connection
         ServerSocketChannel serverSocketChannel = null;
         int mServerPort;
         try {
+            //TODO: PREGUNTA!
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(new InetSocketAddress(0));
             mServerPort = serverSocketChannel.socket().getLocalPort();
+            //----------
             NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(discoverySession, handle)  //Objeto de especificador de red utilizado para solicitar una red compatible con Wi-Fi. Las aplicaciones deben usar el WifiAwareNetworkSpecifier.Builderclass para crear una instancia.
                     .setPskPassphrase("wifiawaretest")
                     .setPort(mServerPort)
@@ -67,12 +70,14 @@ public class RTSPServerSelector extends AbstractSelector {
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                     .setNetworkSpecifier(networkSpecifier)
                     .build();
+            //TODO: PREGUNTA!
             this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
             Connection conn = new Connection(serverSocketChannel, handle, new WifiAwareNetworkCallback(this, handle, mConManager));
             mConnectionsMap.put(handle, conn);
             mServerChannelsMap.put(serverSocketChannel, conn);
             //mNetRequestMan.requestNetwork(networkRequest, conn.mNetCallback);
             mConManager.requestNetwork(networkRequest, conn.mNetCallback);
+            //----------
         } catch (IOException e) {
             return false;
         }
