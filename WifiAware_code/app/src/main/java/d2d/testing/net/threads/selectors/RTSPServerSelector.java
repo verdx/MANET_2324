@@ -64,46 +64,9 @@ public class RTSPServerSelector<T> extends AbstractSelector {
         return mEnabled;
     }
 
-<<<<<<< Updated upstream
-        //https://developer.android.com/guide/topics/connectivity/wifi-aware#create_a_connection
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-        ServerSocketChannel serverSocketChannel = null;
-        int mServerPort;
-        try {
-            //TODO: PREGUNTA!
-            serverSocketChannel = ServerSocketChannel.open();
-            serverSocketChannel.configureBlocking(false);
-            serverSocketChannel.socket().bind(new InetSocketAddress(0));
-            mServerPort = serverSocketChannel.socket().getLocalPort();
-            //----------
-            NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(discoverySession, handle)  //Objeto de especificador de red utilizado para solicitar una red compatible con Wi-Fi. Las aplicaciones deben usar el WifiAwareNetworkSpecifier.Builderclass para crear una instancia.
-                    .setPskPassphrase("wifiawaretest")
-                    .setPort(mServerPort)
-                    .build();
-            NetworkRequest networkRequest = new NetworkRequest.Builder()
-                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-                    .setNetworkSpecifier(networkSpecifier)
-                    .build();
-            //TODO: PREGUNTA!
-            this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
-            Connection conn = new Connection(serverSocketChannel, handle, new WifiAwareNetworkCallback(this, handle, mConManager));
-            mConnectionsMap.put(handle, conn);
-            mServerChannelsMap.put(serverSocketChannel, conn);
-            //mNetRequestMan.requestNetwork(networkRequest, conn.mNetCallback);
-            mConManager.requestNetwork(networkRequest, conn.mNetCallback);
-            //----------
-        } catch (IOException e) {
-            return false;
-        }
-        return true;
-=======
-
     public synchronized void addNewConnection(T handle, ServerSocketChannel serverSocketChannel, Connection conn){
         mConnectionsMap.put(handle, conn);
         mServerChannelsMap.put(serverSocketChannel, conn);
->>>>>>> Stashed changes
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){

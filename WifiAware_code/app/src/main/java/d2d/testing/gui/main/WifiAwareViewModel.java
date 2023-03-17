@@ -7,19 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
-import android.net.NetworkSpecifier;
-import android.net.wifi.aware.AttachCallback;
-import android.net.wifi.aware.DiscoverySessionCallback;
-import android.net.wifi.aware.PeerHandle;
-import android.net.wifi.aware.PublishConfig;
-import android.net.wifi.aware.PublishDiscoverySession;
-import android.net.wifi.aware.SubscribeConfig;
-import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
-import android.net.wifi.aware.WifiAwareNetworkSpecifier;
-import android.net.wifi.aware.WifiAwareSession;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -28,26 +16,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.inject.Provider;
-
-import java.io.IOException;
-import java.nio.channels.SelectionKey;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-import d2d.testing.gui.MainActivity;
-=======
-import d2d.testing.net.threads.selectors.ChangeRequest;
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
-import d2d.testing.streaming.rtsp.RtspClient;
 
 public class WifiAwareViewModel extends AndroidViewModel{
 
@@ -56,8 +25,6 @@ public class WifiAwareViewModel extends AndroidViewModel{
     private final WifiAwareManager mWifiAwareManager;
     private final MutableLiveData<Boolean> mIsWifiAwareAvailable;
     private final HandlerThread worker;
-    private Handler workerHandle;
-    private RTSPServerSelector mServer;
 
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
@@ -72,19 +39,6 @@ public class WifiAwareViewModel extends AndroidViewModel{
         //Thread para ejecutar los callbacks
         worker = new HandlerThread("WifiAware Worker");
         worker.start();
-<<<<<<< Updated upstream
-        //Manejador de thread: Interactuar con thread
-        // getLooper(): Looper es un thread especial que tiene un buble interno que escucha eventos de otros
-        // threads. Da acceso al Handler al looper para manejarlo
-        workerHandle = new Handler(worker.getLooper());
-        //workerhandle tiene un bucle y esta esperando a ejecutar
-=======
-<<<<<<< Updated upstream
-        workerHandle = new Handler(worker.getLooper());
-=======
-        //workerHandle = new Handler(worker.getLooper());
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
         mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -153,229 +107,17 @@ public class WifiAwareViewModel extends AndroidViewModel{
 
 
     public boolean createSession() throws InterruptedException {
-<<<<<<< Updated upstream
-        if(mWifiAwareManager == null) return false;
-        if(mWifiAwareSession != null) return true;
-        synchronized (this){
-            //En función de cómo termina el thread de worker, hace callback de onAttached o onAttachFailed
-            mWifiAwareManager.attach(new AttachCallback(){
-                @Override
-                public void onAttached(WifiAwareSession session) {
-                    synchronized (WifiAwareViewModel.this){
-                        WifiAwareViewModel.this.mWifiAwareSession = session;
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-
-                @Override
-                public void onAttachFailed() {
-                    synchronized (WifiAwareViewModel.this){
-                        mWifiAwareSession = null;
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-            }, workerHandle);
-            //Espera notify del workerthread --> workerHandle
-            this.wait();
-            return mWifiAwareSession != null;
-        }
-=======
         return mWifiAwareNetwork.createSession();
->>>>>>> Stashed changes
     }
 
     //https://developer.android.com/guide/topics/connectivity/wifi-aware#publish_a_service
     public boolean publishService(String serviceName) throws InterruptedException {
-<<<<<<< Updated upstream
-        if(mWifiAwareSession == null) return false;
-        //Síncrona para creación de servicio
-        synchronized (WifiAwareViewModel.this){
-            PublishConfig config = new PublishConfig.Builder().setServiceName(serviceName).build();
-            //Thread que llama publishservice espera a thread de WFA le avise del resultado de la
-            // llamada a publishservice
-            mWifiAwareSession.publish(config, new DiscoverySessionCallback(){
-
-                //TODO: Pregunta!
-                private int mLastMessageID = 0;
-                private boolean mCreatingConnection = false;
-                private final Queue<PeerHandle> mPendingConnections = new LinkedList<>();
-                //------------------
-
-                @Override
-                public void onPublishStarted(@NonNull PublishDiscoverySession session) {
-                    synchronized (WifiAwareViewModel.this){
-                        mPublishSession = session;
-                        try {
-                            mServer = new RTSPServerSelector(mConManager);
-                            mServer.start();
-                            //Server socket para escuchar peticiones
-                            if(!mServer.addNewConnection("127.0.0.1", 1234)){
-                                throw new IOException();
-                            }
-                        } catch (IOException e) {
-                            session.close();
-                            mPublishSession = null;
-                        }
-                        //
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-
-                @Override
-                public void onSessionConfigFailed() {
-                    synchronized (WifiAwareViewModel.this){
-                        mPublishSession = null;
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-
-                @Override
-                public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    if(mCreatingConnection){
-                        mPendingConnections.add(peerHandle);
-                    }
-                    else{
-                        startConnection(peerHandle);
-                    }
-                }
-
-                @Override
-                public void onMessageSendSucceeded(int messageId) {
-                    processNextConnection();
-                }
-
-                @Override
-                public void onMessageSendFailed(int messageId) {
-                    processNextConnection();
-                }
-
-                private void startConnection(PeerHandle peerHandle){
-                    //Para el server, puede establecer conexión con el primer PeerHandle que recibe en
-                    // onMessageReceived, mientras que el subscriber usa el segundo, el PeerHandle que
-                    // recibe en el mensaje devuelto por server
-                    if(mServer.addNewConnection(mPublishSession, peerHandle)){
-                        int messageId = mLastMessageID++;
-                        mPublishSession.sendMessage(peerHandle, messageId, ("connect").getBytes());
-                        mCreatingConnection = true;
-                    }
-                }
-
-                private void processNextConnection(){
-                    try {
-                        Thread.sleep(DELAY_BETWEEN_CONNECTIONS);
-                    } catch (InterruptedException ignored) {}
-                    if(mPendingConnections.isEmpty()){
-                        mCreatingConnection = false;
-                    }
-                    else{
-                        PeerHandle nextPeerHandle = mPendingConnections.remove();
-                        startConnection(nextPeerHandle);
-                    }
-                }
-
-
-            }, workerHandle);
-
-            // Libera mutex y espera a que se cumpla una condición interna del monitor, lo cual se
-            // consigue mediante la llamada WifiAwareViewModel.this.notify();
-
-            //Java mete un mutex interno a cada Clase, manejado por un "MONITOR" (objeto con mutex)
-            //Cada objeto tiene un MONITOR, que se encarga de bloquearlo/desbloquearlo
-
-            /*
-                pthread_cond_t  myConVar = PTHREAD_COND_INITIALIZER;
-                pthread_cond_wait(&myConVar , &mymutex);
-                pthread_cond_signal(&myConVar);
-             */
-            this.wait();
-            return mPublishSession != null;
-        }
-=======
         return mWifiAwareNetwork.publishService(serviceName);
->>>>>>> Stashed changes
     }
 
     //https://developer.android.com/guide/topics/connectivity/wifi-aware#subscribe_to_a_service
     public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
-<<<<<<< Updated upstream
-        if(mWifiAwareSession == null) return false;
-        //TODO: PREGUNTA SYNCHRONIZED?
-        synchronized (WifiAwareViewModel.this){
-            SubscribeConfig config = new SubscribeConfig.Builder().setServiceName(serviceName).build();
-            mWifiAwareSession.subscribe(config, new DiscoverySessionCallback(){
-
-                private int mLastMessageID = 0;
-                private boolean mCreatingConnection = false;
-                private final Queue<PeerHandle> mPendingConnections = new LinkedList<>();
-
-                @Override
-                public void onSubscribeStarted(@NonNull SubscribeDiscoverySession session) {
-                    synchronized (WifiAwareViewModel.this){
-                        mSubscribeSession = session;
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-
-                @Override
-                public void onSessionConfigFailed() {
-                    synchronized (WifiAwareViewModel.this){
-                        mSubscribeSession = null;
-                        WifiAwareViewModel.this.notify();
-                    }
-                }
-
-                @Override
-                public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
-                    if(mCreatingConnection){
-                        mPendingConnections.add(peerHandle);
-                    }
-                    else{
-                        startConnection(peerHandle);
-                    }
-                }
-
-                @Override
-                public void onMessageSendFailed(int messageId) {
-                    processNextConnection();
-                }
-
-                @Override
-                public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    RtspClient rtspClient = new RtspClient();
-                    rtspClient.setCallback(activity); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
-                    mClients.put(peerHandle, rtspClient);
-                    rtspClient.connectionCreated(mConManager, mSubscribeSession, peerHandle);
-
-                    processNextConnection();
-                }
-
-                private void startConnection(PeerHandle peerHandle){
-                    mCreatingConnection = true;
-                    int nextMessageId = mLastMessageID++;
-                    mSubscribeSession.sendMessage(peerHandle, nextMessageId, ("connect").getBytes());
-                }
-
-                private void processNextConnection(){
-                    try {
-                        Thread.sleep(DELAY_BETWEEN_CONNECTIONS);
-                    } catch (InterruptedException ignored) {}
-                    if(mPendingConnections.isEmpty()){
-                        mCreatingConnection = false;
-                    }
-                    else{
-                        PeerHandle nextMessagePeerHandle = mPendingConnections.remove();
-                        startConnection(nextMessagePeerHandle);
-                    }
-                }
-
-            }, workerHandle);
-
-            this.wait();
-            return mSubscribeSession != null;
-        }
-=======
         return mWifiAwareNetwork.subscribeToService(serviceName, activity);
->>>>>>> Stashed changes
     }
 
     //Puede llamarlo el main thread al cambiar la disponibilidad de wifiaware u otro thread
