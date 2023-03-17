@@ -53,6 +53,7 @@ public class WifiAwareNetwork implements INetwork {
     private RTSPServerSelector mServer;
     private final Map<PeerHandle, RtspClient> mClients;
     private static ConnectivityManager mConManager;
+    private RTSPServerWFAController mServerController;
 
     @Inject
     public WifiAwareNetwork(ConnectivityManager conManager, WifiAwareManager wifiAwareManager){
@@ -61,6 +62,7 @@ public class WifiAwareNetwork implements INetwork {
         mPublishSession = null;
         mSubscribeSession = null;
         mServer = null;
+        mServerController = null;
 
         this.mWifiAwareManager = wifiAwareManager;
         this.mClients = new HashMap<>();
@@ -120,10 +122,12 @@ public class WifiAwareNetwork implements INetwork {
                         mPublishSession = session;
                         try {
                             //------------------------------------v------------------------------------------
-                            mServer = new RTSPServerSelector<PeerHandle>(mConManager);
-                            mServer.start();
+                            mServerController = new RTSPServerWFAController(mConManager);
+                            mServerController.startServer();
+
+
                             //Pone al server RTSP a escuchar en localhost:1234 para peticiones de descarga de libVLC
-                            if(!mServer.addNewConnection("127.0.0.1", 1234)){
+                            if(!mServerController.addNewConnection("127.0.0.1", 1234)){
                                 throw new IOException();
                             }
                         } catch (IOException e) {
@@ -309,20 +313,20 @@ public class WifiAwareNetwork implements INetwork {
             client.release();
         }
         mClients.clear();
-        if(mServer != null){
-            mServer.stop();
-            mServer = null;
+        if(mServerController!=null && mServerController.getServer() != null){
+            mServerController.stopServer();
+            mServerController = null;
         }
     }
 
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
 
-        if(!mServer.getEnabled().get()) return false;
-        if(mServer.getmConnectionsMap().get(handle) != null){
+        if(!mServerController.isServerEnabled()) return false;
+        if(mServerController.has(handle)){
             return true;
         }
 
-        RTSPServerSelector.Connection conn = null;
+        RTSPServerWFAController.Connection conn = null;
         try {
             //Crea un ServerSocketChannel específico para gestionar comunicación entre A y B
             //Una red aislada entre A y B
@@ -341,17 +345,17 @@ public class WifiAwareNetwork implements INetwork {
                     .setNetworkSpecifier(networkSpecifier)
                     .build();
 
-            mServer.addChangeRequest(new ChangeRequest(serverSocketChannel,
+            mServerController.addChangeRequest(new ChangeRequest(serverSocketChannel,
                     ChangeRequest.REGISTER,
                     SelectionKey.OP_ACCEPT));
 
-            conn = new RTSPServerSelector.Connection<PeerHandle>(serverSocketChannel,
+            conn = new RTSPServerWFAController.Connection(serverSocketChannel,
                     handle,
-                    new WifiAwareNetworkCallback(mServer, handle, mConManager));
+                    new WifiAwareNetworkCallback(mServerController, handle, mConManager));
 
             mConManager.requestNetwork(networkRequest, conn.mNetCallback);
 
-            mServer.addNewConnection(handle,serverSocketChannel,conn);
+            mServerController.addNewConnection(handle,serverSocketChannel,conn);
 
         } catch (IOException e) {
             return false;
@@ -360,32 +364,32 @@ public class WifiAwareNetwork implements INetwork {
     }
 
 
-
     private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
         private final PeerHandle mConnectionHandle;
-        private final RTSPServerSelector mServer;
+
+        private final RTSPServerWFAController mController;
         private final ConnectivityManager mConManager;
 
-        public WifiAwareNetworkCallback(RTSPServerSelector server, PeerHandle connectionHandle, ConnectivityManager conManager){
+        public WifiAwareNetworkCallback(RTSPServerWFAController server, PeerHandle connectionHandle, ConnectivityManager conManager){
             this.mConnectionHandle = connectionHandle;
-            this.mServer = server;
+            this.mController = server;
             mConManager = conManager;
         }
 
         @Override
         public void onAvailable(@NonNull Network network) {
-            mServer.addNetToConnection(network, mConnectionHandle);
+            mController.addNetToConnection(network, mConnectionHandle);
         }
 
         @Override
         public void onUnavailable() {
-            mServer.removeConnection(mConnectionHandle);
+            mController.removeConnection(mConnectionHandle);
         }
 
         @Override
         public void onLost(@NonNull Network network) {
-            mServer.removeConnection(mConnectionHandle);
+            mController.removeConnection(mConnectionHandle);
         }
     }
 
