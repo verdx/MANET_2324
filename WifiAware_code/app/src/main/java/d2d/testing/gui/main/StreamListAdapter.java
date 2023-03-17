@@ -31,7 +31,6 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private static final int VIEW_TYPE_PLACEHOLDER = 1;
     private Context mContext;
     private ArrayList<StreamDetail> mStreams;
-    private StreamDetail sd;
     private MainFragment fragment;
 
     public StreamListAdapter(Context context , ArrayList<StreamDetail> objects, MainFragment fragment) {
@@ -62,10 +61,9 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         if(holder instanceof  RealViewHolder){
-            sd = mStreams.get(position);
+            StreamDetail sd = mStreams.get(position);
 
             RealViewHolder realHolder = (RealViewHolder) holder;
-
 
             String[] desc = sd.getName().split("__");
             String name;
@@ -80,7 +78,6 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             }
 
             author = desc[1].replace("_", " ");
-
 
             realHolder.stream_name.setTransformationMethod(new WordBreakTransformationMethod());
             realHolder.stream_name.setText(name);
@@ -100,6 +97,7 @@ public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                         Toast.makeText(mContext, "Finaliza la descarga del stream seleccionado...", Toast.LENGTH_SHORT).show();
                     }
                 }
+
             });
 
             realHolder.stream_download.setBackgroundResource(sd.isDownload()?
