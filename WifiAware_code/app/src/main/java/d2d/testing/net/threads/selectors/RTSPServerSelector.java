@@ -11,6 +11,11 @@ import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 
 import androidx.annotation.NonNull;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectableChannel;
@@ -21,20 +26,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import d2d.testing.gui.main.ConnectionProvider;
+import d2d.testing.gui.main.INetwork;
+import d2d.testing.gui.main.NetworkModule;
+import d2d.testing.gui.main.WifiAwareNetwork;
 import d2d.testing.net.threads.workers.RTSPServerWorker;
 
 /**
- * Implementacion del AbstractSelector. Se encarga de crear un ServerSocketChannel y asociarlo al Selector para recibir eventos de tipo Accept (initiateInstance).
- * Cuando los clientes intenten conectar con el ServerSocketChannel se creara, en la funcion accept() de AbstractSelector, un SocketChannel con el cliente
- * y se añadira al Selector para recibir eventos de tipo Read.
- * Cuando se comuniquen por el canal se guardaran los datos en mReadBuffer y se pasaran al thread del RTSPServerWorker, que es creado por esta clase.
+ * Implementacion del AbstractSelector. Se encarga de crear un ServerSocketChannel y asociarlo al
+ * Selector para recibir eventos de tipo Accept (initiateInstance).
+ * Cuando los clientes intenten conectar con el ServerSocketChannel se creara, en la funcion accept()
+ * de AbstractSelector, un SocketChannel con el cliente y se añadira al Selector para recibir eventos de tipo Read.
+ * Cuando se comuniquen por el canal se guardaran los datos en mReadBuffer y se pasaran al thread
+ * del RTSPServerWorker, que es creado por esta clase.
  */
-public class RTSPServerSelector extends AbstractSelector {
+public class RTSPServerSelector<T> extends AbstractSelector {
 
-    private final Map<PeerHandle, Connection> mConnectionsMap;
+    private final Map<T, Connection> mConnectionsMap;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
-
 
     public RTSPServerSelector(ConnectivityManager connManager) throws IOException {
         super(connManager);
@@ -45,14 +56,19 @@ public class RTSPServerSelector extends AbstractSelector {
         mWorker.start();
     }
 
+    public Map<T, Connection> getmConnectionsMap() {
+        return mConnectionsMap;
+    }
 
-    public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
-        if(!mEnabled.get()) return false;
-        if(mConnectionsMap.get(handle) != null){
-            return true;
-        }
+    public AtomicBoolean getEnabled() {
+        return mEnabled;
+    }
 
+<<<<<<< Updated upstream
         //https://developer.android.com/guide/topics/connectivity/wifi-aware#create_a_connection
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
         ServerSocketChannel serverSocketChannel = null;
         int mServerPort;
         try {
@@ -82,6 +98,12 @@ public class RTSPServerSelector extends AbstractSelector {
             return false;
         }
         return true;
+=======
+
+    public synchronized void addNewConnection(T handle, ServerSocketChannel serverSocketChannel, Connection conn){
+        mConnectionsMap.put(handle, conn);
+        mServerChannelsMap.put(serverSocketChannel, conn);
+>>>>>>> Stashed changes
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){
@@ -99,7 +121,7 @@ public class RTSPServerSelector extends AbstractSelector {
         return true;
     }
 
-    public synchronized void removeConnection(PeerHandle handle) {
+    public synchronized void removeConnection(T handle) {
         Connection conn =  mConnectionsMap.get(handle);
         ServerSocketChannel serverChan = null;
         if(conn == null){
@@ -133,7 +155,7 @@ public class RTSPServerSelector extends AbstractSelector {
         }
     }
 
-    private synchronized void addNetToConnection(Network net, PeerHandle conHandle){
+    public synchronized void addNetToConnection(Network net, T conHandle){
         Connection conn = mConnectionsMap.get(conHandle);
         if(conn != null){
             conn.net = net;
@@ -172,7 +194,7 @@ public class RTSPServerSelector extends AbstractSelector {
             if(entry.getKey().equals(chan)){
                 return entry.getValue().net;
             }
-            for(SocketChannel sockChan : entry.getValue().mComChannels){
+            for(Object sockChan : entry.getValue().mComChannels){
                 if(sockChan.equals(chan)){
                     return entry.getValue().net;
                 }
@@ -181,16 +203,16 @@ public class RTSPServerSelector extends AbstractSelector {
         return null;
     }
 
-    private static class Connection{
+    public static class Connection<T>{
 
-        public Connection(ServerSocketChannel serverChan, PeerHandle handle, ConnectivityManager.NetworkCallback netCallback){
+        public Connection(ServerSocketChannel serverChan, T handle, ConnectivityManager.NetworkCallback netCallback){
             mServerSocketChannel = serverChan;
             mNetCallback = netCallback;
             this.handle = handle;
             mComChannels = new ArrayList<>();
         }
         public ServerSocketChannel mServerSocketChannel;
-        public PeerHandle handle;
+        public T handle;
         public Network net;
         public List<SocketChannel> mComChannels;
         public ConnectivityManager.NetworkCallback mNetCallback;
@@ -208,32 +230,5 @@ public class RTSPServerSelector extends AbstractSelector {
         }
     }
 
-    private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
-
-        private final PeerHandle mConnectionHandle;
-        private final RTSPServerSelector mServer;
-        private final ConnectivityManager mConManager;
-
-        public WifiAwareNetworkCallback(RTSPServerSelector server, PeerHandle connectionHandle, ConnectivityManager conManager){
-            this.mConnectionHandle = connectionHandle;
-            this.mServer = server;
-            mConManager = conManager;
-        }
-
-        @Override
-        public void onAvailable(@NonNull Network network) {
-            mServer.addNetToConnection(network, mConnectionHandle);
-        }
-
-        @Override
-        public void onUnavailable() {
-            mServer.removeConnection(mConnectionHandle);
-        }
-
-        @Override
-        public void onLost(@NonNull Network network) {
-            mServer.removeConnection(mConnectionHandle);
-        }
-    }
 
 }
