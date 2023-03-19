@@ -53,6 +53,7 @@ import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import d2d.testing.gui.main.NetworkManager;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
@@ -164,11 +165,12 @@ public class RtspClient implements StreamingRecordObserver {
 	private ConnectivityManager mConnManager;
 	private Network mCurrentNet;
 	private NetworkCapabilities mCurrentNetCapabitities;
-	private WifiAwareNetworkCallback mNetworkCallback;
+	private NetworkCallback mNetworkCallback;
 	private NetworkRequest mNetworkRequest;
 	private int mTotalNetworkRequests;
-
 	private SessionBuilder mSessionBuilder;
+
+	private NetworkManager mNetworkManager;
 	/**
 	 * The callback interface you need to implement to know what's going on with the
 	 * RTSP server (for example your Wowza Media Server).
@@ -177,7 +179,7 @@ public class RtspClient implements StreamingRecordObserver {
 		void onRtspUpdate(int message, Exception exception);
 	}
 
-	public RtspClient() {
+	public RtspClient(NetworkManager netMana) {
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
 		//mTmpParameters.path = "/";
@@ -187,6 +189,8 @@ public class RtspClient implements StreamingRecordObserver {
 		mMainHandler = new Handler(Looper.getMainLooper());
 		mState = STATE_STOPPED;
 
+		mNetworkManager = netMana;
+
 		final Semaphore signal = new Semaphore(0);
 		new HandlerThread("d2d.testing.streaming.RtspClient"){
 			@Override
@@ -195,6 +199,19 @@ public class RtspClient implements StreamingRecordObserver {
 				signal.release();
 			}
 		}.start();
+		/*
+			https://stackoverflow.com/questions/23459807/when-to-use-java-util-concurrent-semaphores-acquire-and-acquireuninterruptibl
+			>>acquire()<< is interruptible.
+			That means if a thread A is calling acquire() on a semaphore, and thread B interrupts
+			threads A by calling interrupt(), then an InterruptedException will be thrown on thread A.
+
+			>>acquireUninterruptibly()<< is not interruptible.
+			That means if a thread A is calling acquireUninterruptibly() on a semaphore, and
+			thread B interrupts threads A by calling interrupt(), then no InterruptedException will
+			be thrown on thread A, just that thread A will have its interrupted status set after
+			acquireUninterruptibly() returns.
+
+		 */
 		signal.acquireUninterruptibly();
 
 		mRebroadcastStreamingStates = new HashMap<>();
@@ -231,9 +248,9 @@ public class RtspClient implements StreamingRecordObserver {
 	 }
 	 */
 
-	public void setSessionBuilder(SessionBuilder builder){mSessionBuilder = builder;}
-
-
+	public void setSessionBuilder(SessionBuilder builder){
+		mSessionBuilder = builder;
+	}
 
 	/**
 	 * Sets the destination address of the RTSP server.
@@ -272,24 +289,25 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 
+	//Funcion que se llama desde wifiaware viewmodel
+	/*
+		En un thread, crea solicitud de red wfa
+		Esta funcionalidad se podría desacoplar para que sea más generalizado
+	 */
+	public void connectionCreated(final ConnectivityManager manager, NetworkRequest networkRequest){
+			mHandler.post(new Runnable() {
 
-	public void connectionCreated(final ConnectivityManager manager, final DiscoverySession subscribeSession, final PeerHandle handle){
-		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
 				if(mState != STATE_STOPPED) return;
 				mCurrentNetCapabitities = null;
 				mCurrentNet = null;
 				mConnManager = manager;
-				NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-						.setPskPassphrase("wifiawaretest")
-						.build();
-				mNetworkRequest = new NetworkRequest.Builder()
-						.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-						.setNetworkSpecifier(networkSpecifier)
-						.build();
+
+				mNetworkRequest = networkRequest;
+
 				mState = STATE_STARTING;
-				mNetworkCallback = new WifiAwareNetworkCallback();
+				mNetworkCallback = new NetworkCallback();
 				mTotalNetworkRequests = 0;
 				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 				//Si no obtienes el network antes del timeout, se produce el código de error 0x2
@@ -299,9 +317,11 @@ public class RtspClient implements StreamingRecordObserver {
 		});
 	}
 
-	private class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
+	//Previous name: WifiAwareNetworkCallback
+	//New name: NetworkCallback --> Because it doesn't use WFA??¿?¿?
+	private class NetworkCallback extends ConnectivityManager.NetworkCallback{
 
-		public final static String TAG = "AwareNetworkCallback";
+		public final static String TAG = "(Aware)NetworkCallback";
 
 		@Override
 		public void onAvailable(@NonNull Network network) {
@@ -353,6 +373,10 @@ public class RtspClient implements StreamingRecordObserver {
 		}
 	}
 
+	/*
+		Obtiene red y crea socket a partir de ello
+		Desacoplable
+	 */
 	private void start(){
 		mHandler.post(new Runnable () {
 			@Override
@@ -362,16 +386,17 @@ public class RtspClient implements StreamingRecordObserver {
 
 				//WFA pasa peerhandle al cliente. Hay que usarlo para obtener mCurrentNet
 				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
-					WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) mCurrentNetCapabitities.getTransportInfo();
-					InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
-					int peerPort = peerAwareInfo.getPort();
+
+					InetAddress peerIpv6 = mNetworkManager.getInetAddress(mCurrentNetCapabitities);
+					int peerPort = mNetworkManager.getPort(mCurrentNetCapabitities);
 
 					Log.d(TAG,"Connecting to RTSP server...");
 					try {
 						mSocket = mCurrentNet.getSocketFactory().createSocket(peerIpv6, peerPort);
 						mBufferedReader = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
 						mOutputStream = new BufferedOutputStream(mSocket.getOutputStream());
-						// If the user calls some methods to configure the client, it won't modify its behavior until the stream is restarted
+						// If the user calls some methods to configure the client, it won't modify
+						// its behavior until the stream is restarted
 						mParameters = mTmpParameters.clone();
 						mParameters.host = peerIpv6.getHostAddress();
 						mParameters.port = peerPort;
@@ -611,8 +636,8 @@ public class RtspClient implements StreamingRecordObserver {
 
 			try {
 				tryConnection(st, streamUUID.toString(), session);
-				session.startTrack(0);
-				session.startTrack(1);
+				session.startTrack(0);	//0=audio
+				session.startTrack(1);	//1=video
 			}catch(SecurityException e){ //Credenciales de conexion invalidas
 				postError(ERROR_WRONG_CREDENTIALS, new Exception("Credenciales invalidas para streaming " + streamUUID.toString(), e));
 				mRebroadcastStreamingStates.remove(streamUUID);
@@ -641,6 +666,9 @@ public class RtspClient implements StreamingRecordObserver {
 		}
 	}
 
+	/*
+		LocalClient --> LocalServer
+	 */
 	private void tryLocalStreamingConnection() throws SecurityException, IOException, IllegalStateException, RuntimeException {
 		mLocalStreamingState.mCSeq = 0;
 		String path = mLocalStreamingUUID.toString();
@@ -786,8 +814,9 @@ public class RtspClient implements StreamingRecordObserver {
 	 */
 	private void sendRequestSetup(StreamingState st, String path, RebroadcastSession session, int trackNo) throws IllegalStateException, IOException {
 		if (session.serverTrackExists(trackNo)) {
-			String params = mParameters.transport==TRANSPORT_TCP ?
-					("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1)) : ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
+			String params = mParameters.transport==TRANSPORT_TCP
+					? ("TCP;interleaved="+2*trackNo+"-"+(2*trackNo+1))
+					: ("UDP;unicast;client_port="+(5000+2*trackNo)+"-"+(5000+2*trackNo+1)+";mode=receive");
 			String request = "SETUP rtsp://"+mParameters.host+":"+mParameters.port+"/"+path+"/trackID="+trackNo+" RTSP/1.0\r\n" +
 					"Transport: RTP/AVP/"+params+"\r\n" +
 					addHeaders(st);
@@ -960,6 +989,8 @@ public class RtspClient implements StreamingRecordObserver {
 		public static final Pattern rexegSession = Pattern.compile("(\\d+)",Pattern.CASE_INSENSITIVE);
 		// Parses a Transport header
 		public static final Pattern rexegTransport = Pattern.compile("client_port=(\\d+)-(\\d+).+server_port=(\\d+)-(\\d+)",Pattern.CASE_INSENSITIVE);
+
+		public static final Pattern rexegCustomMeta = Pattern.compile("my-custom-metadata=(\\S+)",Pattern.CASE_INSENSITIVE);
 
 
 		public int status;

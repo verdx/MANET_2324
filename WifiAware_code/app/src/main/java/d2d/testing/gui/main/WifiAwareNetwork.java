@@ -14,6 +14,7 @@ import android.net.wifi.aware.PublishDiscoverySession;
 import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
+import android.net.wifi.aware.WifiAwareNetworkInfo;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Handler;
@@ -23,12 +24,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Provider;
-
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
@@ -42,7 +39,7 @@ import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
 
-public class WifiAwareNetwork implements INetwork {
+public class WifiAwareNetwork extends NetworkManager/* implements INetwork */{
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;
     private WifiAwareManager mWifiAwareManager;
     private PublishDiscoverySession mPublishSession;
@@ -55,7 +52,6 @@ public class WifiAwareNetwork implements INetwork {
     private static ConnectivityManager mConManager;
     private RTSPServerWFAController mServerController;
 
-    @Inject
     public WifiAwareNetwork(ConnectivityManager conManager, WifiAwareManager wifiAwareManager){
 
         mWifiAwareSession = null;
@@ -245,10 +241,10 @@ public class WifiAwareNetwork implements INetwork {
 
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    RtspClient rtspClient = new RtspClient();
+                    RtspClient rtspClient = new RtspClient(WifiAwareNetwork.this);
                     rtspClient.setCallback(activity); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
                     mClients.put(peerHandle, rtspClient);
-                    rtspClient.connectionCreated(mConManager, mSubscribeSession, peerHandle);
+                    rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle));
 
                     processNextConnection();
                 }
@@ -319,6 +315,17 @@ public class WifiAwareNetwork implements INetwork {
         }
     }
 
+    public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle){
+        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+                .setPskPassphrase("wifiawaretest")
+                .build();
+        NetworkRequest nr = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+                .setNetworkSpecifier(ns)
+                .build();
+        return nr;
+    }
+
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
 
         if(!mServerController.isServerEnabled()) return false;
@@ -335,15 +342,8 @@ public class WifiAwareNetwork implements INetwork {
             serverSocketChannel.socket().bind(new InetSocketAddress(0));
             //The port the socket is listening
             int serverPort = serverSocketChannel.socket().getLocalPort();
-            NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(discoverySession, handle)
-                    .setPskPassphrase("wifiawaretest")
-                    .setPort(serverPort)
-                    .build();
-            //Red compatible con Wifi
-            NetworkRequest networkRequest = new NetworkRequest.Builder()
-                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-                    .setNetworkSpecifier(networkSpecifier)
-                    .build();
+
+            NetworkRequest networkRequest = createNetworkRequest(discoverySession, handle);
 
             mServerController.addChangeRequest(new ChangeRequest(serverSocketChannel,
                     ChangeRequest.REGISTER,
@@ -363,11 +363,24 @@ public class WifiAwareNetwork implements INetwork {
         return true;
     }
 
+    @Override
+    public InetAddress getInetAddress(NetworkCapabilities networkCapabilities) {
+        WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
+        InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
+        return peerIpv6;
+    }
+
+    @Override
+    public int getPort(NetworkCapabilities networkCapabilities) {
+        WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
+        int peerPort = peerAwareInfo.getPort();
+        return peerPort;
+    }
+
 
     private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
         private final PeerHandle mConnectionHandle;
-
         private final RTSPServerWFAController mController;
         private final ConnectivityManager mConManager;
 
@@ -392,6 +405,9 @@ public class WifiAwareNetwork implements INetwork {
             mController.removeConnection(mConnectionHandle);
         }
     }
+
+
+
 
 
 }
