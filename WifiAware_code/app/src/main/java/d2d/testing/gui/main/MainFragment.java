@@ -19,13 +19,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.UUID;
 
 import d2d.testing.R;
@@ -41,30 +41,24 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
 
     private  EditText myName;
-    private TextView myMode;
     private TextView myStatus;
-
-    private Button record;
     private WifiAwareViewModel mAwareModel;
-
     private TextView numStreams;
-
-    private ArrayList<StreamDetail> streamList = new ArrayList();
+    private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
-    private RecyclerView streamsListView;
-
     private Boolean isWifiAwareAvailable;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        streamList = new ArrayList<>();
         mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_main, container, false);
 
-        streamsListView = root.findViewById(R.id.streamListView);
+        RecyclerView streamsListView = root.findViewById(R.id.streamListView);
         streamsListView.setLayoutManager(new LinearLayoutManager(getContext()));
         addDefaultItemList();
         arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
@@ -75,32 +69,26 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
         StreamingRecord.getInstance().addObserver(this);
 
-        record = root.findViewById(R.id.recordButton);
-        record.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(checkCameraHardware()){
-                    if(!isWifiAwareAvailable) Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
-                    else handleCamera();
-                }
+        Button record = root.findViewById(R.id.recordButton);
+        record.setOnClickListener(v -> {
+            if(checkCameraHardware()){
+                if(!isWifiAwareAvailable) Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
+                else handleCamera();
             }
         });
 
         @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.animate_record);
         record.startAnimation(shake);
 
-        myMode = root.findViewById(R.id.my_mode);
+        TextView myMode = root.findViewById(R.id.my_mode);
         myName = root.findViewById(R.id.my_name);
         myStatus = root.findViewById(R.id.my_status);
 
-        mAwareModel.isWifiAwareAvailable().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean aBoolean) {
-                isWifiAwareAvailable = aBoolean;
-                myStatus.setText(getDeviceStatus());
-                if(isWifiAwareAvailable && !mAwareModel.sessionCreated()){
-                    initWifiAware();
-                }
+        mAwareModel.isWifiAwareAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
+            isWifiAwareAvailable = aBoolean;
+            myStatus.setText(getDeviceStatus());
+            if(isWifiAwareAvailable && !mAwareModel.sessionCreated()){
+                initWifiAware();
             }
         });
 
@@ -129,12 +117,15 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void removeDefaultItemList(){
+
         for (Iterator<StreamDetail> iterator = streamList.iterator(); iterator.hasNext(); ) {
             StreamDetail value = iterator.next();
             if (value == null) {
                 iterator.remove();
             }
         }
+
+//        streamList.removeIf(Objects::isNull);
     }
 
     @Override
@@ -148,9 +139,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         StreamingRecord.getInstance().removeObserver(this);
     }
 
-    public ArrayList<StreamDetail> getStreamList(){
-        return this.streamList;
-    }
+//    public ArrayList<StreamDetail> getStreamList(){
+//        return this.streamList;
+//    }
 
     public void updateList(boolean on_off, String uuid, String name, String ip, int port, boolean download){
         removeDefaultItemList();
@@ -171,6 +162,14 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     public void putStreamDownloading(String uuid, boolean isDownload){
+        for(StreamDetail value: streamList){
+            if (value.getUuid().equals(uuid)) {
+                value.setDownload(isDownload);
+                arrayAdapter.setStreamsData(streamList);
+                return;
+            }
+        }
+        /*
         for (Iterator<StreamDetail> iterator = streamList.iterator(); iterator.hasNext(); ) {
             StreamDetail value = iterator.next();
             if (value.getUuid().equals(uuid)) {
@@ -179,6 +178,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 return;
             }
         }
+         */
     }
 
     public void openStreamActivity(String uuid) {
