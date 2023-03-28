@@ -21,8 +21,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -39,7 +37,7 @@ import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
 
-public class WifiAwareNetwork extends NetworkManager/* implements INetwork */{
+public class WifiAwareNetwork implements INetworkManager{
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;
     private WifiAwareManager mWifiAwareManager;
     private PublishDiscoverySession mPublishSession;

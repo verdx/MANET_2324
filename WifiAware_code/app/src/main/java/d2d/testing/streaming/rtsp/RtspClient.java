@@ -22,11 +22,6 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.net.NetworkSpecifier;
-import android.net.wifi.aware.DiscoverySession;
-import android.net.wifi.aware.PeerHandle;
-import android.net.wifi.aware.WifiAwareNetworkInfo;
-import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -53,7 +48,7 @@ import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import d2d.testing.gui.main.NetworkManager;
+import d2d.testing.gui.main.INetworkManager;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
@@ -170,7 +165,7 @@ public class RtspClient implements StreamingRecordObserver {
 	private int mTotalNetworkRequests;
 	private SessionBuilder mSessionBuilder;
 
-	private NetworkManager mNetworkManager;
+	private INetworkManager mNetworkManager;
 	/**
 	 * The callback interface you need to implement to know what's going on with the
 	 * RTSP server (for example your Wowza Media Server).
@@ -179,7 +174,7 @@ public class RtspClient implements StreamingRecordObserver {
 		void onRtspUpdate(int message, Exception exception);
 	}
 
-	public RtspClient(NetworkManager netMana) {
+	public RtspClient(INetworkManager netMana) {
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
 		//mTmpParameters.path = "/";
