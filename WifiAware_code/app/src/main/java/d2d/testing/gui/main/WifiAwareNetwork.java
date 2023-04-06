@@ -324,6 +324,18 @@ public class WifiAwareNetwork implements INetworkManager{
         return nr;
     }
 
+    public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle, int serverport){
+        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+                .setPskPassphrase("wifiawaretest")
+                .setPort(serverport)
+                .build();
+        NetworkRequest nr = new NetworkRequest.Builder()
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+                .setNetworkSpecifier(ns)
+                .build();
+        return nr;
+    }
+
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
 
         if(!mServerController.isServerEnabled()) return false;
@@ -341,7 +353,7 @@ public class WifiAwareNetwork implements INetworkManager{
             //The port the socket is listening
             int serverPort = serverSocketChannel.socket().getLocalPort();
 
-            NetworkRequest networkRequest = createNetworkRequest(discoverySession, handle);
+            NetworkRequest networkRequest = createNetworkRequest(discoverySession, handle, serverPort);
 
             mServerController.addChangeRequest(new ChangeRequest(serverSocketChannel,
                     ChangeRequest.REGISTER,
