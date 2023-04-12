@@ -98,7 +98,6 @@ public class RtspServer extends Service {
 	protected boolean mEnabled = true;	
 	protected int mPort = DEFAULT_RTSP_PORT;
 	protected WeakHashMap<Session,Object> mSessions = new WeakHashMap<>(2);
-	
 	private RequestListener mListenerThread;
 	private final IBinder mBinder = new LocalBinder();
 	private boolean mRestart = false;
@@ -344,6 +343,7 @@ public class RtspServer extends Service {
 			}
 		}
 
+		@Override
 		public void run() {
 			Log.i(TAG,"RTSP server listening on port "+mServer.getLocalPort());
 			while (!Thread.interrupted()) {

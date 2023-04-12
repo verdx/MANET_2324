@@ -2,6 +2,7 @@ package d2d.testing.net.threads.selectors;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class RTSPServerSelector extends AbstractSelector {
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){
+
         if(!mEnabled.get()) return false;
         ServerSocketChannel serverSocketChannel = null;
         try {
@@ -48,29 +50,64 @@ public class RTSPServerSelector extends AbstractSelector {
             serverSocketChannel.socket().bind(new InetSocketAddress(serverIP ,serverPort));
             this.addChangeRequest(new ChangeRequest(serverSocketChannel, ChangeRequest.REGISTER, SelectionKey.OP_ACCEPT));
             mConnections.add(serverSocketChannel);
+
+            mController.addServerSocketChannel(serverSocketChannel);
+
         } catch (IOException e) {
             return false;
         }
         return true;
     }
 
-    protected void accept(@NonNull SelectionKey key) throws IOException {
 
-        synchronized (this){
-            ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
-            SocketChannel socketChannel = null;
-            try {
-                if(!mController.accept(serverChan, mSelector)){
-                    super.accept(key);
-                    return;
-                }
+    public synchronized boolean upListeningPort(){
 
-            } catch (IOException e) {
-                mController.handleAcceptException(serverChan);
-            }
+        RTSPServerController.Connection conn = null;
+        try {
+            //Crea un ServerSocketChannel para escuchar peticiones
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+
+            serverSocketChannel.socket().bind(new InetSocketAddress(8080));
+
+            this.addChangeRequest(new ChangeRequest(serverSocketChannel,
+                    ChangeRequest.REGISTER,
+                    SelectionKey.OP_ACCEPT));
+
+            conn = new RTSPServerController.Connection(serverSocketChannel);
+
+            mController.addNewConnection(serverSocketChannel,conn);
+
+        } catch (IOException e) {
+            return false;
         }
+        return true;
     }
 
+
+
+//    protected void accept(@NonNull SelectionKey key) {
+//
+//        synchronized (this){
+//            ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
+//            SocketChannel socketChannel = null;
+//            try {
+//                if(!mController.accept(serverChan, mSelector)){
+//                    super.accept(key);
+//                    return;
+//                }
+//
+//            } catch (IOException e) {
+//                mController.handleAcceptException(serverChan);
+//            }
+//        }
+//    }
+
+
+//    @Override
+//    protected void onClientConnected(SelectableChannel socketChannel) {
+//        mController.onClientConnected();
+//    }
 
     @Override
     protected void initiateConnection() { //No se crea un canal de escucha para el servidor, como en UDPServerSelector, si no que por cada subscriber se crea un canal de escucha en addNewConnection
@@ -98,7 +135,6 @@ public class RTSPServerSelector extends AbstractSelector {
     public synchronized Network getChannelNetwork(SelectableChannel chan){
         return mController.getChannelNetwork(chan);
     }
-
 
 
 

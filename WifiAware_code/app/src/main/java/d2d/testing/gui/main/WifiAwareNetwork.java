@@ -25,7 +25,9 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -36,6 +38,7 @@ import java.util.Queue;
 import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClient;
+import d2d.testing.streaming.rtsp.RtspClientWFA;
 
 public class WifiAwareNetwork implements INetworkManager{
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;
@@ -118,7 +121,6 @@ public class WifiAwareNetwork implements INetworkManager{
                             //------------------------------------v------------------------------------------
                             mServerController = new RTSPServerWFAController(mConManager);
                             mServerController.startServer();
-
 
                             //Pone al server RTSP a escuchar en localhost:1234 para peticiones de descarga de libVLC
                             if(!mServerController.addNewConnection("127.0.0.1", 1234)){
@@ -239,7 +241,9 @@ public class WifiAwareNetwork implements INetworkManager{
 
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-                    RtspClient rtspClient = new RtspClient(WifiAwareNetwork.this);
+
+                    RtspClientWFA rtspClient = new RtspClientWFA(WifiAwareNetwork.this);
+
                     rtspClient.setCallback(activity); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
                     mClients.put(peerHandle, rtspClient);
                     rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle));
@@ -388,8 +392,8 @@ public class WifiAwareNetwork implements INetworkManager{
     }
 
 
-    private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
 
+    private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
         private final PeerHandle mConnectionHandle;
         private final RTSPServerWFAController mController;
         private final ConnectivityManager mConManager;

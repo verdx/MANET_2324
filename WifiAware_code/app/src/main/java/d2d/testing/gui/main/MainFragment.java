@@ -23,9 +23,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.UUID;
 
 import d2d.testing.R;
@@ -42,17 +42,39 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     private  EditText myName;
     private TextView myStatus;
-    private WifiAwareViewModel mAwareModel;
+//    private WifiAwareViewModel mAwareModel;
     private TextView numStreams;
     private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
-    private Boolean isWifiAwareAvailable;
+
+    TextView tvIP, tvPort;
+    public static String SERVER_IP = "";
+    public static int SERVER_PORT = 8080;
+    DefaultViewModel mViewModel;
+
+
+//    private Boolean isWifiAwareAvailable;
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         streamList = new ArrayList<>();
-        mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
+
+
+
+//        mAwareModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
+        mViewModel = new ViewModelProvider(requireActivity()).get(DefaultViewModel.class);
+
+        try {
+            SERVER_IP = mViewModel.getLocalIpAddress();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
+
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -67,13 +89,22 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         numStreams = root.findViewById(R.id.streams_available);
         numStreams.setText(getString(R.string.dispositivos_encontrados, 0));
 
+
+        tvIP = root.findViewById(R.id.tvIP);
+        tvIP.setText(SERVER_IP);
+        tvPort = root.findViewById(R.id.tvPort);
+        tvPort.setText(String.valueOf(SERVER_PORT));
+
+
         StreamingRecord.getInstance().addObserver(this);
 
         Button record = root.findViewById(R.id.recordButton);
         record.setOnClickListener(v -> {
             if(checkCameraHardware()){
-                if(!isWifiAwareAvailable) Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
-                else handleCamera();
+//                if(!isWifiAwareAvailable)
+//                    Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
+//                else
+                    handleCamera();
             }
         });
 
@@ -84,6 +115,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         myName = root.findViewById(R.id.my_name);
         myStatus = root.findViewById(R.id.my_status);
 
+        /*
         mAwareModel.isWifiAwareAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
             isWifiAwareAvailable = aBoolean;
             myStatus.setText(getDeviceStatus());
@@ -91,6 +123,8 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 initWifiAware();
             }
         });
+        */
+        initDefaultNetwork();
 
         String mode = "";
 
@@ -186,26 +220,43 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void initWifiAware(){
-        try {
-            if(mAwareModel.createSession()){
-                if(mAwareModel.publishService("Server")){
-                    //Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
-                }
-                if(mAwareModel.subscribeToService("Server", this)){
-                    //Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
-                }
-            }else {
-                //Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+
+//        try {
+//            if(mAwareModel.createSession()){
+//                if(mAwareModel.publishService("Server")){
+//                    //Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
+//                }else{
+//                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
+//                }
+//
+//                if(mAwareModel.subscribeToService("Server", this)){
+//                    //Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+//                }else{
+//                    //Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
+//                }
+//            }else {
+//                //Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
+//            }
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    private void initDefaultNetwork(){
+        if(mViewModel.startServer()){
+            Toast.makeText(this.getContext(), "Server Started", Toast.LENGTH_SHORT).show();
+
+        }else {
+            Toast.makeText(this.getContext(), "ServerStart Error", Toast.LENGTH_LONG).show();
         }
+
+        if(mViewModel.startClient()){
+            Toast.makeText(this.getContext(), "Client Started", Toast.LENGTH_SHORT).show();
+
+        }else {
+            Toast.makeText(this.getContext(), "ClientStart Error", Toast.LENGTH_LONG).show();
+        }
+
     }
 
     private void handleCamera(){
@@ -214,14 +265,16 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @SuppressLint("ResourceType")
     public String getDeviceStatus() {
-        if (isWifiAwareAvailable) {
-            myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
-            return "Wifi Aware available";
-        }
-        else {
-            myStatus.setTextColor(Color.parseColor(getString(R.color.colorRed)));
-            return "Wifi Aware unavailable";
-        }
+//        if (/*isWifiAwareAvailable) {
+//            myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
+//            return "Wifi Aware available";
+//        }
+//        else {
+//            myStatus.setTextColor(Color.parseColor(getString(R.color.colorRed)));
+//            return "Wifi Aware unavailable";
+//        }
+        myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
+        return "Wifi Aware available";
     }
 
     private boolean checkCameraHardware() {

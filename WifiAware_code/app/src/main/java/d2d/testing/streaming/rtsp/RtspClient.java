@@ -36,8 +36,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -98,20 +101,49 @@ public class RtspClient implements StreamingRecordObserver {
 	 */
 	public final static int MESSAGE_CONNECTION_RECOVERED = 0x05;
 
-	private final static int STATE_STARTED = 0x00;
-	private final static int STATE_STARTING = 0x01;
-	private final static int STATE_STOPPING = 0x02;
-	private final static int STATE_STOPPED = 0x03;
-	private int mState = 0;
+	protected final static int STATE_STARTED = 0x00;
+	protected final static int STATE_STARTING = 0x01;
+	protected final static int STATE_STOPPING = 0x02;
+	protected final static int STATE_STOPPED = 0x03;
+	protected int mState = 0;
 
-	private final static int MAX_NETWORK_REQUESTS = 100;
+	protected final static int MAX_NETWORK_REQUESTS = 100;
 
-	private class Parameters {
+	protected UUID mLocalStreamingUUID = null;
+	String mLocalStreamingName = null;
+	protected Session mLocalStreamingSession;
+	protected Map<UUID, RebroadcastSession> mRebroadcastStreamings;
+
+	protected Socket mSocket;
+	protected BufferedReader mBufferedReader;
+	protected OutputStream mOutputStream;
+	protected Callback mCallback;
+	protected final Handler mMainHandler;
+	protected Handler mHandler;
+
+	protected ConnectivityManager mConnManager;
+
+
+	protected int mTotalNetworkRequests;
+	protected SessionBuilder mSessionBuilder;
+	protected INetworkManager mNetworkManager;
+	protected Parameters mTmpParameters;
+	protected Parameters mParameters;
+	protected StreamingState mLocalStreamingState;
+	protected Map<UUID, StreamingState> mRebroadcastStreamingStates;
+	/**
+	 * The callback interface you need to implement to know what's going on with the
+	 * RTSP server (for example your Wowza Media Server).
+	 */
+
+	protected class Parameters {
 		public String host;
 		public String username;
 		public String password;
-		//public String path;
-		//public Session session;
+
+//		public String path;
+//		public Session session;
+
 		public int port;
 		public int transport;
 
@@ -120,15 +152,17 @@ public class RtspClient implements StreamingRecordObserver {
 			params.host = host;
 			params.username = username;
 			params.password = password;
+
 			//params.path = path;
 			//params.session = session;
+
 			params.port = port;
 			params.transport = transport;
 			return params;
 		}
 	}
 
-	private class StreamingState{
+	protected class StreamingState{
 		public int mCSeq;
 		public String mSessionID;
 		public String mAuthorization;
@@ -139,37 +173,7 @@ public class RtspClient implements StreamingRecordObserver {
 		}
 	}
 
-	private UUID mLocalStreamingUUID = null;
-	String mLocalStreamingName = null;
-	private Session mLocalStreamingSession;
-	private StreamingState mLocalStreamingState;
 
-	private Map<UUID, StreamingState> mRebroadcastStreamingStates;
-	private Map<UUID, RebroadcastSession> mRebroadcastStreamings;
-
-	private Parameters mTmpParameters;
-	private Parameters mParameters;
-
-	private Socket mSocket;
-	private BufferedReader mBufferedReader;
-	private OutputStream mOutputStream;
-	private Callback mCallback;
-	private final Handler mMainHandler;
-	private Handler mHandler;
-
-	private ConnectivityManager mConnManager;
-	private Network mCurrentNet;
-	private NetworkCapabilities mCurrentNetCapabitities;
-	private NetworkCallback mNetworkCallback;
-	private NetworkRequest mNetworkRequest;
-	private int mTotalNetworkRequests;
-	private SessionBuilder mSessionBuilder;
-
-	private INetworkManager mNetworkManager;
-	/**
-	 * The callback interface you need to implement to know what's going on with the
-	 * RTSP server (for example your Wowza Media Server).
-	 */
 	public interface Callback {
 		void onRtspUpdate(int message, Exception exception);
 	}
@@ -177,7 +181,7 @@ public class RtspClient implements StreamingRecordObserver {
 	public RtspClient(INetworkManager netMana) {
 		mTmpParameters = new Parameters();
 		mTmpParameters.port = 1935;
-		//mTmpParameters.path = "/";
+
 		mTmpParameters.transport = TRANSPORT_UDP;
 
 		mCallback = null;
@@ -194,19 +198,6 @@ public class RtspClient implements StreamingRecordObserver {
 				signal.release();
 			}
 		}.start();
-		/*
-			https://stackoverflow.com/questions/23459807/when-to-use-java-util-concurrent-semaphores-acquire-and-acquireuninterruptibl
-			>>acquire()<< is interruptible.
-			That means if a thread A is calling acquire() on a semaphore, and thread B interrupts
-			threads A by calling interrupt(), then an InterruptedException will be thrown on thread A.
-
-			>>acquireUninterruptibly()<< is not interruptible.
-			That means if a thread A is calling acquireUninterruptibly() on a semaphore, and
-			thread B interrupts threads A by calling interrupt(), then no InterruptedException will
-			be thrown on thread A, just that thread A will have its interrupted status set after
-			acquireUninterruptibly() returns.
-
-		 */
 		signal.acquireUninterruptibly();
 
 		mRebroadcastStreamingStates = new HashMap<>();
@@ -269,7 +260,6 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 
-
 	/**
 	 * Call this with {@link #TRANSPORT_TCP} or {@value #TRANSPORT_UDP} to choose the
 	 * transport protocol that will be used to send RTP/RTCP packets.
@@ -289,128 +279,71 @@ public class RtspClient implements StreamingRecordObserver {
 		En un thread, crea solicitud de red wfa
 		Esta funcionalidad se podría desacoplar para que sea más generalizado
 	 */
-	public void connectionCreated(final ConnectivityManager manager, NetworkRequest networkRequest){
-			mHandler.post(new Runnable() {
 
+	//****************************** arg Networkrequest not used
+	public void connectionCreated(final ConnectivityManager manager){
+		mHandler.post(new Runnable() {
 			@Override
 			public void run() {
 				if(mState != STATE_STOPPED) return;
-				mCurrentNetCapabitities = null;
-				mCurrentNet = null;
+
 				mConnManager = manager;
-
-				mNetworkRequest = networkRequest;
-
 				mState = STATE_STARTING;
-				mNetworkCallback = new NetworkCallback();
 				mTotalNetworkRequests = 0;
-				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
-				//Si no obtienes el network antes del timeout, se produce el código de error 0x2
-				manager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
-				Log.e(TAG, "connectionCreated Called ");
+
+				Log.e(TAG, "connectionCreated Called");
 			}
 		});
-	}
-
-	//Previous name: WifiAwareNetworkCallback
-	//New name: NetworkCallback --> Because it doesn't use WFA??¿?¿?
-	private class NetworkCallback extends ConnectivityManager.NetworkCallback{
-
-		public final static String TAG = "(Aware)NetworkCallback";
-
-		@Override
-		public void onAvailable(@NonNull Network network) {
-			mCurrentNet = network;
-			Log.e(TAG, "Network available");
-		}
-
-		@Override
-		public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
-			if(mCurrentNetCapabitities == null){
-				Log.e(TAG, "onCapabilitiesChanged: capabiity 1");
-				mCurrentNetCapabitities = networkCapabilities;
-				mCurrentNet = network;
-				start();
-				Log.e(TAG, "start Called");
-			}
-			else {
-				Log.e(TAG, "onCapabilitiesChanged: Red distinta o nueva capability");
-				mCurrentNetCapabitities = networkCapabilities;
-
-			}
-		}
-
-		@Override
-		public void onLost(@NonNull Network network) {
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
-					postError(ERROR_NETWORK_LOST, null);
-					restartClient();
-				}
-			});
-			Log.e(TAG, "Network lost");
-		}
-
-		@Override
-		public void onUnavailable() {
-			if(mTotalNetworkRequests++ > MAX_NETWORK_REQUESTS){
-				Log.e(TAG, "Network Unavailable, connection failed");
-				postError(ERROR_CONNECTION_FAILED, null);
-				mNetworkCallback = null;
-				restartClient();
-			}
-			else{
-				Log.e(TAG, "Network Unavailable, requesting again");
-				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
-				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
-			}
-		}
 	}
 
 	/*
 		Obtiene red y crea socket a partir de ello
 		Desacoplable
 	 */
-	private void start(){
+	public void start(){
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				//mConnManager.bindProcessToNetwork(mCurrentNet) Sirve que los siguientes sockets creados
-				// se vinculen a la red actual y no la de por defecto
 
-				//WFA pasa peerhandle al cliente. Hay que usarlo para obtener mCurrentNet
-				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
+				if(mState == STATE_STARTING) {
 
-					InetAddress peerIpv6 = mNetworkManager.getInetAddress(mCurrentNetCapabitities);
-					int peerPort = mNetworkManager.getPort(mCurrentNetCapabitities);
-
-					Log.d(TAG,"Connecting to RTSP server...");
 					try {
-						mSocket = mCurrentNet.getSocketFactory().createSocket(peerIpv6, peerPort);
+						String peerAddr = mTmpParameters.host;
+						int peerPort = mTmpParameters.port;
+
+						Log.d(TAG,"Connecting to RTSP server...");
+
+						mSocket = new Socket(peerAddr, peerPort);
 						mBufferedReader = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
 						mOutputStream = new BufferedOutputStream(mSocket.getOutputStream());
 						// If the user calls some methods to configure the client, it won't modify
 						// its behavior until the stream is restarted
+
 						mParameters = mTmpParameters.clone();
-						mParameters.host = peerIpv6.getHostAddress();
-						mParameters.port = peerPort;
+						//mParameters.host = peerAddr.getHostAddress();
+						//mParameters.port = peerPort;
+
 						mState = STATE_STARTED;
-						mConnManager.bindProcessToNetwork(null);
+						//mConnManager.bindProcessToNetwork(null);
 						if (mParameters.transport == TRANSPORT_UDP) {
 							mHandler.post(mConnectionMonitor);
 						}
 						StreamingRecord.getInstance().addObserver(RtspClient.this);
 					} catch (IOException e) {
+						Log.e(TAG,"Failed to connect to RTSP server", e);
 						postError(ERROR_CONNECTION_FAILED, e);
-						//clearClient();
-						mConnManager.unregisterNetworkCallback(mNetworkCallback);
-						//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
-						mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
+
+						// Start mete un ejecutable a la cola de un hilo. No es recursivo llamar start dentro de otro.
+						//Para la versión sin WFA, en catch llama otra vez a start()
+						onFailedStart();
 					}
 				}
 			}
 		});
+	}
+
+	protected void onFailedStart(){
+		start();
 	}
 
 	/**
@@ -431,7 +364,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 
-	private void restartClient(){
+	protected void restartClient(){
 		StreamingRecord.getInstance().removeObserver(this);
 		closeConnections();
 		clearClient();
@@ -479,7 +412,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 
-	private void clearClient(){
+	protected void clearClient(){
 		mState = STATE_STOPPED;
 
 		try {
@@ -488,11 +421,9 @@ public class RtspClient implements StreamingRecordObserver {
 		mSocket = null;
 		mBufferedReader = null;
 		mOutputStream = null;
-		if(mNetworkCallback != null) mConnManager.unregisterNetworkCallback(mNetworkCallback);
-		mNetworkCallback = null;
+
 		mCallback = null;
-		mCurrentNet = null;
-		mCurrentNetCapabitities = null;
+		//mCurrentNet = null;
 		mConnManager.bindProcessToNetwork(null);
 		mHandler.removeCallbacks(mConnectionMonitor);
 	}
@@ -520,6 +451,7 @@ public class RtspClient implements StreamingRecordObserver {
 			}
 		});
 	}
+
 
 	@Override
 	public void streamingAvailable(final Streaming streaming, final boolean bAllowDispatch) {
@@ -567,8 +499,8 @@ public class RtspClient implements StreamingRecordObserver {
 
 	}
 
-	private void sendLocalStreaming(){
-		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
+	protected void sendLocalStreaming(){
+		if(mState == STATE_STARTED){
 			try {
 				mLocalStreamingSession = mSessionBuilder.build();
 				mLocalStreamingSession.setNameStreaming(mLocalStreamingName);
@@ -618,7 +550,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	private void sendStreaming(UUID streamUUID){
-		if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)){
+		if(mState == STATE_STARTED){
 			StreamingState st = mRebroadcastStreamingStates.get(streamUUID);
 			RebroadcastSession session = mRebroadcastStreamings.get(streamUUID);
 			try {
@@ -901,7 +833,7 @@ public class RtspClient implements StreamingRecordObserver {
 	 * If the connection with the RTSP server is lost, we try to reconnect to it as
 	 * long as {@link #stop()} is not called.
 	 */
-	private Runnable mConnectionMonitor = new Runnable() {
+	protected Runnable mConnectionMonitor = new Runnable() {
 		@Override
 		public void run() {
 			if (mState == STATE_STARTED) {
@@ -955,7 +887,7 @@ public class RtspClient implements StreamingRecordObserver {
 		});
 	}
 
-	private void postError(final int message, final Exception e) {
+	protected void postError(final int message, final Exception e) {
 		mMainHandler.post(new Runnable() {
 			@Override
 			public void run() {
