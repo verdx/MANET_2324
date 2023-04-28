@@ -84,24 +84,22 @@ public class RTSPServerSelector extends AbstractSelector {
         return true;
     }
 
+    protected void accept(@NonNull SelectionKey key) {
 
+        synchronized (this){
+            ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
+            SocketChannel socketChannel = null;
+            try {
+                if(!mController.accept(serverChan, mSelector)){
+                    super.accept(key);
+                    return;
+                }
 
-//    protected void accept(@NonNull SelectionKey key) {
-//
-//        synchronized (this){
-//            ServerSocketChannel serverChan = (ServerSocketChannel) key.channel();
-//            SocketChannel socketChannel = null;
-//            try {
-//                if(!mController.accept(serverChan, mSelector)){
-//                    super.accept(key);
-//                    return;
-//                }
-//
-//            } catch (IOException e) {
-//                mController.handleAcceptException(serverChan);
-//            }
-//        }
-//    }
+            } catch (IOException e) {
+                mController.handleAcceptException(serverChan);
+            }
+        }
+    }
 
 
 //    @Override
