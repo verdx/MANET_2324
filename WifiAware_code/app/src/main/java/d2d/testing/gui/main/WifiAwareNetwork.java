@@ -196,7 +196,7 @@ public class WifiAwareNetwork implements INetworkManager{
     /*
         Subscribe to a service
      */
-    public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
+    public boolean subscribeToService(String serviceName, final WifiAwareViewModel viewModel) throws InterruptedException {
         if(mWifiAwareSession == null) return false;
 
         synchronized (WifiAwareNetwork.this){
@@ -244,7 +244,7 @@ public class WifiAwareNetwork implements INetworkManager{
 
                     RtspClientWFA rtspClient = new RtspClientWFA(WifiAwareNetwork.this);
 
-                    rtspClient.setCallback(activity); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
+                    rtspClient.setCallback(viewModel); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
                     mClients.put(peerHandle, rtspClient);
                     rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle));
 

@@ -3,6 +3,7 @@ package d2d.testing.gui.main;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.wifi.aware.PeerHandle;
+import android.util.Log;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
@@ -72,11 +73,12 @@ public class RTSPServerWFAController extends RTSPServerController{
             if(conn == null){
                 return false;
             }
+            SocketChannel socketChannel = null;
             try {
-                SocketChannel socketChannel = null;
                 socketChannel = serverChan.accept();
                 socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
                 socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                conn.mComChannels.add(socketChannel);
 
             } catch (IOException e) {
                 mConnectionsMap.remove(conn.handle);

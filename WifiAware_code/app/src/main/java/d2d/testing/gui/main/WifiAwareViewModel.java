@@ -1,35 +1,39 @@
 package d2d.testing.gui.main;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.wifi.aware.WifiAwareManager;
-import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Pair;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.R;
+import d2d.testing.streaming.rtsp.RtspClient;
 
-public class WifiAwareViewModel extends AndroidViewModel{
+public class WifiAwareViewModel extends DefaultViewModel implements RtspClient.Callback {
 
     private WifiAwareNetwork mWifiAwareNetwork;
     private static ConnectivityManager mConManager;
     private final WifiAwareManager mWifiAwareManager;
-    private final MutableLiveData<Boolean> mIsWifiAwareAvailable;
     private final HandlerThread worker;
+
 
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
-        mIsWifiAwareAvailable = new MutableLiveData<>(Boolean.FALSE);
 
+        mIsNetworkAvailable = new MutableLiveData<>(Boolean.FALSE);
 
         if(!app.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)){
             mWifiAwareManager = null;
@@ -65,6 +69,39 @@ public class WifiAwareViewModel extends AndroidViewModel{
     }
 
     @Override
+    protected void initNetwork(){
+        if(!sessionCreated()){
+            try {
+                if(createSession()){
+                    if(publishService("Server")){
+                        //Toast.makeText(this.getContext(), "Se creo una sesion de publisher con WifiAware", Toast.LENGTH_SHORT).show();
+                    }else{
+                        //Toast.makeText(this.getContext(), "No se pudo crear una sesion de publisher de WifiAware", Toast.LENGTH_LONG).show();
+                    }
+
+                    if(subscribeToService("Server")){
+                        //Toast.makeText(this.getContext(), "Se creo una sesion de subscripcion con WifiAware", Toast.LENGTH_SHORT).show();
+                    }else{
+                        //Toast.makeText(this.getContext(), "No se pudo crear una sesion de subscripcion de WifiAware", Toast.LENGTH_LONG).show();
+                    }
+                }else {
+                    //Toast.makeText(this.getContext(), "No se pudo crear la sesion de WifiAware", Toast.LENGTH_LONG).show();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    protected String getNetworkAvailabilityString(boolean available){
+        if(available){
+            return "Wifi Aware available";
+        }
+        return "Wifi Aware unavailable";
+    }
+
+    @Override
     protected void onCleared() {
         closeSessions();
         worker.quitSafely();
@@ -78,19 +115,15 @@ public class WifiAwareViewModel extends AndroidViewModel{
         closeSessions();
 
         if(mWifiAwareManager.isAvailable()){
-            mIsWifiAwareAvailable.postValue(Boolean.TRUE);
+            mIsNetworkAvailable.postValue(Boolean.TRUE);
         }
         else{
-            mIsWifiAwareAvailable.postValue(Boolean.FALSE);
+            mIsNetworkAvailable.postValue(Boolean.FALSE);
         }
     }
 
     public boolean sessionCreated(){
         return mWifiAwareNetwork.sessionCreated();
-    }
-
-    public LiveData<Boolean> isWifiAwareAvailable(){
-        return mIsWifiAwareAvailable;
     }
 
     public boolean publishSessionCreated(){
@@ -116,8 +149,8 @@ public class WifiAwareViewModel extends AndroidViewModel{
     }
 
     //https://developer.android.com/guide/topics/connectivity/wifi-aware#subscribe_to_a_service
-    public boolean subscribeToService(String serviceName, final MainFragment activity) throws InterruptedException {
-        return mWifiAwareNetwork.subscribeToService(serviceName, activity);
+    public boolean subscribeToService(String serviceName) throws InterruptedException {
+        return mWifiAwareNetwork.subscribeToService(serviceName, this);
     }
 
     //Puede llamarlo el main thread al cambiar la disponibilidad de wifiaware u otro thread
@@ -125,4 +158,8 @@ public class WifiAwareViewModel extends AndroidViewModel{
         mWifiAwareNetwork.closeSessions();
     }
 
+    @Override
+    public void onRtspUpdate(int message, Exception exception) {
+        Toast.makeText(getApplication().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
+    }
 }

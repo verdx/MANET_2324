@@ -23,9 +23,6 @@ public class RTSPServerController {
     RTSPServerSelector mServer;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
-//    INetworkManager mNetworkManager;
-
-
     public RTSPServerController(/*INetworkManager netMana, */ConnectivityManager connManager) throws IOException {
         mServer = new RTSPServerSelector(this, connManager);
         mServerChannelsMap = new HashMap<>();
@@ -60,14 +57,16 @@ public class RTSPServerController {
         return mServer;
     }
 
+
+
     public boolean accept(ServerSocketChannel serverChan, Selector selector){
         synchronized (this){
-            RTSPServerController.Connection conn = mServerChannelsMap.get(serverChan);
+            Connection conn = mServerChannelsMap.get(serverChan);
             if(conn == null){
                 return false;
             }
+            SocketChannel socketChannel = null;
             try {
-                SocketChannel socketChannel = null;
                 socketChannel = serverChan.accept();
                 socketChannel.configureBlocking(false);// Accept the connection and make it non-blocking
                 socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
@@ -111,9 +110,9 @@ public class RTSPServerController {
         }
 
         //Socket del server
-        ServerSocketChannel mServerSocketChannel;
+        public ServerSocketChannel mServerSocketChannel;
         //Lista de sockets clientes conectados al socket server
-        List<SocketChannel> mComChannels;
+        public List<SocketChannel> mComChannels;
 
         public void closeConnection(RTSPServerSelector serverSelector){
             serverSelector.addChangeRequest(new ChangeRequest(mServerSocketChannel, ChangeRequest.REMOVE, 0));
