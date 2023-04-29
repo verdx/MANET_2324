@@ -1,10 +1,13 @@
 package d2d.testing.gui;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
+import android.location.Location;
 import android.media.MediaCodec;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,6 +41,7 @@ import androidx.preference.PreferenceManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.witness.proofmode.ProofMode;
+import org.witness.proofmode.util.GPSTracker;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -50,6 +54,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -117,6 +122,57 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         });
     }
 
+    private File writeBaseFile(){
+        // Get the directory where the file will be saved
+        File directory = getFilesDir();
+
+        // Create a File object for the file you want to write to
+        File file = new File(directory, "myFile.txt");
+
+        try {
+            // Create a FileOutputStream object to write to the file
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+
+            String locationStr = getLocationStr();
+            Random rand = new Random();
+            String randomNumber = String.valueOf(rand.nextDouble());
+
+            fileOutputStream.write(locationStr.getBytes());
+            fileOutputStream.write(randomNumber.getBytes());
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return file;
+    }
+
+
+    private String getLocationStr(){
+        String location = "";
+
+        GPSTracker gpsTracker = new GPSTracker(this);
+        if (gpsTracker.canGetLocation()) {
+            Location loc = gpsTracker.getLocation();
+
+            for (int waitIdx = 0; loc == null && waitIdx < 3; loc = gpsTracker.getLocation()) {
+                ++waitIdx;
+                try {
+                    Thread.sleep(500L);
+                } catch (Exception var16) {
+                }
+            }
+
+            if (loc != null) {
+                location += "Location.Latitude: " + loc.getLatitude() + "\n"
+                        + "Location.Longitude: " + loc.getLongitude() + "\n"
+                        + "Location.Altitude: " + loc.getAltitude() + "\n"
+                        + "Location.Time: " + loc.getTime() + "\n";
+            }
+        }
+        return location;
+    }
+
     private void setProofMode(){
         boolean proofDeviceIds = true;
         boolean proofLocation = true;
@@ -133,12 +189,10 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         editor.putBoolean("trackMobileNetwork", proofNetwork);
         editor.apply();
 
-        int resourceId = R.raw.test;
-        String uriString = "android.resource://" + getPackageName() + "/" + resourceId;
-        Uri uri = Uri.parse(uriString);
+        Uri uri = Uri.fromFile(writeBaseFile());
 
         //generate proof for a URI
-        String proofHash = ProofMode.generateProof(StreamActivity.this,uri);
+        String proofHash = ProofMode.generateProof(this, uri);
 
         //get the folder that proof is stored
         File proofDir = ProofMode.getProofDir(StreamActivity.this, proofHash);

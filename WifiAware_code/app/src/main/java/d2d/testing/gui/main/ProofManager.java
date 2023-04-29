@@ -7,8 +7,7 @@ public class ProofManager {
 
     File mProofZipFile;
     String mDownloadDir;
-    //Use it as filename
-    String mFileHash;
+    String mFileHash;     //Use it as filename
 
     public static ProofManager getInstance(){
         if(mInstance==null)

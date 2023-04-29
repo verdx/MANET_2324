@@ -702,7 +702,8 @@ public class RTSPServerWorker extends AbstractWorker {
         final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
         //Patrón del custom rtsp header
-        final Pattern regexCustomMeta = Pattern.compile("a=proof:file=(.+)",Pattern.CASE_INSENSITIVE);
+        final Pattern regexProofFile = Pattern.compile("a=proof:file=(.+)",Pattern.CASE_INSENSITIVE);
+        final Pattern regexProofName = Pattern.compile("a=proof:name=(.+)",Pattern.CASE_INSENSITIVE);
 
         Matcher matcher;
         String streamName = "defaultName";
@@ -721,11 +722,15 @@ public class RTSPServerWorker extends AbstractWorker {
             }
 
             //*******************
+            if(regexProofName.matcher(line).find()){
+                int firstEqualsIndex = line.indexOf('=');
+                int secondEqualsIndex = line.indexOf('=', firstEqualsIndex + 1);
+                String filename = line.substring(secondEqualsIndex + 1);
 
-            if(regexCustomMeta.matcher(line).find()){
-//                matcher = regexCustomMeta.matcher(line);
-//                String fileBytes = matcher.group(1);
+                session.setProofFilename(filename);
+            }
 
+            if(regexProofFile.matcher(line).find()){
                 int firstEqualsIndex = line.indexOf('=');
                 int secondEqualsIndex = line.indexOf('=', firstEqualsIndex + 1);
                 String fileBytes = line.substring(secondEqualsIndex + 1);

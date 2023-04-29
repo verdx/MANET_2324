@@ -359,6 +359,7 @@ public class Session {
 			// Encode the byte array as a Base64 string
 			String encodedData = Base64.getEncoder().encodeToString(baos.toByteArray());
 
+			sessionDescription.append("a=proof:name=" + ProofManager.getInstance().getFileName() + "\r\n");
 			sessionDescription.append("a=proof:file=" + encodedData);
 
 		} catch (IOException e) {

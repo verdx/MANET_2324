@@ -28,6 +28,8 @@ public class ReceiveSession {
 
     private byte[] mProofFileByteArr;
 
+    private String mProofFilename;
+
 
     /**
      * Creates a streaming session that can be customized by adding tracks.
@@ -168,5 +170,13 @@ public class ReceiveSession {
 
     public String getPath() {
         return path;
+    }
+
+    public void setProofFilename(String filename) {
+        mProofFilename = filename;
+    }
+
+    public String getProofFilename() {
+        return mProofFilename;
     }
 }
