@@ -1,21 +1,14 @@
 package d2d.testing.gui;
 
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.media.MediaCodec;
-import android.media.MediaRecorder;
 import android.net.Uri;
-import android.net.wifi.aware.WifiAwareSession;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
+import android.os.Environment;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -26,6 +19,7 @@ import android.widget.Toast;
 
 
 import d2d.testing.BuildConfig;
+import d2d.testing.gui.main.ProofManager;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
@@ -49,14 +43,12 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -117,7 +109,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
                 if(!mRecording) {
                     setProofMode();
 
-//                    startStreaming();
+                    startStreaming();
                 } else {
                     stopStreaming();
                 }
@@ -151,7 +143,16 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         //get the folder that proof is stored
         File proofDir = ProofMode.getProofDir(StreamActivity.this, proofHash);
 
-        shareProof(proofDir);
+//        shareProof(proofDir);
+
+        try {
+            File res = makeProofZip(proofDir);
+
+            ProofManager.getInstance().setProofZipFile(proofHash, res);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void shareProof(File proofDir){

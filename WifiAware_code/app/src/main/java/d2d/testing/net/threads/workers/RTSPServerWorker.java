@@ -4,12 +4,15 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +22,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import d2d.testing.gui.main.MainFragment;
+import d2d.testing.gui.main.ProofManager;
 import d2d.testing.net.packets.DataReceived;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
@@ -696,6 +701,9 @@ public class RTSPServerWorker extends AbstractWorker {
         final Pattern regexVideoDescription = Pattern.compile("m=video (\\S+)",Pattern.CASE_INSENSITIVE);
         final Pattern pattern = Pattern.compile("s=(\\w+)", Pattern.CASE_INSENSITIVE);
 
+        //Patrón del custom rtsp header
+        final Pattern regexCustomMeta = Pattern.compile("a=proof:file=(.+)",Pattern.CASE_INSENSITIVE);
+
         Matcher matcher;
         String streamName = "defaultName";
 
@@ -710,6 +718,34 @@ public class RTSPServerWorker extends AbstractWorker {
                 TrackInfo trackInfo = new TrackInfo();
                 trackInfo.setSessionDescription(line +"\r\n"+ reader.readLine() +"\r\n"+ reader.readLine() +"\r\n");
                 session.addVideoTrack(trackInfo);
+            }
+
+            //*******************
+
+            if(regexCustomMeta.matcher(line).find()){
+//                matcher = regexCustomMeta.matcher(line);
+//                String fileBytes = matcher.group(1);
+
+                int firstEqualsIndex = line.indexOf('=');
+                int secondEqualsIndex = line.indexOf('=', firstEqualsIndex + 1);
+                String fileBytes = line.substring(secondEqualsIndex + 1);
+
+
+                if(fileBytes!=null){
+                    // Decode the incoming data from Base64 to binary
+                    byte[] decodedData = java.util.Base64.getDecoder().decode(fileBytes);
+
+                    session.setProofArr(decodedData);
+
+                    // Save the decoded data to a file with the .zip extension
+//                    File outputFile = new File(ProofManager.getInstance().getDownloadDir(), ProofManager.getInstance().getFileName() + ".zip");
+//                    if (!outputFile.exists()) {
+//                        outputFile.createNewFile();
+//                    }
+//                    try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+//                        fos.write(decodedData);
+//                    }
+                }
             }
 
             matcher = pattern.matcher(line);
