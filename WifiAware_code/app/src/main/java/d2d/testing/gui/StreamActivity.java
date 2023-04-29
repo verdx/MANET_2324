@@ -1,13 +1,20 @@
 package d2d.testing.gui;
 
+import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.media.MediaCodec;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Size;
@@ -16,10 +23,9 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 
-import d2d.testing.gui.main.MainFragment;
+import d2d.testing.BuildConfig;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
@@ -27,25 +33,34 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;
 import d2d.testing.streaming.video.VideoQuality;
-import d2d.testing.utils.IOUtils;
 
 import d2d.testing.R;
 
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.Preference;
+import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.witness.proofmode.ProofMode;
+
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
 public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener {
@@ -100,13 +115,93 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
             @Override
             public void onClick(View v) {
                 if(!mRecording) {
-                    startStreaming();
+                    setProofMode();
+
+//                    startStreaming();
                 } else {
                     stopStreaming();
                 }
             }
         });
     }
+
+    private void setProofMode(){
+        boolean proofDeviceIds = true;
+        boolean proofLocation = true;
+        boolean proofNetwork = true;
+        boolean proofNotary = false;
+
+//        ProofMode.setProofPoints(this, proofDeviceIds, proofLocation, proofNetwork, proofNotary);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("trackDeviceId", proofDeviceIds);
+        editor.putBoolean("trackLocation", proofLocation);
+        editor.putBoolean("autoNotarize", proofNotary);
+        editor.putBoolean("trackMobileNetwork", proofNetwork);
+        editor.apply();
+
+        int resourceId = R.raw.test;
+        String uriString = "android.resource://" + getPackageName() + "/" + resourceId;
+        Uri uri = Uri.parse(uriString);
+
+        //generate proof for a URI
+        String proofHash = ProofMode.generateProof(StreamActivity.this,uri);
+
+        //get the folder that proof is stored
+        File proofDir = ProofMode.getProofDir(StreamActivity.this, proofHash);
+
+        shareProof(proofDir);
+    }
+
+    private void shareProof(File proofDir){
+        try {
+            File res = makeProofZip(proofDir);
+            try {
+                if (res.exists()) {
+                    Uri auxUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", res);
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.setType("*/*");
+                    intent.putExtra(Intent.EXTRA_STREAM, auxUri);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                    startActivity(intent);
+                    startActivity(Intent.createChooser(intent, "Share via"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "setProofMode: ", e);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private File makeProofZip(File proofDirPath) throws IOException {
+        File outputZipFile = new File(getFilesDir(), proofDirPath.getName() + ".zip");
+        try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputZipFile)))) {
+            Files.walkFileTree(proofDirPath.toPath(), new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String zipFileName = file.toAbsolutePath().toString().substring(proofDirPath.getAbsolutePath().length() + 1);
+                    ZipEntry entry = new ZipEntry(zipFileName + (file.toFile().isDirectory() ? "/" : ""));
+                    zos.putNextEntry(entry);
+                    if (file.toFile().isFile()) {
+                        Files.copy(file, zos);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            ZipEntry keyEntry = new ZipEntry("pubkey.asc");
+            zos.putNextEntry(keyEntry);
+//            String publicKey = ProofMode.getPublicKeyString(this);
+//            zos.write(publicKey.getBytes());
+        }
+
+        return outputZipFile;
+    }
+
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
