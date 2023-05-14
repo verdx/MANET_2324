@@ -72,14 +72,6 @@ public class RtspClientWFA extends RtspClient {
 	protected NetworkCapabilities mCurrentNetCapabitities;
 	protected Network mCurrentNet;
 
-	/**
-	 * The callback interface you need to implement to know what's going on with the
-	 * RTSP server (for example your Wowza Media Server).
-	 */
-	public interface Callback {
-		void onRtspUpdate(int message, Exception exception);
-	}
-
 	public RtspClientWFA(INetworkManager netMana) {
 		super(netMana);
 	}
@@ -106,7 +98,6 @@ public class RtspClientWFA extends RtspClient {
 				//++++++++++++++++
 
 				mTotalNetworkRequests = 0;
-				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 				//Si no obtienes el network antes del timeout, se produce el código de error 0x2
 
 				//++++++++++++++++
@@ -159,8 +150,6 @@ public class RtspClientWFA extends RtspClient {
 		});
 	}
 
-
-
 	private class WFANetworkCallback extends ConnectivityManager.NetworkCallback{
 
 		public final static String TAG = "AwareNetworkCallback";
@@ -210,7 +199,6 @@ public class RtspClientWFA extends RtspClient {
 			}
 			else{
 				Log.e(TAG, "Network Unavailable, requesting again");
-				//mNetRequestMan.requestNetwork(mNetworkRequest, mNetworkCallback);
 				mConnManager.requestNetwork(mNetworkRequest, mNetworkCallback, 5000);
 			}
 		}

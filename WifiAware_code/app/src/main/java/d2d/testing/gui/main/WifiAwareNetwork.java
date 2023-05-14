@@ -239,11 +239,11 @@ public class WifiAwareNetwork implements INetworkManager{
                 @Override
                 public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
 
-                    RtspClientWFA rtspClient = new RtspClientWFA(WifiAwareNetwork.this);
+                    RtspClientWFA rtspClientWFA = new RtspClientWFA(WifiAwareNetwork.this);
 
-                    rtspClient.setCallback(viewModel); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
-                    mClients.put(peerHandle, rtspClient);
-                    rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle, -1));
+                    rtspClientWFA.setCallback(viewModel); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
+                    mClients.put(peerHandle, rtspClientWFA);
+                    rtspClientWFA.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle, -1));
 
                     processNextConnection();
                 }
@@ -314,24 +314,16 @@ public class WifiAwareNetwork implements INetworkManager{
         }
     }
 
-//    public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle){
-//        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-//                .setPskPassphrase("wifiawaretest")
-//                .build();
-//        NetworkRequest nr = new NetworkRequest.Builder()
-//                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-//                .setNetworkSpecifier(ns)
-//                .build();
-//        return nr;
-//    }
-
     public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle, int serverport){
-        WifiAwareNetworkSpecifier.Builder builder = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-                                                        .setPskPassphrase("wifiawaretest");
-        if(serverport>-1){
-            builder.setPort(serverport);
-        }
-        NetworkSpecifier ns = builder.build();
+        NetworkSpecifier ns = serverport>-1
+                ?new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+                        .setPskPassphrase("wifiawaretest")
+                        .setPort(serverport)
+                        .build()
+                :new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+                        .setPskPassphrase("wifiawaretest")
+                        .build();
+
         NetworkRequest nr = new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                 .setNetworkSpecifier(ns)

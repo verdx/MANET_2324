@@ -76,10 +76,9 @@ public class RTSPServerModel {
             }
         }
         return true;
-
-//        return mNetworkManager.accept(serverChan, selector);
-
     }
+
+
     public void handleAcceptException(ServerSocketChannel serverChan) {
         Log.e(TAG, "Error accepting client connection");
     }
@@ -97,9 +96,6 @@ public class RTSPServerModel {
     public boolean addNewConnection() {
         return mServer.upListeningPort();
     }
-
-//    public void onClientConnected() {
-//    }
 
 
     public static class Connection{
