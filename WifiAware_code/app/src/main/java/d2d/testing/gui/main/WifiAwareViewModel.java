@@ -1,34 +1,26 @@
 package d2d.testing.gui.main;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.wifi.aware.WifiAwareManager;
 import android.os.HandlerThread;
-import android.util.Pair;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
 
-public class WifiAwareViewModel extends DefaultViewModel implements RtspClient.Callback {
+public class WifiAwareViewModel extends BasicViewModel {
 
     private WifiAwareNetwork mWifiAwareNetwork;
     private static ConnectivityManager mConManager;
     private final WifiAwareManager mWifiAwareManager;
-    private final HandlerThread worker;
-
 
     public WifiAwareViewModel(@NonNull Application app) {
         super(app);
@@ -37,12 +29,8 @@ public class WifiAwareViewModel extends DefaultViewModel implements RtspClient.C
 
         if(!app.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)){
             mWifiAwareManager = null;
-            worker = null;
             return;
         }
-        //Thread para ejecutar los callbacks
-        worker = new HandlerThread("WifiAware Worker");
-        worker.start();
 
         mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -158,8 +146,5 @@ public class WifiAwareViewModel extends DefaultViewModel implements RtspClient.C
         mWifiAwareNetwork.closeSessions();
     }
 
-    @Override
-    public void onRtspUpdate(int message, Exception exception) {
-        Toast.makeText(getApplication().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
-    }
+
 }

@@ -50,7 +50,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     TextView tvIP, tvPort;
     public static String SERVER_IP = "";
     public static int SERVER_PORT = 8080;
-    DefaultViewModel mViewModel;
+    BasicViewModel mViewModel;
 
     private Boolean isNetworkAvailable;
 

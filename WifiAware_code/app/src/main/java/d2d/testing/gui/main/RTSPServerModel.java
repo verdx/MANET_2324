@@ -18,15 +18,14 @@ import java.util.Map;
 import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 
-public class RTSPServerController {
-    public static final String TAG = "RTSPServerController";
+public class RTSPServerModel {
+    public static final String TAG = "RTSPServerModel";
     RTSPServerSelector mServer;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
-    public RTSPServerController(/*INetworkManager netMana, */ConnectivityManager connManager) throws IOException {
+    public RTSPServerModel(ConnectivityManager connManager) throws IOException {
         mServer = new RTSPServerSelector(this, connManager);
         mServerChannelsMap = new HashMap<>();
-//        mNetworkManager = netMana;
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){

@@ -3,7 +3,6 @@ package d2d.testing.gui.main;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.wifi.aware.PeerHandle;
-import android.util.Log;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
@@ -11,26 +10,17 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
 
-public class RTSPServerWFAController extends RTSPServerController{
+public class RTSPServerWFAModel extends RTSPServerModel {
     protected ConnectivityManager mConManager;
-
-    /*
-        * Being final only means that the reference cannot be reasigned after initialization.
-        * It doesn't mean that the object itself is immutable
-            * It final as a HashMap, but as a Map instance, its content can be modified
-     */
     private final Map<PeerHandle, Connection> mConnectionsMap;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
-    public RTSPServerWFAController(ConnectivityManager connManager) throws IOException {
+    public RTSPServerWFAModel(ConnectivityManager connManager) throws IOException {
         super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
@@ -120,7 +110,7 @@ public class RTSPServerWFAController extends RTSPServerController{
         return null;
     }
 
-    public static class Connection extends RTSPServerController.Connection{
+    public static class Connection extends RTSPServerModel.Connection{
         public Connection(ServerSocketChannel serverChan, PeerHandle handle, ConnectivityManager.NetworkCallback netCallback){
             super(serverChan);
             mNetCallback = netCallback;

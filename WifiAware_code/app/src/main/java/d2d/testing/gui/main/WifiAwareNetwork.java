@@ -25,9 +25,7 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -51,7 +49,7 @@ public class WifiAwareNetwork implements INetworkManager{
     private RTSPServerSelector mServer;
     private final Map<PeerHandle, RtspClient> mClients;
     private static ConnectivityManager mConManager;
-    private RTSPServerWFAController mServerController;
+    private RTSPServerWFAModel mServerController;
 
     public WifiAwareNetwork(ConnectivityManager conManager, WifiAwareManager wifiAwareManager){
 
@@ -118,8 +116,7 @@ public class WifiAwareNetwork implements INetworkManager{
                     synchronized (WifiAwareNetwork.this){
                         mPublishSession = session;
                         try {
-                            //------------------------------------v------------------------------------------
-                            mServerController = new RTSPServerWFAController(mConManager);
+                            mServerController = new RTSPServerWFAModel(mConManager);
                             mServerController.startServer();
 
                             //Pone al server RTSP a escuchar en localhost:1234 para peticiones de descarga de libVLC
@@ -246,7 +243,7 @@ public class WifiAwareNetwork implements INetworkManager{
 
                     rtspClient.setCallback(viewModel); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
                     mClients.put(peerHandle, rtspClient);
-                    rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle));
+                    rtspClient.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle, -1));
 
                     processNextConnection();
                 }
@@ -317,22 +314,24 @@ public class WifiAwareNetwork implements INetworkManager{
         }
     }
 
-    public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle){
-        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-                .setPskPassphrase("wifiawaretest")
-                .build();
-        NetworkRequest nr = new NetworkRequest.Builder()
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-                .setNetworkSpecifier(ns)
-                .build();
-        return nr;
-    }
+//    public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle){
+//        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+//                .setPskPassphrase("wifiawaretest")
+//                .build();
+//        NetworkRequest nr = new NetworkRequest.Builder()
+//                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+//                .setNetworkSpecifier(ns)
+//                .build();
+//        return nr;
+//    }
 
     public NetworkRequest createNetworkRequest(final DiscoverySession subscribeSession, final PeerHandle handle, int serverport){
-        NetworkSpecifier ns = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-                .setPskPassphrase("wifiawaretest")
-                .setPort(serverport)
-                .build();
+        WifiAwareNetworkSpecifier.Builder builder = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
+                                                        .setPskPassphrase("wifiawaretest");
+        if(serverport>-1){
+            builder.setPort(serverport);
+        }
+        NetworkSpecifier ns = builder.build();
         NetworkRequest nr = new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                 .setNetworkSpecifier(ns)
@@ -343,14 +342,10 @@ public class WifiAwareNetwork implements INetworkManager{
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
 
         if(!mServerController.isServerEnabled()) return false;
-        if(mServerController.has(handle)){
-            return true;
-        }
+        if(mServerController.has(handle))return true;
 
-        RTSPServerWFAController.Connection conn = null;
         try {
             //Crea un ServerSocketChannel específico para gestionar comunicación entre A y B
-            //Una red aislada entre A y B
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(new InetSocketAddress(0));
@@ -363,7 +358,7 @@ public class WifiAwareNetwork implements INetworkManager{
                     ChangeRequest.REGISTER,
                     SelectionKey.OP_ACCEPT));
 
-            conn = new RTSPServerWFAController.Connection(serverSocketChannel,
+            RTSPServerWFAModel.Connection conn = new RTSPServerWFAModel.Connection(serverSocketChannel,
                     handle,
                     new WifiAwareNetworkCallback(mServerController, handle, mConManager));
 
@@ -392,13 +387,12 @@ public class WifiAwareNetwork implements INetworkManager{
     }
 
 
-
     private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
         private final PeerHandle mConnectionHandle;
-        private final RTSPServerWFAController mController;
+        private final RTSPServerWFAModel mController;
         private final ConnectivityManager mConManager;
 
-        public WifiAwareNetworkCallback(RTSPServerWFAController server, PeerHandle connectionHandle, ConnectivityManager conManager){
+        public WifiAwareNetworkCallback(RTSPServerWFAModel server, PeerHandle connectionHandle, ConnectivityManager conManager){
             this.mConnectionHandle = connectionHandle;
             this.mController = server;
             mConManager = conManager;

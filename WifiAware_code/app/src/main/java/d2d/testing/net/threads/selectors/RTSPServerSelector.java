@@ -2,7 +2,6 @@ package d2d.testing.net.threads.selectors;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import java.io.IOException;
@@ -13,8 +12,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import d2d.testing.gui.main.RTSPServerController;
-import d2d.testing.gui.main.RTSPServerWFAController;
+import d2d.testing.gui.main.RTSPServerModel;
 import d2d.testing.net.threads.workers.RTSPServerWorker;
 
 /**
@@ -27,9 +25,9 @@ import d2d.testing.net.threads.workers.RTSPServerWorker;
  */
 public class RTSPServerSelector extends AbstractSelector {
 
-    RTSPServerController mController;
+    RTSPServerModel mController;
 
-    public RTSPServerSelector(RTSPServerController controller, ConnectivityManager connManager) throws IOException {
+    public RTSPServerSelector(RTSPServerModel controller, ConnectivityManager connManager) throws IOException {
         super(connManager);
         mController = controller;
         mWorker = new RTSPServerWorker(null, null, this);
@@ -62,7 +60,7 @@ public class RTSPServerSelector extends AbstractSelector {
 
     public synchronized boolean upListeningPort(){
 
-        RTSPServerController.Connection conn = null;
+        RTSPServerModel.Connection conn = null;
         try {
             //Crea un ServerSocketChannel para escuchar peticiones
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -74,7 +72,7 @@ public class RTSPServerSelector extends AbstractSelector {
                     ChangeRequest.REGISTER,
                     SelectionKey.OP_ACCEPT));
 
-            conn = new RTSPServerController.Connection(serverSocketChannel);
+            conn = new RTSPServerModel.Connection(serverSocketChannel);
 
             mController.addNewConnection(serverSocketChannel,conn);
 
