@@ -1,6 +1,7 @@
 package d2d.testing.gui.main;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.TransportInfo;
@@ -8,15 +9,24 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Pair;
 
+import androidx.preference.PreferenceManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
@@ -25,10 +35,15 @@ public class DefaultNetwork implements INetworkManager{
 
     private Handler workerHandle;
     private final HandlerThread worker;
-//    private final Map<String, RtspClient> mClients; //IP, cliente
+
+    private final Map<String, RtspClient> mClients; //IP, cliente
     private RTSPServerModel mServerModel;
     private static ConnectivityManager mConManager;
     private DestinationIPReader mDestinationReader;
+
+    private SharedPreferences mSharedPrefs;
+
+    private ScheduledExecutorService mScheduler;
 
 
     public DefaultNetwork(Application app, ConnectivityManager conManager){
@@ -36,7 +51,7 @@ public class DefaultNetwork implements INetworkManager{
         mServerModel = null;
         this.mConManager = conManager;
 
-//        this.mClients = new HashMap<>();
+        mClients = new HashMap<>();
 
         worker = new HandlerThread("DefaultNetwork Worker");
         worker.start();
@@ -45,8 +60,34 @@ public class DefaultNetwork implements INetworkManager{
         InputStream inputStream = app.getResources().openRawResource(R.raw.destinations);
         mDestinationReader = new DestinationIPReader(inputStream);
 
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(app.getApplicationContext());
+
     }
 
+    private synchronized void checkDestinationsConnectivity() {
+
+        for(DestinationInfo info: mDestinationReader.mDestinationList){
+            if(!info.isConnected){
+                RtspClient client = mClients.get(info.ip);
+                if(client!=null){
+                    client.start(); //Retry connection
+                    info.isConnected = client.isConnected();
+                }
+                else{
+                    connectToDestination(info);
+                }
+            }
+        }
+    }
+
+    private void connectToDestination(DestinationInfo dest) {
+        RtspClient client = new RtspClient(DefaultNetwork.this);
+        client.setServerAddress(dest.ip, dest.port);
+        client.connectionCreated(mConManager);
+        client.start();
+
+        mClients.put(dest.ip, client);
+    }
 
     private boolean startLocalServer(){
         synchronized (DefaultNetwork.this){
@@ -72,29 +113,16 @@ public class DefaultNetwork implements INetworkManager{
         return false;
     }
 
+
+
     public boolean startClient() {
-
-        int tam = mDestinationReader.mDestinationList.size();
-        if(tam>0){
-            ExecutorService executor = Executors.newFixedThreadPool(tam);
-
-            for(Pair<String, Integer> destination: mDestinationReader.mDestinationList){
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        RtspClient client = new RtspClient(DefaultNetwork.this);
-                        client.setServerAddress(destination.first, destination.second);
-                        client.connectionCreated(mConManager);
-                        client.start();
-
-//                        mClients.put(destination.first, client);
-                    }
-                });
+        int delayms = 3000;
+        workerHandle.postDelayed(new Runnable() {
+            public void run() {
+                checkDestinationsConnectivity();
+                workerHandle.postDelayed(this, delayms);
             }
-            executor.shutdown();
-        }else{
-            return false;
-        }
+        }, delayms);
 
         return true;
     }
@@ -116,12 +144,30 @@ public class DefaultNetwork implements INetworkManager{
         return 8080;
     }
 
+    class DestinationInfo{
+        String ip;
+        int port;
+        boolean isConnected;
+
+        public DestinationInfo(String ip, int port, boolean isConnected){
+            this.ip = ip;
+            this.port = port;
+            this.isConnected = isConnected;
+        }
+    }
+
     public class DestinationIPReader{
-        List<Pair<String, Integer>> mDestinationList;   //Par ip, puerto
+
+        List<DestinationInfo> mDestinationList;
 
         public DestinationIPReader(InputStream inputStream){
             mDestinationList = new ArrayList<>();
             getDestinationIps(inputStream);
+        }
+
+        public DestinationIPReader(){
+            mDestinationList = new ArrayList<>();
+            getDestinationIps();
         }
 
         private void getDestinationIps(InputStream inputStream){
@@ -129,14 +175,23 @@ public class DefaultNetwork implements INetworkManager{
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String line;
-                int port;
                 while ((line = bufferedReader.readLine()) != null) {
                     String[] res = line.split(":");
 
-                    mDestinationList.add(new Pair<>(res[0], Integer.valueOf(res[1])));
+                    mDestinationList.add(new DestinationInfo(res[0], Integer.valueOf(res[1]), false));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private void getDestinationIps(){
+            Set<String> ipAddresses = mSharedPrefs.getStringSet("PREF_IP_ADDRESSES", new HashSet<String>());
+
+            mDestinationList.clear();
+
+            for(String ipaddr: ipAddresses){
+                mDestinationList.add(new DestinationInfo(ipaddr, 8080,false));
             }
         }
     }

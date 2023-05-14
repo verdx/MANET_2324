@@ -11,7 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 public class DefaultViewModel extends BasicViewModel{
 
     private DefaultNetwork mNetwork;
-    private static ConnectivityManager mConManager;
+    private ConnectivityManager mConManager;
 
     public DefaultViewModel(@NonNull Application app) {
         super(app);
@@ -56,9 +56,5 @@ public class DefaultViewModel extends BasicViewModel{
     public boolean startClient(){
         return mNetwork.startClient();
     }
-
-
-
-
 
 }

@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -273,8 +274,6 @@ public class RtspClient implements StreamingRecordObserver {
 		return mState==STATE_STARTED||mState==STATE_STARTING;
 	}
 
-
-	//Funcion que se llama desde wifiaware viewmodel
 	/*
 		En un thread, crea solicitud de red wfa
 		Esta funcionalidad se podría desacoplar para que sea más generalizado
@@ -296,9 +295,16 @@ public class RtspClient implements StreamingRecordObserver {
 		});
 	}
 
+
+	public boolean isConnected(){
+		if(mSocket!=null)
+			return mSocket.isConnected();
+		return false;
+	}
+
+
 	/*
-		Obtiene red y crea socket a partir de ello
-		Desacoplable
+		Obtiene red y crea socket a partir de ella
 	 */
 	public void start(){
 		mHandler.post(new Runnable () {
@@ -320,11 +326,8 @@ public class RtspClient implements StreamingRecordObserver {
 						// its behavior until the stream is restarted
 
 						mParameters = mTmpParameters.clone();
-						//mParameters.host = peerAddr.getHostAddress();
-						//mParameters.port = peerPort;
 
 						mState = STATE_STARTED;
-						//mConnManager.bindProcessToNetwork(null);
 						if (mParameters.transport == TRANSPORT_UDP) {
 							mHandler.post(mConnectionMonitor);
 						}
@@ -334,8 +337,7 @@ public class RtspClient implements StreamingRecordObserver {
 						postError(ERROR_CONNECTION_FAILED, e);
 
 						// Start mete un ejecutable a la cola de un hilo. No es recursivo llamar start dentro de otro.
-						//Para la versión sin WFA, en catch llama otra vez a start()
-						onFailedStart();
+						//Para la versión sin WFA, se reintentará la conexión en unos segundos
 					}
 				}
 			}
