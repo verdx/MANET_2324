@@ -61,7 +61,6 @@ public class DefaultNetwork implements INetworkManager{
         mDestinationReader = new DestinationIPReader(inputStream);
 
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(app.getApplicationContext());
-
     }
 
     private synchronized void checkDestinationsConnectivity() {
@@ -83,7 +82,7 @@ public class DefaultNetwork implements INetworkManager{
     private void connectToDestination(DestinationInfo dest) {
         RtspClient client = new RtspClient(DefaultNetwork.this);
         client.setServerAddress(dest.ip, dest.port);
-        client.connectionCreated(mConManager);
+        client.connectionCreated();
         client.start();
 
         mClients.put(dest.ip, client);
@@ -187,7 +186,6 @@ public class DefaultNetwork implements INetworkManager{
 
         private void getDestinationIps(){
             Set<String> ipAddresses = mSharedPrefs.getStringSet("PREF_IP_ADDRESSES", new HashSet<String>());
-
             mDestinationList.clear();
 
             for(String ipaddr: ipAddresses){

@@ -103,9 +103,9 @@ public class RtspClient implements StreamingRecordObserver {
 	public final static int MESSAGE_CONNECTION_RECOVERED = 0x05;
 
 	protected final static int STATE_STARTED = 0x00;
-	protected final static int STATE_STARTING = 0x01;
-	protected final static int STATE_STOPPING = 0x02;
-	protected final static int STATE_STOPPED = 0x03;
+
+	protected final static int STATE_STOPPING = 0x01;
+	protected final static int STATE_STOPPED = 0x02;
 	protected int mState = 0;
 
 	protected final static int MAX_NETWORK_REQUESTS = 100;
@@ -121,9 +121,6 @@ public class RtspClient implements StreamingRecordObserver {
 	protected Callback mCallback;
 	protected final Handler mMainHandler;
 	protected Handler mHandler;
-
-	protected ConnectivityManager mConnManager;
-
 
 	protected int mTotalNetworkRequests;
 	protected SessionBuilder mSessionBuilder;
@@ -271,7 +268,7 @@ public class RtspClient implements StreamingRecordObserver {
 	}
 
 	public boolean isStreaming() {
-		return mState==STATE_STARTED||mState==STATE_STARTING;
+		return mState==STATE_STARTED;
 	}
 
 	/*
@@ -279,20 +276,9 @@ public class RtspClient implements StreamingRecordObserver {
 		Esta funcionalidad se podría desacoplar para que sea más generalizado
 	 */
 
-	//****************************** arg Networkrequest not used
-	public void connectionCreated(final ConnectivityManager manager){
-		mHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if(mState != STATE_STOPPED) return;
-
-				mConnManager = manager;
-				mState = STATE_STARTING;
-				mTotalNetworkRequests = 0;
-
-				Log.e(TAG, "connectionCreated Called");
-			}
-		});
+	public void connectionCreated(){
+		mTotalNetworkRequests = 0;
+		mState = STATE_STARTED;
 	}
 
 
@@ -311,7 +297,7 @@ public class RtspClient implements StreamingRecordObserver {
 			@Override
 			public void run() {
 
-				if(mState == STATE_STARTING) {
+				if(mState == STATE_STARTED) {
 
 					try {
 						String peerAddr = mTmpParameters.host;
@@ -327,7 +313,6 @@ public class RtspClient implements StreamingRecordObserver {
 
 						mParameters = mTmpParameters.clone();
 
-						mState = STATE_STARTED;
 						if (mParameters.transport == TRANSPORT_UDP) {
 							mHandler.post(mConnectionMonitor);
 						}
@@ -425,8 +410,6 @@ public class RtspClient implements StreamingRecordObserver {
 		mOutputStream = null;
 
 		mCallback = null;
-		//mCurrentNet = null;
-		mConnManager.bindProcessToNetwork(null);
 		mHandler.removeCallbacks(mConnectionMonitor);
 	}
 
@@ -510,10 +493,8 @@ public class RtspClient implements StreamingRecordObserver {
 				mLocalStreamingSession.setDestinationPort(mParameters.port);
 				mLocalStreamingSession.setOriginAddress(mSocket.getLocalAddress(), true);
 				mLocalStreamingSession.syncConfigure();
-				mConnManager.bindProcessToNetwork(null);
 			} catch (Exception e) {
 				mLocalStreamingSession = null;
-				mConnManager.bindProcessToNetwork(null);
 				return;
 			}
 
@@ -584,9 +565,6 @@ public class RtspClient implements StreamingRecordObserver {
 				mRebroadcastStreamingStates.remove(streamUUID);
 				mRebroadcastStreamings.remove(streamUUID);
 				session.stop();
-			}
-			finally {
-				mConnManager.bindProcessToNetwork(null);
 			}
 		}
 		else{

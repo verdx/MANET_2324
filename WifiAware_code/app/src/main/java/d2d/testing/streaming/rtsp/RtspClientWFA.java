@@ -69,13 +69,13 @@ public class RtspClientWFA extends RtspClient {
 	public final static String TAG = "RtspClientWFA";
 	protected WFANetworkCallback mNetworkCallback;
 	protected NetworkRequest mNetworkRequest;
+	protected ConnectivityManager mConnManager;
 	protected NetworkCapabilities mCurrentNetCapabitities;
 	protected Network mCurrentNet;
 
 	public RtspClientWFA(INetworkManager netMana) {
 		super(netMana);
 	}
-
 
 	public void connectionCreated(final ConnectivityManager manager, final NetworkRequest networkRequest){
 			mHandler.post(new Runnable() {
@@ -91,7 +91,7 @@ public class RtspClientWFA extends RtspClient {
 				mNetworkRequest = networkRequest;
 				//++++++++++++++++
 
-				mState = STATE_STARTING;
+				mState = STATE_STARTED;
 
 				//++++++++++++++++
 				mNetworkCallback = new WFANetworkCallback();
@@ -114,7 +114,7 @@ public class RtspClientWFA extends RtspClient {
 		mHandler.post(new Runnable () {
 			@Override
 			public void run() {
-				if(mState == STATE_STARTING && mConnManager.bindProcessToNetwork(mCurrentNet)) {
+				if(mState == STATE_STARTED && mConnManager.bindProcessToNetwork(mCurrentNet)) {
 
 					InetAddress peerIpv6 = mNetworkManager.getInetAddress(mCurrentNetCapabitities);
 					int peerPort = mNetworkManager.getPort(mCurrentNetCapabitities);
@@ -130,8 +130,7 @@ public class RtspClientWFA extends RtspClient {
 						mParameters = mTmpParameters.clone();
 						mParameters.host = peerIpv6.getHostAddress();
 						mParameters.port = peerPort;
-
-						mState = STATE_STARTED;
+						
 						mConnManager.bindProcessToNetwork(null);
 						if (mParameters.transport == TRANSPORT_UDP) {
 							mHandler.post(mConnectionMonitor);
