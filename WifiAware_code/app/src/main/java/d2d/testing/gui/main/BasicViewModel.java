@@ -61,13 +61,17 @@ public class BasicViewModel extends AndroidViewModel implements RtspClient.Callb
         worker.quitSafely();
     }
 
-    public String getLocalIpAddress() throws UnknownHostException {
+    public String getLocalIpAddress() {
         WifiManager wifiManager = (WifiManager) this.getApplication().getApplicationContext().getSystemService(WIFI_SERVICE);
         assert wifiManager!=null;
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         int ipInt = wifiInfo.getIpAddress();
 
-        return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
+        try {
+            return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
+        } catch (UnknownHostException e) {
+            return "Local address not found";
+        }
     }
 
     @Override

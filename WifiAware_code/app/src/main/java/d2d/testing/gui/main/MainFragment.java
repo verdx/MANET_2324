@@ -20,6 +20,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +29,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
+
+import javax.inject.Inject;
 
 import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
@@ -40,40 +43,26 @@ import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
-
     private  EditText myName;
     private TextView myStatus;
-//    private WifiAwareViewModel mAwareModel;
     private TextView numStreams;
     private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
-    TextView tvIP, tvPort;
-    public static String SERVER_IP = "";
-    public static int SERVER_PORT = 8080;
+    @Inject
     BasicViewModel mViewModel;
-
     private Boolean isNetworkAvailable;
-
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         streamList = new ArrayList<>();
 
-        PackageManager packageManager = getContext().getPackageManager();
+        NetworkComponent networkComponent = DaggerNetworkComponent.builder()
+                .fragmentActivityModule(new FragmentActivityModule(requireActivity()))
+                .build();
 
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE)) {
-            // Wi-Fi Aware is supported on this device
-            mViewModel = new ViewModelProvider(requireActivity()).get(WifiAwareViewModel.class);
-        } else {
-            // Wi-Fi Aware is not supported on this device
-            mViewModel = new ViewModelProvider(requireActivity()).get(DefaultViewModel.class);
-            try {
-                SERVER_IP = mViewModel.getLocalIpAddress();
-            } catch (UnknownHostException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        networkComponent.inject(this);
+
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

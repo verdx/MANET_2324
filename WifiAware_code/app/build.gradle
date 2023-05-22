@@ -44,4 +44,7 @@ dependencies {
 
     implementation 'info.guardianproject.panic:panic:0.5'
 
+    implementation 'com.google.dagger:dagger:2.46.1'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.46.1'
+
 }

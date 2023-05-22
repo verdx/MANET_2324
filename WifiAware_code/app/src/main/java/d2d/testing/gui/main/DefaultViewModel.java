@@ -10,22 +10,23 @@ import androidx.lifecycle.MutableLiveData;
 
 public class DefaultViewModel extends BasicViewModel{
 
+    public static String SERVER_IP = "";
+    public static int SERVER_PORT = 8080;
     private DefaultNetwork mNetwork;
     private ConnectivityManager mConManager;
 
     public DefaultViewModel(@NonNull Application app) {
         super(app);
-
         mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
         mNetwork = new DefaultNetwork(app, mConManager);
-
+        SERVER_IP = super.getLocalIpAddress();
         mIsNetworkAvailable = new MutableLiveData<>(Boolean.TRUE);
     }
 
     @Override
     public String getNetworkAvailabilityString(boolean available){
         if(available){
-            return MainFragment.SERVER_IP + ":" + MainFragment.SERVER_PORT;
+            return SERVER_IP + ":" + SERVER_PORT;
         }
         return "Default Network unavailable";
     }
