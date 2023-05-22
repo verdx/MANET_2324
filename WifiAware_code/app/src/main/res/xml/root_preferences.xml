@@ -18,5 +18,14 @@
 			app:key="PREF_UNINSTALL_THIS_APP" app:title="Unistall this app" />
 
 	</PreferenceCategory>
+	<PreferenceCategory app:title="Who will receive the stream?">
+		<EditTextPreference
+			app:key="PREF_IP_ADDRESS"
+			app:title="IP Address"
+			app:summary="Enter the IP address you want to connect to"
+			app:dialogTitle="Enter IP Address"/>
+<!--			app:dialogMessage="Please enter the IP address you want to connect to" />-->
+	</PreferenceCategory>
+
 
 </PreferenceScreen>

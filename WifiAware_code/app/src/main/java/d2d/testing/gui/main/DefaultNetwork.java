@@ -33,6 +33,8 @@ import d2d.testing.streaming.rtsp.RtspClient;
 
 public class DefaultNetwork implements INetworkManager{
 
+    public static int DEFAULT_PORT = 8080;
+
     private Handler workerHandle;
     private final HandlerThread worker;
 
@@ -40,11 +42,9 @@ public class DefaultNetwork implements INetworkManager{
     private RTSPServerModel mServerModel;
     private static ConnectivityManager mConManager;
     private DestinationIPReader mDestinationReader;
-
     private SharedPreferences mSharedPrefs;
 
     private ScheduledExecutorService mScheduler;
-
 
     public DefaultNetwork(Application app, ConnectivityManager conManager){
 
@@ -57,17 +57,17 @@ public class DefaultNetwork implements INetworkManager{
         worker.start();
         workerHandle = new Handler(worker.getLooper());
 
-        InputStream inputStream = app.getResources().openRawResource(R.raw.destinations);
-        mDestinationReader = new DestinationIPReader(inputStream);
-
+//        InputStream inputStream = app.getResources().openRawResource(R.raw.destinations);
+//        mDestinationReader = new DestinationIPReader(inputStream);
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(app.getApplicationContext());
+        mDestinationReader = new DestinationIPReader();
     }
 
     private synchronized void checkDestinationsConnectivity() {
 
         for(DestinationInfo info: mDestinationReader.mDestinationList){
+            RtspClient client = mClients.get(info.ip);
             if(!info.isConnected){
-                RtspClient client = mClients.get(info.ip);
                 if(client!=null){
                     client.start(); //Retry connection
                     info.isConnected = client.isConnected();
@@ -75,6 +75,9 @@ public class DefaultNetwork implements INetworkManager{
                 else{
                     connectToDestination(info);
                 }
+            }
+            else{
+                info.isConnected = client.isConnected();
             }
         }
     }
@@ -115,7 +118,7 @@ public class DefaultNetwork implements INetworkManager{
 
 
     public boolean startClient() {
-        int delayms = 3000;
+        int delayms = 10000;
         workerHandle.postDelayed(new Runnable() {
             public void run() {
                 checkDestinationsConnectivity();
@@ -140,7 +143,7 @@ public class DefaultNetwork implements INetworkManager{
 
     @Override
     public int getPort(NetworkCapabilities networkCapabilities) {
-        return 8080;
+        return DEFAULT_PORT;
     }
 
     class DestinationInfo{
@@ -185,11 +188,13 @@ public class DefaultNetwork implements INetworkManager{
         }
 
         private void getDestinationIps(){
-            Set<String> ipAddresses = mSharedPrefs.getStringSet("PREF_IP_ADDRESSES", new HashSet<String>());
+            String[] ipAddresses = mSharedPrefs.getString("PREF_IP_ADDRESS", "").split("\\n");
+
             mDestinationList.clear();
 
             for(String ipaddr: ipAddresses){
-                mDestinationList.add(new DestinationInfo(ipaddr, 8080,false));
+                if(!ipaddr.equals(""))
+                    mDestinationList.add(new DestinationInfo(ipaddr, DEFAULT_PORT,false));
             }
         }
     }
