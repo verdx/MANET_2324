@@ -297,8 +297,20 @@ public class RtspClient implements StreamingRecordObserver {
 
 
 	public boolean isConnected(){
-		if(mSocket!=null)
-			return mSocket.isConnected();
+		if(mSocket!=null){
+			String aux = "req";
+			try {
+				mOutputStream.write(aux.getBytes("UTF-8"));
+				mOutputStream.flush();
+			} catch (SocketException e){
+				return false;
+			} catch (IOException e) {
+				return false;
+			}
+
+			return !mSocket.isClosed();
+
+		}
 		return false;
 	}
 
