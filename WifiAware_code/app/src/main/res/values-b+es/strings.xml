@@ -1,0 +1,57 @@
+<resources>
+	<string name="app_name_title">MULTISTREAMING</string>
+	<string name="app_name">Multistreaming</string>
+	<string name="no_streams">No Streams Disponibles</string>
+	<string name="string_on_off">\On/Off WIFI</string>
+	<string name="string_discover_peers">\Discover peers</string>
+	<string name="string_transfer_file">\Transfer File</string>
+	<string name="string_camera">Camera</string>
+	<string name="mi_dispositivo">MI DISPOSITIVO</string>
+	<string name="boton_record">GRABAR</string>
+	<string name="record_video">reproducir</string>
+	<string name="change_camera">cambiar cámara</string>
+	<string name="dispositivos_encontrados">STREAMS DISPONIBLES (%1$d)</string>
+	<string name="connection_status">Estado de la conexión</string>
+	<string name="home">Home</string>
+	<string name="settings">Ajustes</string>
+	<string name="information">Información</string>
+	<string name="menu_gallery">Galería</string>
+    <string name="witness">Witness</string>
+	<string name="humanitarian">Humanitarian</string>
+	<string name="description_mode">Selecciona el escenario de uso de la aplicación</string>
+	<string name="witness_desc">Para retransmitir videos de forma privada</string>
+    <string name="humanitarian_desc">Para alertar sobre situaciones de riesgo cuando no hay conexión a Internet. <b><i>Metadatos como la ubicación pueden ser compartidos.</i></b></string>
+	<string name="todo">TODO</string>
+	<string name="mode_witness">w</string>
+	<string name="mode_humanitarian">h</string>
+	<string name="name_dialog_header">NOMBRE DEL STREAM</string>
+	<string name="name_dialog_hint">Nombre del stream</string>
+	<string name="my_device_info_mode">Modo:</string>
+	<string name="my_device_info_name">Nombre:</string>
+	<string name="record_not_available">Wifi Aware no se encuentra disponible. No puedes grabar</string>
+
+	<string name="video_category_prefs">Preferencias de video</string>
+	<string name="save_my_streaming_prefs">Guardar mis streams</string>
+
+	<string name="panic_category_prefs">Preferencias de Panic</string>
+	<string name="lock_and_exit_prefs">Bloquear y salir</string>
+	<string name="clear_app_data_prefs">Borrar datos de la aplicación</string>
+	<string name="unistall_prefs">Desinstalar esta aplicación</string>
+	<string name="ip_category_prefs">¿Quiénes recibirán el stream?</string>
+	<string name="ip_addrs_edittextprefs">Direcciones IP</string>
+	<string name="ip_addrs_summary">Introduce las direcciones IP de los dispositivos con los que quieres conectarte para enviarles el stream</string>
+	<string name="ip_addrs_dialog">Introduce las direcciones IP</string>
+
+	<string name="wfa_available_str">Wifi Aware disponible</string>
+	<string name="wfa_unavailable_str">Wifi Aware no disponible</string>
+	<string name="defaultnet_unavailable_str">Red por defecto no disponible</string>
+	<string name="unknown_net_availability_str">Disponibilidad desconocida de red</string>
+
+	<string name="save_str">GUARDAR</string>
+	<string name="cancel_str">CANCELAR</string>
+
+	<string name="stream_stop_str">Se ha detenido la transmisión del streaming</string>
+	<string name="record_start_failed_str">No se pudo iniciar la grabacion</string>
+
+
+</resources>

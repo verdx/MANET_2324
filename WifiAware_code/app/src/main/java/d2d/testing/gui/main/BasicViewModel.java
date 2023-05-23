@@ -22,6 +22,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
 
 public class BasicViewModel extends AndroidViewModel implements RtspClient.Callback{
@@ -41,17 +42,17 @@ public class BasicViewModel extends AndroidViewModel implements RtspClient.Callb
     }
 
     @SuppressLint("ResourceType")
-    public Pair<Boolean, String> getDeviceStatus() {
+    public Pair<Boolean, String> getDeviceStatus(Context c) {
         if (mIsNetworkAvailable.getValue()) {
-            return new Pair<>(Boolean.TRUE, getNetworkAvailabilityString(true));
+            return new Pair<>(Boolean.TRUE, getNetworkAvailabilityString(c, true));
         }
         else {
-            return new Pair<>(Boolean.FALSE, getNetworkAvailabilityString(false));
+            return new Pair<>(Boolean.FALSE, getNetworkAvailabilityString(c, false));
         }
     }
 
-    protected String getNetworkAvailabilityString(boolean available){
-        return "Network Availability unknown";
+    protected String getNetworkAvailabilityString(Context c, boolean available){
+        return c.getString(R.string.unknown_net_availability_str);
     }
 
     protected void initNetwork(){}

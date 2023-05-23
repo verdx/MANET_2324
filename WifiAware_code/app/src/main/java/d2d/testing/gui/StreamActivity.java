@@ -133,7 +133,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         recordButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.videocam));
         mRecording = false;
         if(isDownload) saveStream.stopDownload();
-        Toast.makeText(this,"Stopped retransmitting the streaming", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,getString(R.string.stream_stop_str), Toast.LENGTH_SHORT).show();
     }
 
     public void onDestroy(){
@@ -163,7 +163,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
             VideoPacketizerDispatcher.start(PreferenceManager.getDefaultSharedPreferences(this), mVideoQuality);
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(this, "No se pudo iniciar la grabacion", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.record_start_failed_str), Toast.LENGTH_LONG).show();
         }
         surfaces.add(VideoPacketizerDispatcher.getEncoderInputSurface());
 

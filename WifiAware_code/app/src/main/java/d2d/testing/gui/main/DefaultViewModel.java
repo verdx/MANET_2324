@@ -8,6 +8,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import d2d.testing.R;
+
 public class DefaultViewModel extends BasicViewModel{
 
     public static String SERVER_IP = "";
@@ -24,11 +26,11 @@ public class DefaultViewModel extends BasicViewModel{
     }
 
     @Override
-    public String getNetworkAvailabilityString(boolean available){
+    public String getNetworkAvailabilityString(Context c, boolean available){
         if(available){
             return SERVER_IP + ":" + SERVER_PORT;
         }
-        return "Default Network unavailable";
+        return c.getString(R.string.defaultnet_unavailable_str);
     }
 
     @Override

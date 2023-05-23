@@ -69,7 +69,7 @@ public class CustomDialogFragment extends DialogFragment {
 
         builder.setView(customView)
                 // Add action buttons
-                .setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getString(R.string.save_str), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         // sign in the user ...
@@ -81,7 +81,7 @@ public class CustomDialogFragment extends DialogFragment {
                         }
                     }
                 })
-                .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                .setNegativeButton(getString(R.string.cancel_str), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         CustomDialogFragment.this.getDialog().cancel();
                         if(mListener!=null){

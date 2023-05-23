@@ -193,7 +193,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @SuppressLint("ResourceType")
     public String getDeviceStatus() {
-        Pair<Boolean, String> status = mViewModel.getDeviceStatus();
+        Pair<Boolean, String> status = mViewModel.getDeviceStatus(getContext());
         if(status.first){
             myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
             return status.second;

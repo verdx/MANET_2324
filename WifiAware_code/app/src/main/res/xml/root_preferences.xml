@@ -1,32 +1,31 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<PreferenceCategory app:title="Video preferences">
+	<PreferenceCategory app:title="@string/video_category_prefs">
 
 		<SwitchPreferenceCompat
-			app:key="saveMyStreaming" app:title="Save my streaming" />
+			app:key="saveMyStreaming" app:title="@string/save_my_streaming_prefs" />
 
 	</PreferenceCategory>
 
-	<PreferenceCategory app:title="Panic preferences">
+	<PreferenceCategory app:title="@string/panic_category_prefs">
 
 		<SwitchPreferenceCompat
-			app:key="PREF_LOCK_AND_EXIT" app:title="Lock and exit" />
+			app:key="PREF_LOCK_AND_EXIT" app:title="@string/lock_and_exit_prefs" />
 		<SwitchPreferenceCompat
-			app:key="PREF_CLEAR_APP_DATA" app:title="Clear app data" />
+			app:key="PREF_CLEAR_APP_DATA" app:title="@string/clear_app_data_prefs" />
 		<SwitchPreferenceCompat
-			app:key="PREF_UNINSTALL_THIS_APP" app:title="Unistall this app" />
+			app:key="PREF_UNINSTALL_THIS_APP" app:title="@string/unistall_prefs" />
 
 	</PreferenceCategory>
 	<PreferenceCategory
-		app:title="Who will receive the stream?"
+		app:title="@string/ip_category_prefs"
 		app:key="ip_input_category">
 		<EditTextPreference
 			app:key="PREF_IP_ADDRESS"
-			app:title="IP Address"
-			app:summary="Enter the IP address you want to connect to"
-			app:dialogTitle="Enter IP Address"/>
+			app:title="@string/ip_addrs_edittextprefs"
+			app:summary="@string/ip_addrs_summary"
+			app:dialogTitle="@string/ip_addrs_dialog"/>
 <!--			app:dialogMessage="Please enter the IP address you want to connect to" />-->
 	</PreferenceCategory>
-
 
 </PreferenceScreen>

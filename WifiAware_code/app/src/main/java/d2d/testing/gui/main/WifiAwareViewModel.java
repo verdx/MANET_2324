@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
 
 public class WifiAwareViewModel extends BasicViewModel {
@@ -82,11 +83,11 @@ public class WifiAwareViewModel extends BasicViewModel {
     }
 
     @Override
-    protected String getNetworkAvailabilityString(boolean available){
+    protected String getNetworkAvailabilityString(Context c, boolean available){
         if(available){
-            return "Wifi Aware available";
+            return c.getString(R.string.wfa_available_str);
         }
-        return "Wifi Aware unavailable";
+        return c.getString(R.string.wfa_unavailable_str);
     }
 
     @Override
