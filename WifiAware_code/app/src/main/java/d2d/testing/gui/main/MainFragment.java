@@ -20,12 +20,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.UUID;
@@ -57,11 +54,11 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         super.onCreate(savedInstanceState);
         streamList = new ArrayList<>();
 
-        NetworkComponent networkComponent = DaggerNetworkComponent.builder()
+        INetworkComponent INetworkComponent = DaggerINetworkComponent.builder()
                 .fragmentActivityModule(new FragmentActivityModule(requireActivity()))
                 .build();
 
-        networkComponent.inject(this);
+        INetworkComponent.inject(this);
 
     }
 
