@@ -27,15 +27,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 
 import d2d.testing.net.threads.selectors.ChangeRequest;
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
-import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.rtsp.RtspClientWFA;
 
 public class WifiAwareNetwork implements INetworkManager{
@@ -47,7 +44,6 @@ public class WifiAwareNetwork implements INetworkManager{
     private Handler workerHandle;
     private final HandlerThread worker;
     private RTSPServerSelector mServer;
-    private final Map<PeerHandle, RtspClient> mClients;
     private static ConnectivityManager mConManager;
     private RTSPServerWFAModel mServerController;
 
@@ -60,7 +56,6 @@ public class WifiAwareNetwork implements INetworkManager{
         mServerController = null;
 
         this.mWifiAwareManager = wifiAwareManager;
-        this.mClients = new HashMap<>();
         this.mConManager = conManager;
 
         worker = new HandlerThread("WifiAware Worker");
@@ -242,7 +237,7 @@ public class WifiAwareNetwork implements INetworkManager{
                     RtspClientWFA rtspClientWFA = new RtspClientWFA(WifiAwareNetwork.this);
 
                     rtspClientWFA.setCallback(viewModel); //TODO: Cambiar callback a un LiveData Object, puede haber excepciones
-                    mClients.put(peerHandle, rtspClientWFA);
+                    mServerController.addClient(peerHandle, rtspClientWFA);
                     rtspClientWFA.connectionCreated(mConManager, createNetworkRequest(mSubscribeSession, peerHandle, -1));
 
                     processNextConnection();
@@ -274,6 +269,7 @@ public class WifiAwareNetwork implements INetworkManager{
         }
     }
 
+
     public boolean sessionCreated(){
         return mWifiAwareSession != null;
     }
@@ -304,10 +300,12 @@ public class WifiAwareNetwork implements INetworkManager{
             mWifiAwareSession.close();
             mWifiAwareSession = null;
         }
-        for(RtspClient client : mClients.values()){
-            client.release();
+
+        if(mServerController!=null){
+            mServerController.releaseClients();
+            mServerController = null;
         }
-        mClients.clear();
+
         if(mServerController!=null && mServerController.getServer() != null){
             mServerController.stopServer();
             mServerController = null;

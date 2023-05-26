@@ -14,16 +14,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.rtsp.RtspClient;
+import d2d.testing.streaming.rtsp.RtspClientWFA;
 
 public class RTSPServerWFAModel extends RTSPServerModel {
     protected ConnectivityManager mConManager;
     private final Map<PeerHandle, Connection> mConnectionsMap;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
+    private final Map<PeerHandle, RtspClient> mClients;
+
 
     public RTSPServerWFAModel(ConnectivityManager connManager) throws IOException {
         super(connManager);
         mConnectionsMap = new HashMap<>();
         mServerChannelsMap = new HashMap<>();
+        mClients = new HashMap<>();
+
         mConManager = connManager;
 
     }
@@ -108,6 +114,17 @@ public class RTSPServerWFAModel extends RTSPServerModel {
             }
         }
         return null;
+    }
+
+    public void addClient(PeerHandle peerHandle, RtspClientWFA rtspClientWFA) {
+        mClients.put(peerHandle, rtspClientWFA);
+    }
+
+    public void releaseClients() {
+        for(RtspClient client : mClients.values()){
+            client.release();
+        }
+        mClients.clear();
     }
 
     public static class Connection extends RTSPServerModel.Connection{
