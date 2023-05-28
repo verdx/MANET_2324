@@ -63,7 +63,6 @@ public class DefaultNetwork implements INetworkManager{
         mServerController = null;
         this.mConManager = conManager;
 
-
         this.mClients = new HashMap<>();
 
         worker = new HandlerThread("DefaultNetwork Worker");
@@ -79,7 +78,7 @@ public class DefaultNetwork implements INetworkManager{
     private boolean startLocalServer(){
         synchronized (DefaultNetwork.this){
             try {
-                mServerController = new RTSPServerController(/*this, */mConManager);
+                mServerController = new RTSPServerController(mConManager);
                 mServerController.startServer();
 
                 //Pone al server RTSP a escuchar en localhost:1234 para peticiones de descarga de libVLC

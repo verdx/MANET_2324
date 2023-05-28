@@ -23,10 +23,9 @@ public class RTSPServerController {
     RTSPServerSelector mServer;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
-    public RTSPServerController(/*INetworkManager netMana, */ConnectivityManager connManager) throws IOException {
+    public RTSPServerController(ConnectivityManager connManager) throws IOException {
         mServer = new RTSPServerSelector(this, connManager);
         mServerChannelsMap = new HashMap<>();
-//        mNetworkManager = netMana;
     }
 
     public synchronized boolean addNewConnection(String serverIP, int serverPort){
@@ -78,8 +77,6 @@ public class RTSPServerController {
         }
         return true;
 
-//        return mNetworkManager.accept(serverChan, selector);
-
     }
     public void handleAcceptException(ServerSocketChannel serverChan) {
         Log.e(TAG, "Error accepting client connection");
@@ -92,16 +89,9 @@ public class RTSPServerController {
         mServerChannelsMap.put(serverSocketChannel, new Connection(serverSocketChannel));
     }
 
-
-
-    //****************
     public boolean addNewConnection() {
         return mServer.upListeningPort();
     }
-
-//    public void onClientConnected() {
-//    }
-
 
     public static class Connection{
         public Connection(ServerSocketChannel serverChan){

@@ -25,7 +25,7 @@ public class RTSPServerWFAController extends RTSPServerController{
     /*
         * Being final only means that the reference cannot be reasigned after initialization.
         * It doesn't mean that the object itself is immutable
-            * It final as a HashMap, but as a Map instance, its content can be modified
+            * It's final as a HashMap, but as a Map instance, its content can be modified
      */
     private final Map<PeerHandle, Connection> mConnectionsMap;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;

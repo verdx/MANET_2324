@@ -44,11 +44,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     private  EditText myName;
     private TextView myStatus;
-//    private WifiAwareViewModel mAwareModel;
     private TextView numStreams;
     private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
-    TextView tvIP, tvPort;
     public static String SERVER_IP = "";
     public static int SERVER_PORT = 8080;
     DefaultViewModel mViewModel;
@@ -180,8 +178,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 streamList.remove(detail);
             }
             numStreams.setText(getString(R.string.dispositivos_encontrados, streamList.size()));
-            //if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
-            //else progressBar.setVisibility(View.VISIBLE);
             if(streamList.size() == 0) addDefaultItemList();
             arrayAdapter.setStreamsData(streamList);
         }

@@ -25,9 +25,7 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -118,7 +116,6 @@ public class WifiAwareNetwork implements INetworkManager{
                     synchronized (WifiAwareNetwork.this){
                         mPublishSession = session;
                         try {
-                            //------------------------------------v------------------------------------------
                             mServerController = new RTSPServerWFAController(mConManager);
                             mServerController.startServer();
 
