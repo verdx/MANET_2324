@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Queue;
 
 import d2d.testing.net.threads.selectors.ChangeRequest;
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.rtsp.RtspClientWFA;
 
 public class WifiAwareNetwork implements INetworkManager{
@@ -43,7 +42,6 @@ public class WifiAwareNetwork implements INetworkManager{
     private WifiAwareSession mWifiAwareSession;
     private Handler workerHandle;
     private final HandlerThread worker;
-    private RTSPServerSelector mServer;
     private static ConnectivityManager mConManager;
     private RTSPServerWFAModel mServerController;
 
@@ -52,7 +50,6 @@ public class WifiAwareNetwork implements INetworkManager{
         mWifiAwareSession = null;
         mPublishSession = null;
         mSubscribeSession = null;
-        mServer = null;
         mServerController = null;
 
         this.mWifiAwareManager = wifiAwareManager;

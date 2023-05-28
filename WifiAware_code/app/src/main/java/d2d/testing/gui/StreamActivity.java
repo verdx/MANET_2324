@@ -91,7 +91,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
             dialog.show(getSupportFragmentManager(), "CustomDialogFragment");
         }
         else {
-            putAutorInDefaultName();
+            putAuthorInDefaultName();
         }
 
         mTextureView = findViewById(R.id.textureView);
@@ -120,6 +120,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
                 }
             }
         });
+
     }
 
     private File writeBaseFile(){
@@ -374,11 +375,11 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     @Override
     public void onDialogNegative(Object object) {
-        putAutorInDefaultName();
+        putAuthorInDefaultName();
 
     }
 
-    private void putAutorInDefaultName(){
+    private void putAuthorInDefaultName(){
         String author = getIntent().getStringExtra("author");
         author = author.replaceAll("\\s+$", "");
         author = author.replaceAll("\\s+", "_");
