@@ -24,11 +24,17 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Base64;
 import java.util.UUID;
 
+import d2d.testing.gui.main.ProofManager;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
 import d2d.testing.streaming.audio.AudioStream;
@@ -336,6 +342,31 @@ public class Session {
 			sessionDescription.append(mVideoStream.getSessionDescription());
 			sessionDescription.append("a=control:trackID="+1+"\r\n");
 		}
+
+
+		File proofFile = ProofManager.getInstance().getProofZipFile();
+
+		try {
+			FileInputStream fis = new FileInputStream(proofFile);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+			byte[] buffer = new byte[1024];
+			int len;
+			while ((len = fis.read(buffer)) > 0) {
+				baos.write(buffer, 0, len);
+			}
+
+			// Encode the byte array as a Base64 string
+			String encodedData = Base64.getEncoder().encodeToString(baos.toByteArray());
+
+			sessionDescription.append("a=proof:name=" + ProofManager.getInstance().getFileName() + "\r\n");
+			sessionDescription.append("a=proof:file=" + encodedData);
+
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+
 		return sessionDescription.toString();
 	}
 

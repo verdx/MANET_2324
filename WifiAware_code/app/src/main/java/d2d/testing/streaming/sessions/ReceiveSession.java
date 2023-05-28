@@ -3,6 +3,7 @@ package d2d.testing.streaming.sessions;
 import android.net.Network;
 import android.os.HandlerThread;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
@@ -17,14 +18,17 @@ public class ReceiveSession {
     private int mDestPort;
     private int mTimeToLive = 64;
     public final String mSessionID;
-
     private TrackInfo mVideoTrackInfo;
     private TrackInfo mAudioTrackInfo;
     private String path;
-
     public String mStreamingName;
-
     private Network mReceiveNet;
+
+
+
+    private byte[] mProofFileByteArr;
+
+    private String mProofFilename;
 
 
     /**
@@ -99,6 +103,16 @@ public class ReceiveSession {
     }
 
 
+
+
+    public byte[] getProofByteArr() {
+        return mProofFileByteArr;
+    }
+
+    public void setProofArr(byte[] proof) {
+        this.mProofFileByteArr = proof;
+    }
+
     /**
      * Asynchronously starts all streams of the session.
      **/
@@ -156,5 +170,13 @@ public class ReceiveSession {
 
     public String getPath() {
         return path;
+    }
+
+    public void setProofFilename(String filename) {
+        mProofFilename = filename;
+    }
+
+    public String getProofFilename() {
+        return mProofFilename;
     }
 }

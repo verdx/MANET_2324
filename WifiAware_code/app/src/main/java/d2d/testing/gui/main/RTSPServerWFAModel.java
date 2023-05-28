@@ -19,6 +19,12 @@ import d2d.testing.streaming.rtsp.RtspClientWFA;
 
 public class RTSPServerWFAModel extends RTSPServerModel {
     protected ConnectivityManager mConManager;
+
+    /*
+        * Being final only means that the reference cannot be reasigned after initialization.
+        * It doesn't mean that the object itself is immutable
+            * It's final as a HashMap, but as a Map instance, its content can be modified
+     */
     private final Map<PeerHandle, Connection> mConnectionsMap;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
     private final Map<PeerHandle, RtspClient> mClients;

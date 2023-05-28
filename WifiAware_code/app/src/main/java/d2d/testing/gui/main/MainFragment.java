@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -59,6 +60,9 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 .build();
 
         INetworkComponent.inject(this);
+
+        ProofManager.getInstance().setProofDir(String.valueOf(getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)));
+        PackageManager packageManager = getContext().getPackageManager();
 
     }
 
@@ -163,8 +167,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                 streamList.remove(detail);
             }
             numStreams.setText(getString(R.string.dispositivos_encontrados, streamList.size()));
-            //if(streamList.size() != 0) progressBar.setVisibility(View.INVISIBLE);
-            //else progressBar.setVisibility(View.VISIBLE);
             if(streamList.size() == 0) addDefaultItemList();
             arrayAdapter.setStreamsData(streamList);
         }

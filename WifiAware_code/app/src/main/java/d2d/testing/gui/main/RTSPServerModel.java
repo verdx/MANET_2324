@@ -90,13 +90,9 @@ public class RTSPServerModel {
         mServerChannelsMap.put(serverSocketChannel, new Connection(serverSocketChannel));
     }
 
-
-
-    //****************
     public boolean addNewConnection() {
         return mServer.upListeningPort();
     }
-
 
     public static class Connection{
         public Connection(ServerSocketChannel serverChan){
