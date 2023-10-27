@@ -108,16 +108,13 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         //mSurfaceView.getHolder().addCallback(this);
 
         recordButton = findViewById(R.id.button_capture);
-        recordButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!mRecording) {
-                    setProofMode();
+        recordButton.setOnClickListener(v -> {
+            if(!mRecording) {
+                setProofMode();
 
-                    startStreaming();
-                } else {
-                    stopStreaming();
-                }
+                startStreaming();
+            } else {
+                stopStreaming();
             }
         });
 

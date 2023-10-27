@@ -1,10 +1,6 @@
 package d2d.testing.gui.main;
 
 import android.content.Context;
-import android.graphics.text.LineBreaker;
-import android.os.UserHandle;
-import android.text.Html;
-import android.text.Layout;
 import android.text.method.ReplacementTransformationMethod;
 import android.view.LayoutInflater;
 import android.view.View;

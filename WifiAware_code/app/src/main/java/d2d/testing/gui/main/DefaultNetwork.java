@@ -7,7 +7,6 @@ import android.net.NetworkCapabilities;
 import android.net.TransportInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Pair;
 
 import androidx.preference.PreferenceManager;
 
@@ -18,17 +17,10 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
-import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
 
 public class DefaultNetwork implements INetworkManager{

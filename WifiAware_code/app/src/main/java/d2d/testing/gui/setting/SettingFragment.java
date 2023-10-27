@@ -19,10 +19,6 @@ public class SettingFragment extends PreferenceFragmentCompat{
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey);
-        PreferenceCategory preferenceCategory = findPreference("ip_input_category");
-        if (preferenceCategory != null) {
-            preferenceCategory.setVisible(NetworkModule.showIpPreference);
-        }
 
     }
 

@@ -151,13 +151,13 @@ public class ModeActivity extends AppCompatActivity {
 
         final boolean lockAndExit = prefs.getBoolean("PREF_LOCK_AND_EXIT", true);
         final boolean clearAppData = prefs.getBoolean("PREF_CLEAR_APP_DATA", false);
-        final boolean unistallThisApp = prefs.getBoolean("PREF_UNINSTALL_THIS_APP", false);
+        final boolean uninstallThisApp = prefs.getBoolean("PREF_UNINSTALL_THIS_APP", false);
 
         //String context = PanicResponder.getConnectIntentSender(this);
         PanicResponder.setTriggerPackageName(this);
 
         if (PanicResponder.receivedTriggerFromConnectedApp(this)) {
-            if (unistallThisApp) {
+            if (uninstallThisApp) {
                 Log.i(TAG, PREF_UNINSTALL_THIS_APP + " " + getApplication().getPackageName());
                 Intent uninstall = new Intent(Intent.ACTION_DELETE);
                 uninstall.setData(Uri.parse("package:" + getApplication().getPackageName()));

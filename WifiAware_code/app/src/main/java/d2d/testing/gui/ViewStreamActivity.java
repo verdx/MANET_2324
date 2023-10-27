@@ -1,25 +1,18 @@
 package d2d.testing.gui;
 
 import android.content.pm.ActivityInfo;
-
 import android.graphics.SurfaceTexture;
-import android.os.Bundle;
-
 import android.net.Uri;
-import android.util.DisplayMetrics;
+import android.os.Bundle;
 import android.util.Log;
-
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ProgressBar;
-import android.widget.VideoView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
