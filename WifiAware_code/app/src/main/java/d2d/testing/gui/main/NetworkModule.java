@@ -1,14 +1,7 @@
 package d2d.testing.gui.main;
 
-import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.widget.Toast;
-
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.EditTextPreference;
-import androidx.preference.PreferenceScreen;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,16 +10,13 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Singleton;
-
 import d2d.testing.R;
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 
 @Module
 public class NetworkModule {
-    private static final String WIFIAWARE = "WFA";
+    private static final String WIFI_AWARE = "WFA";
     String mNetwork;
     public static boolean showIpPreference = false;
 
@@ -34,7 +24,7 @@ public class NetworkModule {
     BasicViewModel provideNetworkViewModel(FragmentActivity activity) {
         readConfig(activity.getResources().openRawResource(R.raw.config));
         switch (mNetwork){
-            case WIFIAWARE:
+            case WIFI_AWARE:
                 return new ViewModelProvider(activity).get(WifiAwareViewModel.class);
             default:
                 showIpPreference = true;
@@ -42,12 +32,6 @@ public class NetworkModule {
         }
 
     }
-
-    @Provides
-    boolean showIpPreference(){
-        return showIpPreference;
-    }
-
 
 //    @Binds
 //    abstract BasicViewModel bindBasicViewModel(BasicViewModel basicViewModel);

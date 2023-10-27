@@ -56,13 +56,12 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         streamList = new ArrayList<>();
 
         INetworkComponent INetworkComponent = DaggerINetworkComponent.builder()
-                .fragmentActivityModule(new FragmentActivityModule(requireActivity()))
+                .fragmentActivity(requireActivity())
                 .build();
 
         INetworkComponent.inject(this);
 
         ProofManager.getInstance().setProofDir(String.valueOf(getContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)));
-        PackageManager packageManager = getContext().getPackageManager();
 
     }
 
