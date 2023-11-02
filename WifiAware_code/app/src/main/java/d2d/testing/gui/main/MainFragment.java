@@ -86,7 +86,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                     Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
                 }
                 else{
-                    handleCamera();
+                    openStreamActivity();
                 }
 
             }
@@ -183,10 +183,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     public void openStreamActivity(String uuid) {
         openViewStreamActivity(getActivity(), uuid);
-    }
-
-    private void handleCamera(){
-        openStreamActivity();
     }
 
     @SuppressLint("ResourceType")
