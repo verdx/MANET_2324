@@ -134,13 +134,9 @@ public class DefaultNetwork extends INetworkManager {
     @Override
     public InetAddress getInetAddress(NetworkCapabilities networkCapabilities) {
         TransportInfo ti = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            ti = networkCapabilities.getTransportInfo();
-        }
+        ti = networkCapabilities.getTransportInfo();
         InetAddress inetAddress = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            inetAddress = (InetAddress) ti;
-        }
+        inetAddress = (InetAddress) ti;
         return inetAddress;
     }
 
