@@ -31,7 +31,7 @@ import d2d.testing.streaming.sessions.ReceiveSession;
 import d2d.testing.streaming.sessions.Session;
 import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.sessions.TrackInfo;
-import d2d.testing.utils.Logger;
+import d2d.testing.streaming.utils.Logger;
 
 
 /**

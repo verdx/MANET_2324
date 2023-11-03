@@ -1,4 +1,4 @@
-package d2d.testing.utils;
+package d2d.testing.streaming.utils;
 
 import android.util.Log;
 

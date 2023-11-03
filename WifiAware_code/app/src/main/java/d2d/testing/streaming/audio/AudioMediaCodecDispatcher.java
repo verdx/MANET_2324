@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import d2d.testing.utils.Logger;
+import d2d.testing.streaming.utils.Logger;
 
 public class AudioMediaCodecDispatcher implements Runnable {
 
