@@ -133,10 +133,8 @@ public class DefaultNetwork extends INetworkManager {
 
     @Override
     public InetAddress getInetAddress(NetworkCapabilities networkCapabilities) {
-        TransportInfo ti = null;
-        ti = networkCapabilities.getTransportInfo();
-        InetAddress inetAddress = null;
-        inetAddress = (InetAddress) ti;
+        TransportInfo ti = networkCapabilities.getTransportInfo();
+        InetAddress inetAddress = (InetAddress) ti;
         return inetAddress;
     }
 
