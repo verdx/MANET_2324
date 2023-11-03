@@ -7,8 +7,8 @@ import java.net.InetAddress;
 import java.nio.channels.SelectableChannel;
 import java.util.Random;
 
-import d2d.testing.net.threads.selectors.UDPServerSelector;
-import d2d.testing.gui.main.WifiAwareViewModel;
+import d2d.testing.streaming.network.INetworkManager;
+import d2d.testing.streaming.threads.selectors.UDPServerSelector;
 
 public class TrackInfo {
     private int mLocalRtpPort;
@@ -26,6 +26,8 @@ public class TrackInfo {
     private String mSSRCHex;
     private String mSessionDescription;
 
+    private INetworkManager mNetworkManager;
+
     public TrackInfo() {
         setLocalPorts(16000 + new Random().nextInt(2000));
         setRemotePorts(14000 + new Random().nextInt(2000));
@@ -36,10 +38,10 @@ public class TrackInfo {
     }
 
     public void startServer(Network receiveNet) throws IOException {
-        mRtcpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtcpPort, receiveNet, WifiAwareViewModel.getConnectivityManager());
+        mRtcpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtcpPort, receiveNet, mNetworkManager.getConnectivityManager());
         mRtcpUdpServer.start();
 
-        mRtpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtpPort, receiveNet, WifiAwareViewModel.getConnectivityManager());
+        mRtpUdpServer = new UDPServerSelector(mLocalAddress, mLocalRtpPort, receiveNet, mNetworkManager.getConnectivityManager());
         mRtpUdpServer.start();
     }
 

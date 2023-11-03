@@ -16,15 +16,12 @@
  * limitations under the License.
  */
 
-package d2d.testing.streaming.rtsp;
+package d2d.testing.gui.main;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -33,30 +30,11 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import d2d.testing.gui.main.INetworkManager;
-import d2d.testing.streaming.Stream;
-import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.StreamingRecordObserver;
-import d2d.testing.streaming.rtp.RtpSocket;
-import d2d.testing.streaming.sessions.RebroadcastSession;
-import d2d.testing.streaming.sessions.Session;
-import d2d.testing.streaming.sessions.SessionBuilder;
+import d2d.testing.streaming.network.INetworkManager;
+import d2d.testing.streaming.rtsp.RtspClient;
 
 /**
  * RFC 2326.

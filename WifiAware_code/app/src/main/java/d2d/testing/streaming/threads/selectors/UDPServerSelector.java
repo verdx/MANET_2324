@@ -1,4 +1,4 @@
-package d2d.testing.net.threads.selectors;
+package d2d.testing.streaming.threads.selectors;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -17,8 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import d2d.testing.net.threads.workers.EchoWorker;
-import d2d.testing.utils.Logger;
+import d2d.testing.streaming.threads.workers.EchoWorker;
 
 public class UDPServerSelector extends AbstractSelector {
     private DatagramChannel mDatagramChannel;
@@ -54,7 +53,6 @@ public class UDPServerSelector extends AbstractSelector {
             mStatusUDP = STATUS_LISTENING;
             this.addChangeRequest(new ChangeRequest(mDatagramChannel, ChangeRequest.REGISTER, SelectionKey.OP_READ));
             if(mConManager != null) mConManager.bindProcessToNetwork(null);
-            Logger.d("UDPServerSelector: initiateConnection as server listening UDP on port " + mLocalAddress.getHostAddress() + ":" + mPortUDP);
         } catch (IOException e) {
             mStatusUDP = STATUS_DISCONNECTED;
             e.printStackTrace();
@@ -67,15 +65,12 @@ public class UDPServerSelector extends AbstractSelector {
         datagramChannel.connect(new InetSocketAddress(address.getHostAddress(), port));
         addChangeRequest(new ChangeRequest(datagramChannel, ChangeRequest.REGISTER, SelectionKey.OP_WRITE));
         mConnections.add(datagramChannel);
-        Logger.d("UDPServerSelector: initiateConnection UDP client 'connected' to " + address.getHostAddress() + ":" + port);
-
         return datagramChannel;
     }
 
     /*
     @Override
     public void send(byte[] data) {
-        Logger.d("UDPServerSelector: sending " + data.length + "bytes to " + mConnections.size());
         for (SelectableChannel socket : mConnections) {
             mBuffers.put(socket, ByteBuffer.wrap(data));
         }
@@ -94,7 +89,6 @@ public class UDPServerSelector extends AbstractSelector {
      */
     @Override
     public void send(byte[] data) {
-        Logger.d("UDPServerSelector: sending " + data.length + "bytes to " + mConnections.size());
         for (SelectableChannel socket : mConnections) {
             this.send(socket, data);
         }

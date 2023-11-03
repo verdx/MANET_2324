@@ -31,10 +31,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import d2d.testing.net.threads.selectors.ChangeRequest;
-import d2d.testing.streaming.rtsp.RtspClientWFA;
+import d2d.testing.streaming.network.INetworkManager;
+import d2d.testing.streaming.threads.selectors.ChangeRequest;
 
-public class WifiAwareNetwork implements INetworkManager{
+public class WifiAwareNetwork extends INetworkManager {
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;
     private WifiAwareManager mWifiAwareManager;
     private PublishDiscoverySession mPublishSession;
@@ -279,7 +279,7 @@ public class WifiAwareNetwork implements INetworkManager{
         return mSubscribeSession != null;
     }
 
-    public static ConnectivityManager getConnectivityManager() {
+    public ConnectivityManager getConnectivityManager() {
         return mConManager;
     }
 

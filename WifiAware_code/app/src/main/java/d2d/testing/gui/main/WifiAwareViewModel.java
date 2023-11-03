@@ -123,8 +123,8 @@ public class WifiAwareViewModel extends BasicViewModel {
         return mWifiAwareNetwork.subscribeSessionCreated();
     }
 
-    public static ConnectivityManager getConnectivityManager() {
-        return WifiAwareNetwork.getConnectivityManager();
+    public ConnectivityManager getConnectivityManager() {
+        return mWifiAwareNetwork.getConnectivityManager();
     }
 
 

@@ -1,12 +1,12 @@
-package d2d.testing.net.threads.workers;
+package d2d.testing.streaming.threads.workers;
 
 import java.nio.channels.SelectableChannel;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import d2d.testing.net.packets.DataReceived;
-import d2d.testing.net.threads.selectors.AbstractSelector;
+import d2d.testing.streaming.packets.DataReceived;
+import d2d.testing.streaming.threads.selectors.AbstractSelector;
 
 /**
  * Define el flujo general de trabajo que tiene que realizar un cliente-servidor.

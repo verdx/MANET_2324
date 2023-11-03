@@ -1,12 +1,9 @@
-package d2d.testing.net.threads.selectors;
+package d2d.testing.streaming.threads.selectors;
 
-import android.annotation.SuppressLint;
 import android.net.ConnectivityManager;
 import android.util.Log;
-import android.util.Pair;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.DatagramChannel;
@@ -28,10 +25,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import d2d.testing.utils.Logger;
-import d2d.testing.net.threads.workers.AbstractWorker;
+import d2d.testing.streaming.threads.workers.AbstractWorker;
 
-import static java.lang.Thread.sleep;
 
 /**
  * Esta clase se encarga de gestionar las peticiones de los canales de comunicacion.

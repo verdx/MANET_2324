@@ -1,8 +1,8 @@
-package d2d.testing.net.packets;
+package d2d.testing.streaming.packets;
 
 import java.nio.channels.SelectableChannel;
 
-import d2d.testing.net.threads.selectors.AbstractSelector;
+import d2d.testing.streaming.threads.selectors.AbstractSelector;
 
 public class DataReceived {
     private final AbstractSelector mSelector;

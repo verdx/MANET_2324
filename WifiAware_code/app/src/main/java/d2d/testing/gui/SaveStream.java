@@ -2,17 +2,11 @@ package d2d.testing.gui;
 
 import android.content.Context;
 import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 
-import org.videolan.libvlc.IVLCVout;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;

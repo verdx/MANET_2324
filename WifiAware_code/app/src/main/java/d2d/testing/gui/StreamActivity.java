@@ -1,28 +1,24 @@
 package d2d.testing.gui;
 
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.res.Resources;
 import android.graphics.SurfaceTexture;
 import android.location.Location;
 import android.media.MediaCodec;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 
 import d2d.testing.BuildConfig;
-import d2d.testing.gui.main.ProofManager;
+import d2d.testing.streaming.network.ProofManager;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;

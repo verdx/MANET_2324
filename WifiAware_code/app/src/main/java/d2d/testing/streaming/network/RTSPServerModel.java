@@ -1,4 +1,4 @@
-package d2d.testing.gui.main;
+package d2d.testing.streaming.network;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -15,12 +15,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import d2d.testing.net.threads.selectors.ChangeRequest;
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.threads.selectors.ChangeRequest;
+import d2d.testing.streaming.threads.selectors.RTSPServerSelector;
 
 public class RTSPServerModel {
     public static final String TAG = "RTSPServerModel";
-    RTSPServerSelector mServer;
+
+    public RTSPServerSelector getmServer() {
+        return mServer;
+    }
+
+    protected RTSPServerSelector mServer;
     private final Map<ServerSocketChannel, Connection> mServerChannelsMap;
 
     public RTSPServerModel(ConnectivityManager connManager) throws IOException {

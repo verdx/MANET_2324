@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import d2d.testing.R;
+import d2d.testing.streaming.network.DefaultNetwork;
 
 public class DefaultViewModel extends BasicViewModel{
 

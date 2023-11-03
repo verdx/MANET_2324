@@ -37,6 +37,7 @@ import d2d.testing.gui.ViewStreamActivity;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
+import d2d.testing.streaming.network.ProofManager;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
 

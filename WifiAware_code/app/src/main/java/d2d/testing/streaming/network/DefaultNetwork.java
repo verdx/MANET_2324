@@ -1,4 +1,4 @@
-package d2d.testing.gui.main;
+package d2d.testing.streaming.network;
 
 import android.app.Application;
 import android.content.SharedPreferences;
@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import d2d.testing.streaming.rtsp.RtspClient;
 
-public class DefaultNetwork implements INetworkManager{
+public class DefaultNetwork extends INetworkManager {
 
     public static int DEFAULT_PORT = 8080;
 
@@ -75,7 +75,7 @@ public class DefaultNetwork implements INetworkManager{
     }
 
     private void connectToDestination(DestinationInfo dest) {
-        RtspClient client = new RtspClient(DefaultNetwork.this);
+        RtspClient client = new RtspClient(this);
         client.setServerAddress(dest.ip, dest.port);
         client.connectionCreated();
         client.start();
@@ -127,9 +127,20 @@ public class DefaultNetwork implements INetworkManager{
     }
 
     @Override
+    public ConnectivityManager getConnectivityManager() {
+        return mConManager;
+    }
+
+    @Override
     public InetAddress getInetAddress(NetworkCapabilities networkCapabilities) {
-        TransportInfo ti = networkCapabilities.getTransportInfo();
-        InetAddress inetAddress = (InetAddress) ti;
+        TransportInfo ti = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            ti = networkCapabilities.getTransportInfo();
+        }
+        InetAddress inetAddress = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            inetAddress = (InetAddress) ti;
+        }
         return inetAddress;
     }
 

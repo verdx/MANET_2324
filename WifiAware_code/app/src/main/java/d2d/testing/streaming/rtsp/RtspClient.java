@@ -59,8 +59,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipOutputStream;
 
-import d2d.testing.gui.main.INetworkManager;
-import d2d.testing.gui.main.ProofManager;
+import d2d.testing.streaming.network.INetworkManager;
+import d2d.testing.streaming.network.ProofManager;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;

@@ -1,4 +1,4 @@
-package d2d.testing.net.threads.selectors;
+package d2d.testing.streaming.threads.selectors;
 
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -12,8 +12,8 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import d2d.testing.gui.main.RTSPServerModel;
-import d2d.testing.net.threads.workers.RTSPServerWorker;
+import d2d.testing.streaming.network.RTSPServerModel;
+import d2d.testing.streaming.threads.workers.RTSPServerWorker;
 
 /**
  * Implementacion del AbstractSelector. Se encarga de crear un ServerSocketChannel y asociarlo al

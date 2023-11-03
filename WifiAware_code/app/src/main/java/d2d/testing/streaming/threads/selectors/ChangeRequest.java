@@ -1,4 +1,4 @@
-package d2d.testing.net.threads.selectors;
+package d2d.testing.streaming.threads.selectors;
 
 import java.nio.channels.SelectableChannel;
 

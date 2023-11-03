@@ -13,9 +13,9 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.network.RTSPServerModel;
 import d2d.testing.streaming.rtsp.RtspClient;
-import d2d.testing.streaming.rtsp.RtspClientWFA;
+import d2d.testing.streaming.threads.selectors.RTSPServerSelector;
 
 public class RTSPServerWFAModel extends RTSPServerModel {
     protected ConnectivityManager mConManager;

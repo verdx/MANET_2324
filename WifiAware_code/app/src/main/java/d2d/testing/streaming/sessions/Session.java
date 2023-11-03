@@ -18,23 +18,21 @@
 
 package d2d.testing.streaming.sessions;
 
-import android.hardware.Camera.CameraInfo;
+import static java.util.UUID.randomUUID;
+
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Base64;
 import java.util.UUID;
 
-import d2d.testing.gui.main.ProofManager;
 import d2d.testing.streaming.Stream;
 import d2d.testing.streaming.audio.AudioQuality;
 import d2d.testing.streaming.audio.AudioStream;
@@ -42,12 +40,10 @@ import d2d.testing.streaming.exceptions.CameraInUseException;
 import d2d.testing.streaming.exceptions.ConfNotSupportedException;
 import d2d.testing.streaming.exceptions.InvalidSurfaceException;
 import d2d.testing.streaming.exceptions.StorageUnavailableException;
-import d2d.testing.streaming.gl.SurfaceView;
+import d2d.testing.streaming.network.ProofManager;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.video.VideoQuality;
 import d2d.testing.streaming.video.VideoStream;
-
-import static java.util.UUID.randomUUID;
 
 /**
  * You should instantiate this class with the {@link SessionBuilder}.<br />

@@ -1,18 +1,15 @@
-package d2d.testing.net.threads.workers;
+package d2d.testing.streaming.threads.workers;
 
 import android.util.Base64;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +19,10 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import d2d.testing.gui.main.MainFragment;
-import d2d.testing.gui.main.ProofManager;
-import d2d.testing.net.packets.DataReceived;
-import d2d.testing.net.threads.selectors.RTSPServerSelector;
+import d2d.testing.streaming.threads.selectors.RTSPServerSelector;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
+import d2d.testing.streaming.packets.DataReceived;
 import d2d.testing.streaming.rtsp.RtspRequest;
 import d2d.testing.streaming.rtsp.RtspResponse;
 import d2d.testing.streaming.rtsp.UriParser;
