@@ -6,22 +6,20 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
 import android.location.Location;
-import android.media.MediaCodec;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Size;
-import android.view.Surface;
 import android.view.TextureView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 
 import d2d.testing.BuildConfig;
-import d2d.testing.streaming.network.ProofManager;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
+import d2d.testing.streaming.gui.AutoFitTextureView;
 import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;
@@ -48,15 +46,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 
-public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener {
+public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener, View.OnClickListener {
 
     private final static String TAG = "StreamActivity";
 
@@ -65,13 +61,13 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     private SessionBuilder mSessionBuilder;
 
     private FloatingActionButton recordButton;
+    private FloatingActionButton switchButton;
     public boolean mRecording = false;
 
     private String mNameStreaming = "defaultName";
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
 
     private boolean isDownload;
-    CameraController ctrl;
 
     private SaveStream saveStream;
 
@@ -104,15 +100,9 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         //mSurfaceView.getHolder().addCallback(this);
 
         recordButton = findViewById(R.id.button_capture);
-        recordButton.setOnClickListener(v -> {
-            if(!mRecording) {
-                setProofMode();
-
-                startStreaming();
-            } else {
-                stopStreaming();
-            }
-        });
+        switchButton = findViewById(R.id.button_switch_camera);
+        recordButton.setOnClickListener(this);
+        switchButton.setOnClickListener(this);
 
     }
 
@@ -191,12 +181,10 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         //get the folder that proof is stored
         File proofDir = ProofMode.getProofDir(StreamActivity.this, proofHash);
 
-//        shareProof(proofDir);
+        shareProof(proofDir);
 
         try {
             File res = makeProofZip(proofDir);
-
-            ProofManager.getInstance().setProofZipFile(proofHash, res);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -292,26 +280,8 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-        ctrl = CameraController.getInstance();
-        List<Surface> surfaces = new ArrayList<>();
-        String cameraId = ctrl.getCameraIdList()[0];
-        Size[] resolutions = ctrl.getPrivType_2Target_MaxResolutions(cameraId, SurfaceTexture.class, MediaCodec.class);
-
-        mTextureView.setAspectRatio(resolutions[0].getWidth(), resolutions[0].getHeight());
-        SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
-        surfaceTexture.setDefaultBufferSize(resolutions[0].getWidth(), resolutions[0].getHeight());
-        Surface surfaceT = new Surface(surfaceTexture);
-        surfaces.add(surfaceT);
-
-        try {
-            VideoPacketizerDispatcher.start(PreferenceManager.getDefaultSharedPreferences(this), mVideoQuality);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, getString(R.string.record_start_failed_str), Toast.LENGTH_LONG).show();
-        }
-        surfaces.add(VideoPacketizerDispatcher.getEncoderInputSurface());
-
-        ctrl.startCamera(cameraId, surfaces);
+        CameraController.getInstance().configureCamera(mTextureView, this);
+        CameraController.getInstance().startCamera();
     }
 
     @Override
@@ -377,5 +347,20 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         author = author.replaceAll("\\s+$", "");
         author = author.replaceAll("\\s+", "_");
         mNameStreaming = mNameStreaming +  "__" + author;
+    }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.button_capture){
+            if(!mRecording) {
+                setProofMode();
+
+                startStreaming();
+            } else {
+                stopStreaming();
+            }
+        } else if (view.getId() == R.id.button_switch_camera) {
+            CameraController.getInstance().switchCamera();
+        }
     }
 }
