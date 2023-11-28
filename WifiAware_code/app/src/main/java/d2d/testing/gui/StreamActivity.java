@@ -1,21 +1,24 @@
 package d2d.testing.gui;
 
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.SurfaceTexture;
-import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
-import d2d.testing.BuildConfig;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.UUID;
+
+import d2d.testing.R;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
 import d2d.testing.streaming.StreamingRecord;
@@ -24,32 +27,6 @@ import d2d.testing.streaming.sessions.SessionBuilder;
 import d2d.testing.streaming.video.CameraController;
 import d2d.testing.streaming.video.VideoPacketizerDispatcher;
 import d2d.testing.streaming.video.VideoQuality;
-
-import d2d.testing.R;
-
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-import androidx.preference.PreferenceManager;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import org.witness.proofmode.ProofMode;
-import org.witness.proofmode.util.GPSTracker;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Random;
-import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 
 public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener, View.OnClickListener {
@@ -65,7 +42,7 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     public boolean mRecording = false;
 
     private String mNameStreaming = "defaultName";
-    private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
+    private final VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
 
     private boolean isDownload;
 
@@ -105,140 +82,6 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
         switchButton.setOnClickListener(this);
 
     }
-
-    private File writeBaseFile(){
-        // Get the directory where the file will be saved
-        File directory = getFilesDir();
-
-        // Create a File object for the file you want to write to
-        File file = new File(directory, "myFile.txt");
-
-        try {
-            // Create a FileOutputStream object to write to the file
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-
-            String locationStr = getLocationStr();
-            Random rand = new Random();
-            String randomNumber = String.valueOf(rand.nextDouble());
-
-            fileOutputStream.write(locationStr.getBytes());
-            fileOutputStream.write(randomNumber.getBytes());
-            fileOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
-
-
-    private String getLocationStr(){
-        String location = "";
-
-        GPSTracker gpsTracker = new GPSTracker(this);
-        if (gpsTracker.canGetLocation()) {
-            Location loc = gpsTracker.getLocation();
-
-            for (int waitIdx = 0; loc == null && waitIdx < 3; loc = gpsTracker.getLocation()) {
-                ++waitIdx;
-                try {
-                    Thread.sleep(500L);
-                } catch (Exception var16) {
-                }
-            }
-
-            if (loc != null) {
-                location += "Location.Latitude: " + loc.getLatitude() + "\n"
-                        + "Location.Longitude: " + loc.getLongitude() + "\n"
-                        + "Location.Altitude: " + loc.getAltitude() + "\n"
-                        + "Location.Time: " + loc.getTime() + "\n";
-            }
-        }
-        return location;
-    }
-
-    private void setProofMode(){
-        boolean proofDeviceIds = true;
-        boolean proofLocation = true;
-        boolean proofNetwork = true;
-        boolean proofNotary = false;
-
-//        ProofMode.setProofPoints(this, proofDeviceIds, proofLocation, proofNetwork, proofNotary);
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("trackDeviceId", proofDeviceIds);
-        editor.putBoolean("trackLocation", proofLocation);
-        editor.putBoolean("autoNotarize", proofNotary);
-        editor.putBoolean("trackMobileNetwork", proofNetwork);
-        editor.apply();
-
-        Uri uri = Uri.fromFile(writeBaseFile());
-
-        //generate proof for a URI
-        String proofHash = ProofMode.generateProof(this, uri);
-
-        //get the folder that proof is stored
-        File proofDir = ProofMode.getProofDir(StreamActivity.this, proofHash);
-
-        shareProof(proofDir);
-
-        try {
-            File res = makeProofZip(proofDir);
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void shareProof(File proofDir){
-        try {
-            File res = makeProofZip(proofDir);
-            try {
-                if (res.exists()) {
-                    Uri auxUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", res);
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    intent.setType("*/*");
-                    intent.putExtra(Intent.EXTRA_STREAM, auxUri);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    startActivity(intent);
-                    startActivity(Intent.createChooser(intent, "Share via"));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.e(TAG, "setProofMode: ", e);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private File makeProofZip(File proofDirPath) throws IOException {
-        File outputZipFile = new File(getFilesDir(), proofDirPath.getName() + ".zip");
-        try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputZipFile)))) {
-            Files.walkFileTree(proofDirPath.toPath(), new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String zipFileName = file.toAbsolutePath().toString().substring(proofDirPath.getAbsolutePath().length() + 1);
-                    ZipEntry entry = new ZipEntry(zipFileName + (file.toFile().isDirectory() ? "/" : ""));
-                    zos.putNextEntry(entry);
-                    if (file.toFile().isFile()) {
-                        Files.copy(file, zos);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            ZipEntry keyEntry = new ZipEntry("pubkey.asc");
-            zos.putNextEntry(keyEntry);
-//            String publicKey = ProofMode.getPublicKeyString(this);
-//            zos.write(publicKey.getBytes());
-        }
-
-        return outputZipFile;
-    }
-
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -353,8 +196,6 @@ public class StreamActivity extends AppCompatActivity implements TextureView.Sur
     public void onClick(View view) {
         if (view.getId() == R.id.button_capture){
             if(!mRecording) {
-                setProofMode();
-
                 startStreaming();
             } else {
                 stopStreaming();
