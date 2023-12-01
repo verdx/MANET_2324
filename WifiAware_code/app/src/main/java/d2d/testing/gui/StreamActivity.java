@@ -21,6 +21,7 @@ import java.util.UUID;
 import d2d.testing.R;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
+import d2d.testing.streaming.SaveStream;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.gui.AutoFitTextureView;
 import d2d.testing.streaming.sessions.SessionBuilder;
