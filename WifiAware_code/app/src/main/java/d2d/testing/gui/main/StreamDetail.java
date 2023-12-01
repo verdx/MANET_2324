@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import d2d.testing.gui.SaveStream;
+import d2d.testing.streaming.SaveStream;
 
 @SuppressLint("ParcelCreator")
 public class StreamDetail implements Parcelable {
