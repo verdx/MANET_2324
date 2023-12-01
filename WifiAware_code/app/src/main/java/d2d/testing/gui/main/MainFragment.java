@@ -129,7 +129,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     private void removeDefaultItemList(){
-
         streamList.removeIf(Objects::isNull);
     }
 
@@ -215,13 +214,13 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     @Override
-    public void localStreamingAvailable(UUID id, String name, SessionBuilder sessionBuilder) {}
+    public void onLocalStreamingAvailable(UUID id, String name, SessionBuilder sessionBuilder) {}
 
     @Override
-    public void localStreamingUnavailable() {}
+    public void onLocalStreamingUnavailable() {}
 
     @Override
-    public void streamingAvailable(final Streaming streaming, boolean bAllowDispatch) {
+    public void onStreamingAvailable(final Streaming streaming, boolean bAllowDispatch) {
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
@@ -236,7 +235,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     @Override
-    public void streamingDownloadStateChanged(final Streaming streaming, final boolean bIsDownload) {
+    public void onStreamingDownloadStateChanged(final Streaming streaming, final boolean bIsDownload) {
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
@@ -246,7 +245,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     @Override
-    public void streamingUnavailable(final Streaming streaming) {
+    public void onStreamingUnavailable(final Streaming streaming) {
         final String path = streaming.getUUID().toString();
         requireActivity().runOnUiThread(new Runnable() {
             public void run() {
