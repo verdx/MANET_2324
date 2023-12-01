@@ -105,8 +105,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             }
         });
 
-        mViewModel.initNetwork();
-
         String mode = "";
 
         if(MainActivity.mode != null){

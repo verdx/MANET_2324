@@ -21,7 +21,7 @@ public class DefaultViewModel extends BasicViewModel{
     public DefaultViewModel(@NonNull Application app) {
         super(app);
         mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
-        mNetwork = new DefaultNetwork(app, mConManager);
+        mNetwork = new DefaultNetwork(app);
         SERVER_IP = super.getLocalIpAddress();
         mIsNetworkAvailable = new MutableLiveData<>(Boolean.TRUE);
     }
