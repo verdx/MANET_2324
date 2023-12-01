@@ -2,7 +2,6 @@ package d2d.testing.gui.main;
 
 import android.app.Application;
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,11 +15,9 @@ public class DefaultViewModel extends BasicViewModel{
     public static String SERVER_IP = "";
     public static int SERVER_PORT = 8080;
     private DefaultNetwork mNetwork;
-    private ConnectivityManager mConManager;
 
     public DefaultViewModel(@NonNull Application app) {
         super(app);
-        mConManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
         mNetwork = new DefaultNetwork(app);
         SERVER_IP = super.getLocalIpAddress();
         mIsNetworkAvailable = new MutableLiveData<>(Boolean.TRUE);
