@@ -60,5 +60,4 @@ public class DefaultViewModel extends BasicViewModel{
     public boolean startClient(){
         return mNetwork.startClient();
     }
-
 }

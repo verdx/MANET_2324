@@ -1,12 +1,12 @@
 package d2d.testing.gui.main;
 
+import static d2d.testing.R.*;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,12 +25,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.inject.Inject;
 
-import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
@@ -64,24 +63,24 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_main, container, false);
+        View root = inflater.inflate(layout.fragment_main, container, false);
 
-        RecyclerView streamsListView = root.findViewById(R.id.streamListView);
+        RecyclerView streamsListView = root.findViewById(id.streamListView);
         streamsListView.setLayoutManager(new LinearLayoutManager(getContext()));
         addDefaultItemList();
         arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
         streamsListView.setAdapter(arrayAdapter);
 
-        numStreams = root.findViewById(R.id.streams_available);
-        numStreams.setText(getString(R.string.dispositivos_encontrados, 0));
+        numStreams = root.findViewById(id.streams_available);
+        numStreams.setText(getString(string.dispositivos_encontrados, 0));
 
         StreamingRecord.getInstance().addObserver(this);
 
-        Button record = root.findViewById(R.id.recordButton);
+        Button record = root.findViewById(id.recordButton);
         record.setOnClickListener(v -> {
             if(checkCameraHardware()){
                 if(!isNetworkAvailable){
-                    Toast.makeText(MainFragment.this.getContext(), R.string.record_not_available, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainFragment.this.getContext(), string.record_not_available, Toast.LENGTH_SHORT).show();
                 }
                 else{
                     openStreamActivity();
@@ -90,12 +89,12 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             }
         });
 
-        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.animate_record);
+        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), anim.animate_record);
         record.startAnimation(shake);
 
-        TextView myMode = root.findViewById(R.id.my_mode);
-        myName = root.findViewById(R.id.my_name);
-        myStatus = root.findViewById(R.id.my_status);
+        TextView myMode = root.findViewById(id.my_mode);
+        myName = root.findViewById(id.my_name);
+        myStatus = root.findViewById(id.my_status);
 
         mViewModel.isNetworkAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
             isNetworkAvailable = aBoolean;
@@ -108,12 +107,12 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         String mode = "";
 
         if(MainActivity.mode != null){
-            if(MainActivity.mode.equals(getString(R.string.mode_witness))){
+            if(MainActivity.mode.equals(getString(string.mode_witness))){
                 myName.setEnabled(false);
-                mode = getString(R.string.witness);
+                mode = getString(string.witness);
             }
-            if(MainActivity.mode.equals(getString(R.string.mode_humanitarian))){
-                mode = getString(R.string.humanitarian);
+            if(MainActivity.mode.equals(getString(string.mode_humanitarian))){
+                mode = getString(string.humanitarian);
             }
         }
         myMode.setText(mode);
@@ -131,12 +130,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     private void removeDefaultItemList(){
 
-        for (Iterator<StreamDetail> iterator = streamList.iterator(); iterator.hasNext(); ) {
-            StreamDetail value = iterator.next();
-            if (value == null) {
-                iterator.remove();
-            }
-        }
+        streamList.removeIf(Objects::isNull);
     }
 
     @Override
@@ -161,7 +155,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             } else {
                 streamList.remove(detail);
             }
-            numStreams.setText(getString(R.string.dispositivos_encontrados, streamList.size()));
+            numStreams.setText(getString(string.dispositivos_encontrados, streamList.size()));
             if(streamList.size() == 0) addDefaultItemList();
             arrayAdapter.setStreamsData(streamList);
         }
@@ -181,26 +175,25 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         openViewStreamActivity(getActivity(), uuid);
     }
 
-    @SuppressLint("ResourceType")
     public String getDeviceStatus() {
         Pair<Boolean, String> status = mViewModel.getDeviceStatus(getContext());
         if(status.first){
-            myStatus.setTextColor(Color.parseColor(getString(R.color.colorPrimaryDark)));
+            myStatus.setTextColor(getResources().getColor(color.colorPrimaryDark));
             return status.second;
         }
 
-        myStatus.setTextColor(Color.parseColor(getString(R.color.colorRed)));
+        myStatus.setTextColor(getResources().getColor(color.colorRed));
         return status.second;
 
     }
 
     private boolean checkCameraHardware() {
-        if (getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){
+        if (requireActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)){
             // This device has a camera
             return true;
         } else {
             // No camera on this device
-            Toast.makeText(getActivity().getApplicationContext(), "YOUR DEVICE HAS NO CAMERA", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireActivity().getApplicationContext(), "YOUR DEVICE HAS NO CAMERA", Toast.LENGTH_SHORT).show();
             return false;
         }
     }
@@ -269,7 +262,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
 
     @Override
     public void onRtspUpdate(int message, Exception exception) {
-        Toast.makeText(this.getActivity().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this.requireActivity().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
     }
 
 }
