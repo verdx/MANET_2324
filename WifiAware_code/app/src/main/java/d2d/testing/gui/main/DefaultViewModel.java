@@ -2,6 +2,10 @@ package d2d.testing.gui.main;
 
 import android.app.Application;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -10,7 +14,7 @@ import androidx.lifecycle.MutableLiveData;
 import d2d.testing.R;
 import d2d.testing.streaming.network.DefaultNetwork;
 
-public class DefaultViewModel extends BasicViewModel{
+public class DefaultViewModel extends BasicViewModel {
 
     public static String SERVER_IP = "";
     public static int SERVER_PORT = 8080;
@@ -21,6 +25,31 @@ public class DefaultViewModel extends BasicViewModel{
         mNetwork = new DefaultNetwork(app);
         SERVER_IP = super.getLocalIpAddress();
         mIsNetworkAvailable = new MutableLiveData<>(Boolean.TRUE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkRequest networkRequest = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
+
+        ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                super.onAvailable(network);
+                // Internet está disponible
+                mIsNetworkAvailable.postValue(true);
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                super.onLost(network);
+                // No hay conexión a internet
+                mIsNetworkAvailable.postValue(false);
+            }
+        };
+
+        if (connectivityManager != null) {
+            connectivityManager.registerNetworkCallback(networkRequest, networkCallback);
+        }
+
     }
 
     @Override
@@ -34,27 +63,17 @@ public class DefaultViewModel extends BasicViewModel{
     @Override
     protected void initNetwork(){
 
-        if(startServer()){
+        if(mNetwork.startServer()){
             Toast.makeText(getApplication().getApplicationContext(), "Server Started", Toast.LENGTH_SHORT).show();
-
         }else {
-            Toast.makeText(getApplication().getApplicationContext(), "ServerStart Error", Toast.LENGTH_LONG).show();
+            //Toast.makeText(getApplication().getApplicationContext(), "ServerStart Error", Toast.LENGTH_LONG).show();
         }
 
-        if(startClient()){
+        if(mNetwork.startClient()){
             Toast.makeText(getApplication().getApplicationContext(), "Client Started", Toast.LENGTH_SHORT).show();
-
         }else {
             Toast.makeText(getApplication().getApplicationContext(), "ClientStart Error", Toast.LENGTH_LONG).show();
         }
 
-    }
-
-    public boolean startServer() {
-        return mNetwork.startServer();
-    }
-
-    public boolean startClient(){
-        return mNetwork.startClient();
     }
 }
