@@ -41,7 +41,6 @@ public class BasicViewModel extends AndroidViewModel implements RtspClient.Callb
         return mIsNetworkAvailable;
     }
 
-    @SuppressLint("ResourceType")
     public Pair<Boolean, String> getDeviceStatus(Context c) {
         if (mIsNetworkAvailable.getValue()) {
             return new Pair<>(Boolean.TRUE, getNetworkAvailabilityString(c, true));
