@@ -89,15 +89,15 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
             }
         });
 
-        @SuppressLint("ResourceType") Animation shake = AnimationUtils.loadAnimation(getContext(), anim.animate_record);
+        Animation shake = AnimationUtils.loadAnimation(getContext(), anim.animate_record);
         record.startAnimation(shake);
 
         TextView myMode = root.findViewById(id.my_mode);
         myName = root.findViewById(id.my_name);
         myStatus = root.findViewById(id.my_status);
 
-        mViewModel.isNetworkAvailable().observe(getViewLifecycleOwner(), aBoolean -> {
-            isNetworkAvailable = aBoolean;
+        mViewModel.isNetworkAvailable().observe(getViewLifecycleOwner(), observedBoolean -> {
+            isNetworkAvailable = observedBoolean;
             myStatus.setText(getDeviceStatus());
             if(isNetworkAvailable){
                 mViewModel.initNetwork();
