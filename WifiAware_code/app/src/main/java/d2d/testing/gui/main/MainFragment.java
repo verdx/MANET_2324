@@ -2,7 +2,6 @@ package d2d.testing.gui.main;
 
 import static d2d.testing.R.*;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,6 +37,8 @@ import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
+import d2d.testing.streaming.BasicViewModel;
+import d2d.testing.streaming.DefaultViewModel;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
@@ -63,6 +63,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         switch (networkType){
             case "WFA":
                 mViewModel =  new WifiAwareViewModel(this.requireActivity().getApplication());
+                break;
             default:
                 mViewModel = new DefaultViewModel(this.requireActivity().getApplication());
         }
