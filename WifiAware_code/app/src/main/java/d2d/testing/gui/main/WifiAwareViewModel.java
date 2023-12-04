@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import d2d.testing.R;
+import d2d.testing.streaming.BasicViewModel;
 
 public class WifiAwareViewModel extends BasicViewModel {
 
@@ -61,7 +62,7 @@ public class WifiAwareViewModel extends BasicViewModel {
     }
 
     @Override
-    protected void initNetwork(){
+    public void initNetwork(){
         if(!sessionCreated()){
             try {
                 if(createSession()){
