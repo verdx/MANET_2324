@@ -28,7 +28,7 @@
 	<string name="name_dialog_hint">Stream name</string>
 	<string name="my_device_info_mode">Mode:</string>
 	<string name="my_device_info_name">Name:</string>
-	<string name="record_not_available">Wifi Aware is not available, you can not record</string>
+	<string name="record_not_available">The network is not available, you can not record</string>
 
 	<string name="video_category_prefs">Video preferences</string>
 	<string name="save_my_streaming_prefs">Save my streaming</string>
@@ -44,7 +44,7 @@
 
 	<string name="wfa_available_str">Wifi Aware available</string>
 	<string name="wfa_unavailable_str">Wifi Aware unavailable</string>
-	<string name="defaultnet_unavailable_str">Default Network unavailable</string>
+	<string name="defaultnet_unavailable_str">Network unavailable</string>
 	<string name="unknown_net_availability_str">Network Availability unknown</string>
 
 	<string name="save_str">SAVE</string>
