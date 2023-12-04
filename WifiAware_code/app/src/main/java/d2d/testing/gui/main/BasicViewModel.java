@@ -25,7 +25,7 @@ import java.nio.ByteOrder;
 import d2d.testing.R;
 import d2d.testing.streaming.rtsp.RtspClient;
 
-public class BasicViewModel extends AndroidViewModel implements RtspClient.Callback{
+public abstract class BasicViewModel extends AndroidViewModel implements RtspClient.Callback{
     protected final HandlerThread worker;
     protected MutableLiveData<Boolean> mIsNetworkAvailable;
 
@@ -50,28 +50,13 @@ public class BasicViewModel extends AndroidViewModel implements RtspClient.Callb
         }
     }
 
-    protected String getNetworkAvailabilityString(Context c, boolean available){
-        return c.getString(R.string.unknown_net_availability_str);
-    }
+    protected abstract String getNetworkAvailabilityString(Context c, boolean available);
 
-    protected void initNetwork(){}
+    protected abstract void initNetwork();
 
     @Override
     protected void onCleared() {
         worker.quitSafely();
-    }
-
-    public String getLocalIpAddress() {
-        WifiManager wifiManager = (WifiManager) this.getApplication().getApplicationContext().getSystemService(WIFI_SERVICE);
-        assert wifiManager!=null;
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        int ipInt = wifiInfo.getIpAddress();
-
-        try {
-            return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
-        } catch (UnknownHostException e) {
-            return "Local address not found";
-        }
     }
 
     @Override

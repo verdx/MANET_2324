@@ -1,30 +1,41 @@
 package d2d.testing.gui.main;
 
+import static android.content.Context.WIFI_SERVICE;
+
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import d2d.testing.R;
 import d2d.testing.streaming.network.DefaultNetwork;
 
 public class DefaultViewModel extends BasicViewModel {
 
+    private DefaultNetwork mNetwork;
     public static String SERVER_IP = "";
     public static int SERVER_PORT = 8080;
-    private DefaultNetwork mNetwork;
 
     public DefaultViewModel(@NonNull Application app) {
         super(app);
         mNetwork = new DefaultNetwork(app);
-        SERVER_IP = super.getLocalIpAddress();
+        SERVER_IP = getLocalIpAddress();
         mIsNetworkAvailable = new MutableLiveData<>(Boolean.TRUE);
+
+        //A partir de aqui estamos creando un callback que actualize automaticamente el estado de red
         ConnectivityManager connectivityManager = (ConnectivityManager) app.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkRequest networkRequest = new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -63,10 +74,10 @@ public class DefaultViewModel extends BasicViewModel {
     @Override
     protected void initNetwork(){
 
-        if(mNetwork.startServer()){
+        if(mNetwork.startLocalServer()){
             Toast.makeText(getApplication().getApplicationContext(), "Server Started", Toast.LENGTH_SHORT).show();
         }else {
-            //Toast.makeText(getApplication().getApplicationContext(), "ServerStart Error", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplication().getApplicationContext(), "ServerStart Error", Toast.LENGTH_LONG).show();
         }
 
         if(mNetwork.startClient()){
@@ -75,5 +86,25 @@ public class DefaultViewModel extends BasicViewModel {
             Toast.makeText(getApplication().getApplicationContext(), "ClientStart Error", Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    @Override
+    protected void onCleared() {
+        mNetwork.stopLocalServer();
+        mNetwork.stopClient();
+        super.onCleared();
+    }
+
+    public String getLocalIpAddress() {
+        WifiManager wifiManager = (WifiManager) this.getApplication().getApplicationContext().getSystemService(WIFI_SERVICE);
+        assert wifiManager!=null;
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        int ipInt = wifiInfo.getIpAddress();
+
+        try {
+            return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
+        } catch (UnknownHostException e) {
+            return "Local address not found";
+        }
     }
 }
