@@ -2,7 +2,7 @@ package d2d.testing.gui.main;
 
 import static d2d.testing.R.*;
 
-import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,15 +21,21 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.inject.Inject;
-
+import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
@@ -45,7 +51,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private TextView numStreams;
     private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
-    @Inject
     BasicViewModel mViewModel;
     private Boolean isNetworkAvailable;
 
@@ -54,11 +59,13 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         super.onCreate(savedInstanceState);
         streamList = new ArrayList<>();
 
-        INetworkComponent INetworkComponent = DaggerINetworkComponent.builder()
-                .fragmentActivity(requireActivity())
-                .build();
-
-        INetworkComponent.inject(this);
+        String networkType = readNetworkType(this.getResources().openRawResource(R.raw.config));
+        switch (networkType){
+            case "WFA":
+                mViewModel =  new WifiAwareViewModel(this.requireActivity().getApplication());
+            default:
+                mViewModel = new DefaultViewModel(this.requireActivity().getApplication());
+        }
 
     }
 
@@ -262,6 +269,30 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     @Override
     public void onRtspUpdate(int message, Exception exception) {
         Toast.makeText(this.requireActivity().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
+    }
+
+    private String readNetworkType(InputStream is){
+
+        String networkType = "";
+
+        Pattern networkPattern = Pattern.compile("use-network:(\\w+)");
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String str = null;
+
+        try {
+            while ((str = br.readLine()) != null) {
+                Matcher matcher = networkPattern.matcher(str);
+                if (matcher.matches()) {
+                    networkType = matcher.group(1); // Extract the network type value
+                }
+            }
+            is.close();
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return networkType;
     }
 
 }
