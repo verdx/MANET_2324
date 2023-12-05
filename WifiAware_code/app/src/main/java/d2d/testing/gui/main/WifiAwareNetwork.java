@@ -36,12 +36,11 @@ import d2d.testing.streaming.threads.selectors.ChangeRequest;
 
 public class WifiAwareNetwork extends INetworkManager {
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;
-    private WifiAwareManager mWifiAwareManager;
+    private final WifiAwareManager mWifiAwareManager;
     private PublishDiscoverySession mPublishSession;
     private SubscribeDiscoverySession mSubscribeSession;
     private WifiAwareSession mWifiAwareSession;
-    private Handler workerHandle;
-    private final HandlerThread worker;
+    private final Handler workerHandle;
     private static ConnectivityManager mConManager;
     private RTSPServerWFAModel mServerController;
 
@@ -53,9 +52,9 @@ public class WifiAwareNetwork extends INetworkManager {
         mServerController = null;
 
         this.mWifiAwareManager = wifiAwareManager;
-        this.mConManager = conManager;
+        mConManager = conManager;
 
-        worker = new HandlerThread("WifiAware Worker");
+        HandlerThread worker = new HandlerThread("WifiAware Worker");
         worker.start();
         workerHandle = new Handler(worker.getLooper());
 
@@ -92,8 +91,8 @@ public class WifiAwareNetwork extends INetworkManager {
     /*
         Make a service discoverable
      */
-    public boolean publishService(String serviceName) throws InterruptedException {
-        if(mWifiAwareSession == null) return false;
+    public void publishService(String serviceName) throws InterruptedException {
+        if(mWifiAwareSession == null) return;
         synchronized (WifiAwareNetwork.this){
             PublishConfig config = new PublishConfig.Builder()
                     .setServiceName(serviceName)
@@ -178,15 +177,14 @@ public class WifiAwareNetwork extends INetworkManager {
             mWifiAwareSession.publish(config, discoverySessionCallback, workerHandle);
 
             this.wait();    //Espera a recibir un notify
-            return mPublishSession != null;
         }
     }
 
     /*
         Subscribe to a service
      */
-    public boolean subscribeToService(String serviceName, final WifiAwareViewModel viewModel) throws InterruptedException {
-        if(mWifiAwareSession == null) return false;
+    public void subscribeToService(String serviceName, final WifiAwareViewModel viewModel) throws InterruptedException {
+        if(mWifiAwareSession == null) return;
 
         synchronized (WifiAwareNetwork.this){
             SubscribeConfig config = new SubscribeConfig.Builder()
@@ -262,21 +260,12 @@ public class WifiAwareNetwork extends INetworkManager {
             }, workerHandle);
 
             this.wait();
-            return mSubscribeSession != null;
         }
     }
 
 
     public boolean sessionCreated(){
         return mWifiAwareSession != null;
-    }
-
-    public boolean publishSessionCreated(){
-        return mPublishSession != null;
-    }
-
-    public boolean subscribeSessionCreated(){
-        return mSubscribeSession != null;
     }
 
     public ConnectivityManager getConnectivityManager() {
@@ -297,14 +286,12 @@ public class WifiAwareNetwork extends INetworkManager {
             mWifiAwareSession.close();
             mWifiAwareSession = null;
         }
-
-        if(mServerController!=null){
-            mServerController.releaseClients();
-            mServerController = null;
-        }
-
         if(mServerController!=null && mServerController.getServer() != null){
             mServerController.stopServer();
+            mServerController = null;
+        }
+        if(mServerController!=null){
+            mServerController.releaseClients();
             mServerController = null;
         }
     }
@@ -319,11 +306,10 @@ public class WifiAwareNetwork extends INetworkManager {
                         .setPskPassphrase("wifiawaretest")
                         .build();
 
-        NetworkRequest nr = new NetworkRequest.Builder()
+        return new NetworkRequest.Builder()
                 .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                 .setNetworkSpecifier(ns)
                 .build();
-        return nr;
     }
 
     public synchronized boolean addNewConnection(DiscoverySession discoverySession, PeerHandle handle){
@@ -347,7 +333,7 @@ public class WifiAwareNetwork extends INetworkManager {
 
             RTSPServerWFAModel.Connection conn = new RTSPServerWFAModel.Connection(serverSocketChannel,
                     handle,
-                    new WifiAwareNetworkCallback(mServerController, handle, mConManager));
+                    new WifiAwareNetworkCallback(mServerController, handle));
 
             mConManager.requestNetwork(networkRequest, conn.mNetCallback);
 
@@ -362,27 +348,23 @@ public class WifiAwareNetwork extends INetworkManager {
     @Override
     public InetAddress getInetAddress(NetworkCapabilities networkCapabilities) {
         WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
-        InetAddress peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
-        return peerIpv6;
+        return peerAwareInfo.getPeerIpv6Addr();
     }
 
     @Override
     public int getPort(NetworkCapabilities networkCapabilities) {
         WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
-        int peerPort = peerAwareInfo.getPort();
-        return peerPort;
+        return peerAwareInfo.getPort();
     }
 
 
     private static class WifiAwareNetworkCallback extends ConnectivityManager.NetworkCallback{
         private final PeerHandle mConnectionHandle;
         private final RTSPServerWFAModel mController;
-        private final ConnectivityManager mConManager;
 
-        public WifiAwareNetworkCallback(RTSPServerWFAModel server, PeerHandle connectionHandle, ConnectivityManager conManager){
+        public WifiAwareNetworkCallback(RTSPServerWFAModel server, PeerHandle connectionHandle){
             this.mConnectionHandle = connectionHandle;
             this.mController = server;
-            mConManager = conManager;
         }
 
         @Override
