@@ -20,7 +20,7 @@ import java.util.UUID;
 
 import d2d.testing.R;
 import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.utils.IOUtils;
+import d2d.testing.streaming.utils.IOUtils;
 
 public class StreamListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int VIEW_TYPE_DATA = 0;
