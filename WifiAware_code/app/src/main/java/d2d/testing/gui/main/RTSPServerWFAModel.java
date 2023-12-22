@@ -4,6 +4,10 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.wifi.aware.PeerHandle;
 
+import net.verdx.libstreaming.rtsp.RTSPServerModel;
+import net.verdx.libstreaming.rtsp.RtspClient;
+import net.verdx.libstreaming.threads.selectors.RTSPServerSelector;
+
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
@@ -12,10 +16,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
-
-import d2d.testing.streaming.rtsp.RTSPServerModel;
-import d2d.testing.streaming.rtsp.RtspClient;
-import d2d.testing.streaming.threads.selectors.RTSPServerSelector;
 
 public class RTSPServerWFAModel extends RTSPServerModel {
     protected ConnectivityManager mConManager;

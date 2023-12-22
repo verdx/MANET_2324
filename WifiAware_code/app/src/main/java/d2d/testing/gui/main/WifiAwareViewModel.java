@@ -12,8 +12,9 @@ import android.net.wifi.aware.WifiAwareManager;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
+import net.verdx.libstreaming.BasicViewModel;
+
 import d2d.testing.R;
-import d2d.testing.streaming.BasicViewModel;
 
 public class WifiAwareViewModel extends BasicViewModel {
 

@@ -26,15 +26,15 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import net.verdx.libstreaming.StreamingRecord;
+import net.verdx.libstreaming.network.INetworkManager;
+import net.verdx.libstreaming.rtsp.RtspClient;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-
-import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.network.INetworkManager;
-import d2d.testing.streaming.rtsp.RtspClient;
 
 /**
  * RFC 2326.

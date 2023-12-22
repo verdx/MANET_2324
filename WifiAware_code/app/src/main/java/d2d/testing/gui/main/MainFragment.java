@@ -1,8 +1,11 @@
 package d2d.testing.gui.main;
 
-import static d2d.testing.R.*;
+import static d2d.testing.R.anim;
+import static d2d.testing.R.color;
+import static d2d.testing.R.id;
+import static d2d.testing.R.layout;
+import static d2d.testing.R.string;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -23,6 +26,16 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import net.verdx.libstreaming.BasicViewModel;
+import net.verdx.libstreaming.DefaultViewModel;
+import net.verdx.libstreaming.StreamListAdapter;
+import net.verdx.libstreaming.Streaming;
+import net.verdx.libstreaming.StreamingRecord;
+import net.verdx.libstreaming.StreamingRecordObserver;
+import net.verdx.libstreaming.gui.StreamDetail;
+import net.verdx.libstreaming.rtsp.RtspClient;
+import net.verdx.libstreaming.sessions.SessionBuilder;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,16 +49,6 @@ import java.util.regex.Pattern;
 import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
-import d2d.testing.streaming.gui.ViewStreamActivity;
-import d2d.testing.streaming.BasicViewModel;
-import d2d.testing.streaming.DefaultViewModel;
-import d2d.testing.streaming.StreamListAdapter;
-import d2d.testing.streaming.Streaming;
-import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.StreamingRecordObserver;
-import d2d.testing.streaming.rtsp.RtspClient;
-import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.streaming.gui.StreamDetail;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
     private  EditText myName;

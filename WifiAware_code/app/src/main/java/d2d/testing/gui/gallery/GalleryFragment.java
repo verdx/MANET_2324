@@ -21,8 +21,10 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import net.verdx.libstreaming.gui.ViewStreamActivity;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -31,7 +33,6 @@ import java.util.Iterator;
 import javax.crypto.ShortBufferException;
 
 import d2d.testing.R;
-import d2d.testing.streaming.gui.ViewStreamActivity;
 
 
 public class GalleryFragment extends Fragment {
@@ -153,7 +154,11 @@ public class GalleryFragment extends Fragment {
                         i -= 1;
                     }
                 }
-                mmr.release();
+                try {
+                    mmr.release();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
                 FragmentActivity fragment = getActivity();
                 //A veces cambias de pestaña y el fragmento es null, entoces crashea

@@ -16,18 +16,19 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import net.verdx.libstreaming.SaveStream;
+import net.verdx.libstreaming.StreamingRecord;
+import net.verdx.libstreaming.gui.AutoFitTextureView;
+import net.verdx.libstreaming.sessions.SessionBuilder;
+import net.verdx.libstreaming.video.CameraController;
+import net.verdx.libstreaming.video.VideoPacketizerDispatcher;
+import net.verdx.libstreaming.video.VideoQuality;
+
 import java.util.UUID;
 
 import d2d.testing.R;
 import d2d.testing.gui.main.dialogName.CustomDialogFragment;
 import d2d.testing.gui.main.dialogName.CustomDialogListener;
-import d2d.testing.streaming.SaveStream;
-import d2d.testing.streaming.StreamingRecord;
-import d2d.testing.streaming.gui.AutoFitTextureView;
-import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.streaming.video.CameraController;
-import d2d.testing.streaming.video.VideoPacketizerDispatcher;
-import d2d.testing.streaming.video.VideoQuality;
 
 
 public class StreamActivity extends AppCompatActivity implements TextureView.SurfaceTextureListener, CameraController.Callback, CustomDialogListener, View.OnClickListener {

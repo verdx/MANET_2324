@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:shape="rectangle"
     android:elevation="10dp">
     <!-- el boton tiene color rojo de fondo, por ejemplo -->

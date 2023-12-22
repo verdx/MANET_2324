@@ -1,3 +1,3 @@
-[submodule "WifiAware_code/app/src/main/java/d2d/testing/streaming"]
-	path = WifiAware_code/app/src/main/java/d2d/testing/streaming
+[submodule "WifiAware_code/libstreaming2.0"]
+	path = WifiAware_code/libstreaming2.0
 	url = https://github.com/verdx/libstreaming2.0.git

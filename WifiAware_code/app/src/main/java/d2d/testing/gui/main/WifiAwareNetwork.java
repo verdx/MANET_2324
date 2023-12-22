@@ -22,6 +22,9 @@ import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
 
+import net.verdx.libstreaming.network.INetworkManager;
+import net.verdx.libstreaming.threads.selectors.ChangeRequest;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -30,9 +33,6 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-
-import d2d.testing.streaming.network.INetworkManager;
-import d2d.testing.streaming.threads.selectors.ChangeRequest;
 
 public class WifiAwareNetwork extends INetworkManager {
     private static final int DELAY_BETWEEN_CONNECTIONS = 500;

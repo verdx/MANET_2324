@@ -16,8 +16,9 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 
+import net.verdx.libstreaming.video.CameraController;
+
 import d2d.testing.R;
-import d2d.testing.streaming.video.CameraController;
 
 
 public class MainActivity extends AppCompatActivity {
