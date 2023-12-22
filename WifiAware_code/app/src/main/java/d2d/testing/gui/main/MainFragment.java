@@ -49,7 +49,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
     private  EditText myName;
     private TextView myStatus;
     private TextView numStreams;
-    private ArrayList<StreamDetail> streamList;
+    private ArrayList<d2d.testing.gui.main.StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
     BasicViewModel mViewModel;
     private Boolean isNetworkAvailable;
