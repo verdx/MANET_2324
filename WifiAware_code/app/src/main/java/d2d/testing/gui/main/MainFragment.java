@@ -78,7 +78,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         RecyclerView streamsListView = root.findViewById(id.streamListView);
         streamsListView.setLayoutManager(new LinearLayoutManager(getContext()));
         addDefaultItemList();
-        arrayAdapter = new StreamListAdapter(getContext(), streamList, this);
+        arrayAdapter = new StreamListAdapter(getContext(), streamList, this.requireActivity());
         streamsListView.setAdapter(arrayAdapter);
 
         numStreams = root.findViewById(id.streams_available);
@@ -180,10 +180,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         }
     }
 
-    public void openStreamActivity(String uuid) {
-        openViewStreamActivity(getActivity(), uuid);
-    }
-
     public String getDeviceStatus() {
         Pair<Boolean, String> status = mViewModel.getDeviceStatus(getContext());
         if(status.first){
@@ -213,13 +209,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
         if(myName.getText().toString().equals("")) author = myName.getHint().toString();
         else author = myName.getText().toString();
         streamActivityIntent.putExtra("author", author);
-        this.startActivity(streamActivityIntent);
-    }
-
-    public void openViewStreamActivity(Context context, String uuid) {
-        Intent streamActivityIntent = new Intent(context, ViewStreamActivity.class);
-        streamActivityIntent.putExtra("isFromGallery", false);
-        streamActivityIntent.putExtra("UUID",uuid);
         this.startActivity(streamActivityIntent);
     }
 
