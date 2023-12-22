@@ -82,7 +82,7 @@
 			android:theme="@style/AppTheme.NoActionBar"
 			android:windowSoftInputMode="adjustPan|adjustResize"/>
 
-		<activity android:name=".gui.ViewStreamActivity"
+		<activity android:name=".streaming.gui.ViewStreamActivity"
 			android:theme="@style/AppTheme.NoActionBar" />
 
 		<activity android:name=".gui.setting.ExitActivity"
