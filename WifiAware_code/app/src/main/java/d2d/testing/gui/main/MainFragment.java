@@ -39,12 +39,13 @@ import d2d.testing.gui.StreamActivity;
 import d2d.testing.gui.ViewStreamActivity;
 import d2d.testing.streaming.BasicViewModel;
 import d2d.testing.streaming.DefaultViewModel;
+import d2d.testing.streaming.StreamListAdapter;
 import d2d.testing.streaming.Streaming;
 import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
-import d2d.testing.gui.main.StreamDetail;
+import d2d.testing.streaming.gui.StreamDetail;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
     private  EditText myName;
