@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
 import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
-import d2d.testing.gui.ViewStreamActivity;
+import d2d.testing.streaming.gui.ViewStreamActivity;
 import d2d.testing.streaming.BasicViewModel;
 import d2d.testing.streaming.DefaultViewModel;
 import d2d.testing.streaming.StreamListAdapter;
