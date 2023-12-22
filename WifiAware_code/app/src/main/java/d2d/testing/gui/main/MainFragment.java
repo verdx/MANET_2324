@@ -44,12 +44,13 @@ import d2d.testing.streaming.StreamingRecord;
 import d2d.testing.streaming.StreamingRecordObserver;
 import d2d.testing.streaming.rtsp.RtspClient;
 import d2d.testing.streaming.sessions.SessionBuilder;
+import d2d.testing.gui.main.StreamDetail;
 
 public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
     private  EditText myName;
     private TextView myStatus;
     private TextView numStreams;
-    private ArrayList<d2d.testing.gui.main.StreamDetail> streamList;
+    private ArrayList<StreamDetail> streamList;
     private StreamListAdapter arrayAdapter;
     BasicViewModel mViewModel;
     private Boolean isNetworkAvailable;
