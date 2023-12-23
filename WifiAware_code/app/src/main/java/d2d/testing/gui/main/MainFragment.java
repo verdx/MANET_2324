@@ -33,7 +33,6 @@ import net.verdx.libstreaming.Streaming;
 import net.verdx.libstreaming.StreamingRecord;
 import net.verdx.libstreaming.StreamingRecordObserver;
 import net.verdx.libstreaming.gui.StreamDetail;
-import net.verdx.libstreaming.rtsp.RtspClient;
 import net.verdx.libstreaming.sessions.SessionBuilder;
 
 import java.io.BufferedReader;
@@ -71,6 +70,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver {
                 break;
             default:
                 mViewModel = new DefaultViewModel(this.requireActivity().getApplication());
+                ((DefaultViewModel) mViewModel).setDestinationIpsSettings(this.requireActivity().getApplication());
         }
 
     }
