@@ -50,7 +50,7 @@ import d2d.testing.R;
 import d2d.testing.gui.MainActivity;
 import d2d.testing.gui.StreamActivity;
 
-public class MainFragment extends Fragment implements StreamingRecordObserver, RtspClient.Callback {
+public class MainFragment extends Fragment implements StreamingRecordObserver {
     private  EditText myName;
     private TextView myStatus;
     private TextView numStreams;
@@ -259,11 +259,6 @@ public class MainFragment extends Fragment implements StreamingRecordObserver, R
                         streaming.isDownloading());
             }
         });
-    }
-
-    @Override
-    public void onRtspUpdate(int message, Exception exception) {
-        Toast.makeText(this.requireActivity().getApplicationContext(), "RtspClient error message " + message + (exception != null ? " Ex: " + exception.getMessage() : ""), Toast.LENGTH_SHORT).show();
     }
 
     private String readNetworkType(InputStream is){
