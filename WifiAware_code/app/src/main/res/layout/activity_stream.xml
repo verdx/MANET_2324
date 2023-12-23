@@ -8,7 +8,7 @@
 	android:color="@android:color/background_light"
 	tools:context=".gui.StreamActivity">
 
-	<d2d.testing.streaming.gui.AutoFitTextureView
+	<net.verdx.libstreaming.gui.AutoFitTextureViewM
 		android:id="@+id/textureView" android:layout_width="match_parent"
 		android:layout_height="match_parent" />
 
