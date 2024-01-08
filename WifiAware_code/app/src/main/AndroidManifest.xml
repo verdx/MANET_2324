@@ -82,13 +82,13 @@
 			android:theme="@style/AppTheme.NoActionBar"
 			android:windowSoftInputMode="adjustPan|adjustResize"/>
 
-		<activity android:name=".streaming.gui.ViewStreamActivity"
+		<activity android:name="net.verdx.libstreaming.gui.ViewStreamActivity"
 			android:theme="@style/AppTheme.NoActionBar" />
 
 		<activity android:name=".gui.setting.ExitActivity"
 			android:theme="@style/AppTheme.NoActionBar" />
 
-		<service android:name=".streaming.rtsp.RtspServer" />
+		<service android:name="net.verdx.libstreaming.rtsp.RtspServer" />
 
 
 
