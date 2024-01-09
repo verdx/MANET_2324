@@ -57,20 +57,23 @@ public class MainFragment extends Fragment implements StreamingRecordObserver {
     private StreamListAdapter arrayAdapter;
     BasicViewModel mViewModel;
     private Boolean isNetworkAvailable;
+    private String networkType;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         streamList = new ArrayList<>();
 
-        String networkType = readNetworkType(this.getResources().openRawResource(R.raw.config));
+        networkType = readNetworkType(this.getResources().openRawResource(R.raw.config));
         switch (networkType){
             case "WFA":
                 mViewModel =  new WifiAwareViewModel(this.requireActivity().getApplication());
                 break;
-            default:
+            case "IP":
                 mViewModel = new DefaultViewModel(this.requireActivity().getApplication());
-                ((DefaultViewModel) mViewModel).setDestinationIpsSettings(this.requireActivity().getApplication());
+                break;
+            default:
+                throw new RuntimeException("Network type not supported");
         }
 
     }
@@ -88,6 +91,10 @@ public class MainFragment extends Fragment implements StreamingRecordObserver {
         numStreams.setText(getString(string.dispositivos_encontrados, 0));
 
         StreamingRecord.getInstance().addObserver(this);
+
+        if (networkType == "IP") {
+            ((DefaultViewModel) mViewModel).setDestinationIpsSettings(this.requireActivity().getApplication());
+        }
 
         Button record = root.findViewById(id.recordButton);
         record.setOnClickListener(v -> {
