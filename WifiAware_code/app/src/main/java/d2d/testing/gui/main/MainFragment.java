@@ -92,7 +92,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver {
 
         StreamingRecord.getInstance().addObserver(this);
 
-        if (networkType == "IP") {
+        if (networkType.equals("IP")) {
             ((DefaultViewModel) mViewModel).setDestinationIpsSettings(this.requireActivity().getApplication());
         }
 
@@ -191,7 +191,7 @@ public class MainFragment extends Fragment implements StreamingRecordObserver {
     }
 
     public String getDeviceStatus() {
-        Pair<Boolean, String> status = mViewModel.getDeviceStatus(getContext());
+        Pair<Boolean, String> status = mViewModel.getDeviceNetworkStatus(getContext());
         if(status.first){
             myStatus.setTextColor(getResources().getColor(color.colorPrimaryDark));
             return status.second;
