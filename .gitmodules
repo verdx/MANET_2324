@@ -1,0 +1,3 @@
+[submodule "CrowdStreaming/libstreaming2.0"]
+	path = CrowdStreaming/libstreaming2.0
+	url = https://github.com/verdx/libstreaming2.0
