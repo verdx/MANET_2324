@@ -111,9 +111,7 @@ public class WifiAwareNetwork extends INetworkManager {
                             mServerController.startServer();
 
                             //Pone al server RTSP a escuchar en localhost:1234 para peticiones de descarga de libVLC
-                            if(!mServerController.addNewConnection("127.0.0.1", 1234)){
-                                throw new IOException();
-                            }
+                            mServerController.addNewConnection("127.0.0.1", 1234);
                         } catch (IOException e) {
                             session.close();
                             mPublishSession = null;
